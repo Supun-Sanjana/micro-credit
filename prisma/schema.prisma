@@ -20,3 +20,231 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+
+// ---------------------------------------------------------------------------
+// Reference / lookup tables
+// ---------------------------------------------------------------------------
+
+enum LoanType {
+  QUICK
+  BUSINESS
+  MICRO
+}
+
+enum LoanStatus {
+  ACTIVE      // currently running
+  SETTLED     // fully paid
+  DEFAULTED   // non-performing
+  CANCELLED   // rejected/cancelled before disbursement
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum RepaymentMethod {
+  CASH
+  BANK_TRANSFER
+  ACCOUNT_TRANSFER // "ACC TRF" seen in cash flow sheets
+}
+
+// ---------------------------------------------------------------------------
+// Branch
+// Galle (SA01) and Matara (SA02) are the two branches in the data.
+// ---------------------------------------------------------------------------
+
+model Branch {
+  id        String   @id @default(cuid())
+  code      String   @unique // e.g. "SA01", "SA02"
+  name      String            // e.g. "GALLE", "MATARA"
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  centres   Centre[]
+  cashFlows CashFlow[]
+}
+
+// ---------------------------------------------------------------------------
+// Centre
+// Each branch has numbered centres (e.g. Centre 1 = THALAPITIYA, Centre 2 = THELIKADA).
+// Micro-loan centres have their own numbering (M01, M02 …) within Matara.
+// ---------------------------------------------------------------------------
+
+model Centre {
+  id           String   @id @default(cuid())
+  centreNumber Int               // sequential within branch (1, 2, … or M01, M02 …)
+  centreCode   String   @unique  // e.g. "SA01/001", "SA02/M01"
+  name         String            // e.g. "THALAPITIYA", "PALATUWA"
+  isMicro      Boolean  @default(false)
+  branchId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  branch   Branch   @relation(fields: [branchId], references: [id])
+  members  Member[]
+
+  @@index([branchId])
+}
+
+// ---------------------------------------------------------------------------
+// Member
+// A member belongs to one centre and can have multiple loans over time.
+// NIC is the primary identifier in Sri Lanka (National Identity Card).
+// The "group" column (1–6 in the data) represents the lending group within a centre.
+// ---------------------------------------------------------------------------
+
+model Member {
+  id           String   @id @default(cuid())
+  memberNumber String   @unique // e.g. "SA01/001/001", "SA02/M01/001"
+  name         String
+  nic          String?           // National Identity Card number
+  address      String?
+  contact1     String?
+  contact2     String?
+  groupNumber  Int?              // group within the centre (1–6 observed)
+  centreId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  centre Centre @relation(fields: [centreId], references: [id])
+  loans  Loan[]
+
+  @@index([centreId])
+  @@index([nic])
+}
+
+// ---------------------------------------------------------------------------
+// LoanProduct
+// Captures the reusable product definition (type, term, interest structure).
+// Keeps Loan lean — actual amounts on the Loan itself since they vary.
+// ---------------------------------------------------------------------------
+
+model LoanProduct {
+  id              String   @id @default(cuid())
+  name            String   @unique  // e.g. "Quick 13W", "Business 18W", "Micro 24W"
+  loanType        LoanType
+  numberOfWeeks   Int               // 13, 18, 24, 40 observed
+  // Interest is flat-rate (difference between totalReceivable and loanAmount)
+  // expressed as a multiplier e.g. totalReceivable / loanAmount
+  // Stored for reference; actual amounts recorded on Loan.
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  loans Loan[]
+}
+
+// ---------------------------------------------------------------------------
+// Loan
+// One row per loan disbursement.  A member can have multiple loans
+// (second/third loans are common in the data — same member, new row).
+//
+// Key fields from the spreadsheet:
+//   loanAmount       — principal disbursed
+//   weeklyRental     — fixed weekly instalment (interest + principal)
+//   numberOfWeeks    — term
+//   totalReceivable  — loanAmount + flat interest
+//   grantedDate      — disbursement date
+//   expireDate       — expected end date (sometimes blank in the data)
+//
+// verificationStatus — "VERIFIED", "SET", "OK", "REJECTED" etc. found in data
+// verificationNote   — free-text note (e.g. "MOM NOT @ HOME", "2ND LOAN")
+// ---------------------------------------------------------------------------
+
+model Loan {
+  id                  String             @id @default(cuid())
+  memberId            String
+  loanProductId       String?
+  loanType            LoanType
+  loanNumber          String?            // sequential per member, e.g. "1ST", "2ND"
+  loanAmount          Decimal            @db.Decimal(12, 2)
+  weeklyRental        Decimal            @db.Decimal(10, 2)
+  numberOfWeeks       Int
+  totalReceivable     Decimal            @db.Decimal(12, 2)
+  grantedDate         DateTime           @db.Date
+  expireDate          DateTime?          @db.Date
+  status              LoanStatus         @default(ACTIVE)
+  verificationStatus  VerificationStatus @default(PENDING)
+  verificationNote    String?            // raw annotation from spreadsheet
+  // Computed / cached totals (updated on each repayment)
+  totalPaid           Decimal            @db.Decimal(12, 2) @default(0)
+  outstanding         Decimal            @db.Decimal(12, 2) // totalReceivable - totalPaid
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  member      Member      @relation(fields: [memberId], references: [id])
+  loanProduct LoanProduct? @relation(fields: [loanProductId], references: [id])
+  repayments  LoanRepayment[]
+
+  @@index([memberId])
+  @@index([loanType])
+  @@index([status])
+  @@index([grantedDate])
+}
+
+// ---------------------------------------------------------------------------
+// LoanRepayment
+// Each weekly instalment record.  The spreadsheet stores up to 13 or 18
+// DATE/amount pairs per row; here each becomes a separate row.
+//
+// instalmentNumber — 1-indexed position in the schedule (1 … numberOfWeeks)
+// scheduledDate    — the date printed on the schedule
+// paidDate         — actual payment date (may differ from scheduled)
+// amount           — amount actually received (may be partial, zero, or lump-sum)
+// method           — payment method (cash, bank transfer …)
+// note             — free-text (e.g. "NP", "SET", "SETTLEMENT")
+// ---------------------------------------------------------------------------
+
+model LoanRepayment {
+  id               String          @id @default(cuid())
+  loanId           String
+  instalmentNumber Int?            // 1-based; null for unscheduled/lump-sum payments
+  scheduledDate    DateTime?       @db.Date
+  paidDate         DateTime        @db.Date
+  amount           Decimal         @db.Decimal(10, 2)
+  method           RepaymentMethod @default(CASH)
+  note             String?
+  collectedBy      String?         // staff name/ID (seen in Matara cash flow)
+  createdAt        DateTime        @default(now())
+
+  loan Loan @relation(fields: [loanId], references: [id])
+
+  @@index([loanId])
+  @@index([paidDate])
+}
+
+// ---------------------------------------------------------------------------
+// CashFlow
+// Daily summary records from the GL CASH FLOW / ALL CASH / MT CASH FLOW sheets.
+// Aggregates loan issuances and recoveries per centre per date.
+// Used for daily reconciliation.
+// ---------------------------------------------------------------------------
+
+model CashFlow {
+  id              String   @id @default(cuid())
+  branchId        String
+  date            DateTime @db.Date
+  centreName      String   // as written in the cash flow sheet
+  loanType        LoanType
+  // Issuance side
+  loansIssued     Int      @default(0)  // count of loans disbursed
+  amountIssued    Decimal  @db.Decimal(14, 2) @default(0)
+  // Recovery side
+  dcAmount        Decimal  @db.Decimal(14, 2) @default(0)  // direct collection
+  recoveryAmount  Decimal  @db.Decimal(14, 2) @default(0)
+  totalRecovery   Decimal  @db.Decimal(14, 2) @default(0)
+  // Interest / capital split (observed in Galle sheets)
+  interestAmount  Decimal? @db.Decimal(14, 2)
+  capitalAmount   Decimal? @db.Decimal(14, 2)
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  branch Branch @relation(fields: [branchId], references: [id])
+
+  @@unique([branchId, date, centreName, loanType])
+  @@index([branchId, date])
+}
