@@ -1,0 +1,14 @@
+services:
+  app:
+    # In dev, we override the production build to mount local code and run dev server
+    build:
+      context: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+      # Use the db service internally
+      - DATABASE_URL=postgresql://myuser:mypass@db:5432/mydb?schema=public
+      - AUTH_SECRET=dev-secret-do-not-use-in-prod
