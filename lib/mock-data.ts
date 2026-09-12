@@ -274,4 +274,10 @@ export const mockCashFlows: CashFlow[] = [
     dcAmount: new Prisma.Decimal(4500),
     recoveryAmount: new Prisma.Decimal(4500),
     totalRecovery: new Prisma.Decimal(9000),
-    in
+    interestAmount: null,
+    capitalAmount: null,
+    note: "Normal collection",
+    createdAt: now,
+    updatedAt: now,
+  },
+];

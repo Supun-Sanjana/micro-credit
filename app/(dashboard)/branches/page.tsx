@@ -3,11 +3,6 @@
 import { useState } from "react"
 import { mockBranches } from "@/lib/mock-data"
 import { Branch } from "@/lib/types"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 export default function BranchesPage() {
   const [branches, setBranches] = useState<Branch[]>(mockBranches)
@@ -29,63 +24,114 @@ export default function BranchesPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Branches</h1>
-        <p className="text-gray-500">Manage organization branches.</p>
+    <div className="flex flex-col gap-[80px]">
+      
+      {/* Hero Section */}
+      <div className="flex flex-col gap-4">
+        <h1 
+          className="text-[44px] leading-[1.3] text-ink-black font-serif font-normal"
+          style={{ letterSpacing: '-0.66px' }}
+        >
+          Branches
+        </h1>
+        <p className="text-[17px] text-slate-gray max-w-[600px] leading-[1.35]">
+          Manage and review regional branch locations across the organization.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1 h-fit">
-          <CardHeader>
-            <CardTitle>New Branch</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="code">Code</Label>
-                <Input id="code" required placeholder="e.g. SA01" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[80px]">
+        
+        {/* Registration Form (Floating Product Artifact) */}
+        <div className="lg:col-span-4 h-fit">
+          <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">
+            <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">
+              New Branch
+            </h2>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+              
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Branch Code</label>
+                <input 
+                  required
+                  value={formData.code}
+                  onChange={e => setFormData({...formData, code: e.target.value})}
+                  placeholder="e.g. SA01"
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" required placeholder="e.g. GALLE" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="123 Main St" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
-              </div>
-              <Button type="submit" className="w-full">Create Branch</Button>
-            </form>
-          </CardContent>
-        </Card>
 
-        <Card className="md:col-span-2">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {branches.map(b => (
-                  <TableRow key={b.id}>
-                    <TableCell className="font-medium">{b.code}</TableCell>
-                    <TableCell>{b.name}</TableCell>
-                    <TableCell className="text-gray-500">{b.address || '-'}</TableCell>
-                  </TableRow>
-                ))}
-                {branches.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-gray-500 py-6">No branches found.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Branch Name</label>
+                <input 
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  placeholder="e.g. GALLE"
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Address</label>
+                <input 
+                  value={formData.address}
+                  onChange={e => setFormData({...formData, address: e.target.value})}
+                  placeholder="Street Address"
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  type="submit"
+                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                >
+                  Create Branch
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* List (Neutral Card) */}
+        <div className="lg:col-span-8">
+          <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border/40">
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Code</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Branch Name</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Location</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {branches.map((b) => (
+                    <tr key={b.id} className="border-b border-border/40 last:border-0">
+                      <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
+                        {b.code}
+                      </td>
+                      <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
+                        {b.name}
+                      </td>
+                      <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                        {b.address || '—'}
+                      </td>
+                    </tr>
+                  ))}
+                  {branches.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-12 text-[15px] text-slate-gray">
+                        No branches registered.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )

@@ -3,13 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { mockMembers, mockLoanProducts } from "@/lib/mock-data"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Save, ArrowRight, ArrowLeft } from "lucide-react"
 
 export default function NewLoanPage() {
   const router = useRouter()
@@ -40,147 +33,214 @@ export default function NewLoanPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">New Loan Application</h1>
-        <p className="text-gray-500">Originate a new loan and capture guarantor details.</p>
+    <div className="flex flex-col gap-10 max-w-[800px] mx-auto">
+      
+      {/* Hero Section */}
+      <div className="flex flex-col gap-4">
+        <h1 
+          className="text-[44px] leading-[1.3] text-ink-black font-serif font-normal"
+          style={{ letterSpacing: '-0.66px' }}
+        >
+          New Loan Application
+        </h1>
+        <p className="text-[17px] text-slate-gray max-w-[600px] leading-[1.35]">
+          Originate a new loan facility and record guarantor compliance details.
+        </p>
       </div>
 
-      <div className="flex items-center gap-2 mb-6">
-        <div className={`h-2 flex-1 rounded-full ${step >= 1 ? "bg-blue-600" : "bg-gray-200"}`} />
-        <div className={`h-2 flex-1 rounded-full ${step >= 2 ? "bg-blue-600" : "bg-gray-200"}`} />
+      {/* Progress Indicator */}
+      <div className="flex items-center gap-3">
+        <div className={`h-[4px] flex-1 rounded-full transition-colors ${step >= 1 ? "bg-ink-black" : "bg-mist-gray"}`} />
+        <div className={`h-[4px] flex-1 rounded-full transition-colors ${step >= 2 ? "bg-ink-black" : "bg-mist-gray"}`} />
       </div>
 
-      <Card className={step === 1 ? "block" : "hidden"}>
-        <CardHeader>
-          <CardTitle>Loan Details</CardTitle>
-          <CardDescription>Select borrower and calculate loan terms.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label>Borrower (Member)</Label>
-            <Select value={formData.memberId} onValueChange={v => setFormData({...formData, memberId: v || ""})}>
-              <SelectTrigger><SelectValue placeholder="Select Member" /></SelectTrigger>
-              <SelectContent>
-                {mockMembers.map(m => (
-                  <SelectItem key={m.id} value={m.id}>{m.name} ({m.memberNumber})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Loan Product</Label>
-              <Select value={formData.loanProductId} onValueChange={v => setFormData({...formData, loanProductId: v || ""})}>
-                <SelectTrigger><SelectValue placeholder="Select Product" /></SelectTrigger>
-                <SelectContent>
-                  {mockLoanProducts.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Principal Amount (LKR)</Label>
-              <Input 
-                type="number" 
-                value={formData.loanAmount} 
-                onChange={e => setFormData({...formData, loanAmount: parseInt(e.target.value) || 0})}
-              />
-            </div>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            <div>
-              <p className="text-xs text-blue-600 font-semibold uppercase">Term</p>
-              <p className="font-bold">{selectedProduct?.numberOfWeeks || 0} Weeks</p>
-            </div>
-            <div>
-              <p className="text-xs text-blue-600 font-semibold uppercase">Rate (Mock)</p>
-              <p className="font-bold">{(rate * 100).toFixed(1)}%</p>
-            </div>
-            <div>
-              <p className="text-xs text-blue-600 font-semibold uppercase">Total</p>
-              <p className="font-bold">LKR {totalReceivable.toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-xs text-blue-600 font-semibold uppercase">Weekly</p>
-              <p className="font-bold">LKR {weeklyRental.toFixed(2)}</p>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <Button onClick={() => setStep(2)} disabled={!formData.memberId || !formData.loanProductId}>
-              Next: Guarantor <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className={step === 2 ? "block" : "hidden"}>
-        <CardHeader>
-          <CardTitle>Guarantor Details</CardTitle>
-          <CardDescription>Select an existing member or enter external guarantor details.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      {/* Step 1: Loan Details */}
+      {step === 1 && (
+        <div className="bg-paper-white rounded-[24px] shadow-subtle-3 p-[40px] flex flex-col gap-8">
+          <h2 className="text-[26px] font-sans font-medium text-ink-black tracking-[-0.23px]">
+            Facility Details
+          </h2>
           
-          <Tabs value={formData.guarantorType} onValueChange={v => setFormData({...formData, guarantorType: v as any})}>
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="EXISTING">Existing Member</TabsTrigger>
-              <TabsTrigger value="NEW">External Guarantor</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="EXISTING" className="pt-4 space-y-4">
-              <div className="space-y-2">
-                <Label>Select Member</Label>
-                <Select value={formData.guarantorMemberId} onValueChange={v => setFormData({...formData, guarantorMemberId: v || ""})}>
-                  <SelectTrigger><SelectValue placeholder="Search member..." /></SelectTrigger>
-                  <SelectContent>
-                    {mockMembers.filter(m => m.id !== formData.memberId).map(m => (
-                      <SelectItem key={m.id} value={m.id}>{m.name} ({m.nic})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Relationship to Borrower</Label>
-                <Input value={formData.guarantorRelationship} onChange={e => setFormData({...formData, guarantorRelationship: e.target.value})} placeholder="e.g. Spouse, Friend, Parent" />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="NEW" className="pt-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Full Name</Label>
-                  <Input value={formData.guarantorName} onChange={e => setFormData({...formData, guarantorName: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>NIC</Label>
-                  <Input value={formData.guarantorNic} onChange={e => setFormData({...formData, guarantorNic: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Contact Number</Label>
-                  <Input value={formData.guarantorContact} onChange={e => setFormData({...formData, guarantorContact: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Relationship</Label>
-                  <Input value={formData.guarantorRelationship} onChange={e => setFormData({...formData, guarantorRelationship: e.target.value})} />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[15px] text-ink-black font-sans ml-1">Borrower (Member)</label>
+              <select 
+                value={formData.memberId} 
+                onChange={e => setFormData({...formData, memberId: e.target.value})}
+                className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+              >
+                <option value="" disabled className="text-smoke-gray">Select Member</option>
+                {mockMembers.map(m => (
+                  <option key={m.id} value={m.id}>{m.name} ({m.memberNumber})</option>
+                ))}
+              </select>
+            </div>
 
-          <div className="flex justify-between pt-4 border-t border-gray-100">
-            <Button variant="outline" onClick={() => setStep(1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </Button>
-            <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white">
-              <Save className="w-4 h-4 mr-2" /> Submit Application
-            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Loan Product</label>
+                <select 
+                  value={formData.loanProductId} 
+                  onChange={e => setFormData({...formData, loanProductId: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                >
+                  <option value="" disabled className="text-smoke-gray">Select Product</option>
+                  {mockLoanProducts.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Principal Amount (LKR)</label>
+                <input 
+                  type="number"
+                  value={formData.loanAmount}
+                  onChange={e => setFormData({...formData, loanAmount: parseInt(e.target.value) || 0})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                />
+              </div>
+            </div>
+
+            {/* Terms Summary (Neutral Block) */}
+            <div className="bg-mist-gray rounded-[16px] p-[24px] grid grid-cols-2 md:grid-cols-4 gap-6 mt-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">Term</span>
+                <span className="text-[18px] text-ink-black font-sans font-medium">{selectedProduct?.numberOfWeeks || 0} Weeks</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">Rate (Mock)</span>
+                <span className="text-[18px] text-ink-black font-sans font-medium">{(rate * 100).toFixed(1)}%</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">Total</span>
+                <span className="text-[18px] text-ink-black font-sans font-medium">LKR {totalReceivable.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">Weekly</span>
+                <span className="text-[18px] text-ink-black font-sans font-medium">LKR {weeklyRental.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button 
+                onClick={() => setStep(2)} 
+                disabled={!formData.memberId || !formData.loanProductId}
+                className="flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue to Guarantor
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Step 2: Guarantor */}
+      {step === 2 && (
+        <div className="bg-paper-white rounded-[24px] shadow-subtle-3 p-[40px] flex flex-col gap-8">
+          <h2 className="text-[26px] font-sans font-medium text-ink-black tracking-[-0.23px]">
+            Guarantor Details
+          </h2>
+          
+          <div className="flex flex-col gap-8">
+            
+            {/* Custom Tab Pills */}
+            <div className="flex items-center gap-2 bg-mist-gray p-[4px] rounded-full w-fit">
+              <button 
+                onClick={() => setFormData({...formData, guarantorType: "EXISTING"})}
+                className={`px-[24px] py-[10px] rounded-full text-[15px] font-sans transition-colors ${formData.guarantorType === "EXISTING" ? "bg-paper-white text-ink-black font-medium shadow-subtle-2" : "text-slate-gray hover:text-ink-black"}`}
+              >
+                Existing Member
+              </button>
+              <button 
+                onClick={() => setFormData({...formData, guarantorType: "NEW"})}
+                className={`px-[24px] py-[10px] rounded-full text-[15px] font-sans transition-colors ${formData.guarantorType === "NEW" ? "bg-paper-white text-ink-black font-medium shadow-subtle-2" : "text-slate-gray hover:text-ink-black"}`}
+              >
+                External Guarantor
+              </button>
+            </div>
+
+            {formData.guarantorType === "EXISTING" && (
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Select Member</label>
+                  <select 
+                    value={formData.guarantorMemberId} 
+                    onChange={e => setFormData({...formData, guarantorMemberId: e.target.value})}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                  >
+                    <option value="" disabled className="text-smoke-gray">Search member...</option>
+                    {mockMembers.filter(m => m.id !== formData.memberId).map(m => (
+                      <option key={m.id} value={m.id}>{m.name} ({m.nic})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Relationship to Borrower</label>
+                  <input 
+                    value={formData.guarantorRelationship} 
+                    onChange={e => setFormData({...formData, guarantorRelationship: e.target.value})}
+                    placeholder="e.g. Spouse, Friend, Parent"
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                  />
+                </div>
+              </div>
+            )}
+
+            {formData.guarantorType === "NEW" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Full Name</label>
+                  <input 
+                    value={formData.guarantorName} 
+                    onChange={e => setFormData({...formData, guarantorName: e.target.value})}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">NIC</label>
+                  <input 
+                    value={formData.guarantorNic} 
+                    onChange={e => setFormData({...formData, guarantorNic: e.target.value})}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Contact Number</label>
+                  <input 
+                    value={formData.guarantorContact} 
+                    onChange={e => setFormData({...formData, guarantorContact: e.target.value})}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Relationship</label>
+                  <input 
+                    value={formData.guarantorRelationship} 
+                    onChange={e => setFormData({...formData, guarantorRelationship: e.target.value})}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between pt-6 border-t border-border/40 mt-2">
+              <button 
+                onClick={() => setStep(1)}
+                className="flex items-center justify-center border border-ink-black text-ink-black rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-70"
+              >
+                Back
+              </button>
+              <button 
+                onClick={handleSave}
+                className="flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+              >
+                Submit Application
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )

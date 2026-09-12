@@ -8,15 +8,29 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Sohne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Signifier', 'ui-serif', 'Georgia', 'serif'],
+      },
       colors: {
+        'ink-black': 'var(--color-ink-black)',
+        'paper-white': 'var(--color-paper-white)',
+        'mist-gray': 'var(--color-mist-gray)',
+        'fog-white': 'var(--color-fog-white)',
+        'slate-gray': 'var(--color-slate-gray)',
+        'ash-gray': 'var(--color-ash-gray)',
+        'smoke-gray': 'var(--color-smoke-gray)',
+        'blush-peach': 'var(--color-blush-peach)',
+        'sienna-brown': 'var(--color-sienna-brown)',
+        
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        background: "var(--color-paper-white)",
+        foreground: "var(--color-ink-black)",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--color-ink-black)",
+          foreground: "var(--color-paper-white)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -27,20 +41,20 @@ const config: Config = {
           foreground: "hsl(var(--destructive-foreground))",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--color-mist-gray)",
+          foreground: "var(--color-slate-gray)",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "var(--color-blush-peach)",
+          foreground: "var(--color-sienna-brown)",
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "var(--color-paper-white)",
+          foreground: "var(--color-ink-black)",
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--color-mist-gray)",
+          foreground: "var(--color-ink-black)",
         },
       },
       borderRadius: {
@@ -48,6 +62,11 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'subtle': '0 0 0 1px rgba(0,0,0,0.05), 0 4px 24px 0 rgba(0,0,0,0.08)',
+        'subtle-2': '0 0 0 1px rgba(0,0,0,0.05), 0 8px 40px 0 rgba(0,0,0,0.1)',
+        'subtle-3': '0 0 0 1px rgba(4,23,43,0.05), 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+      }
     },
   },
   plugins: [],

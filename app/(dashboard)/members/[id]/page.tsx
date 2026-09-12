@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { User, Phone, MapPin, Hash, ShieldCheck } from "lucide-react"
+import { MemberDocuments } from "@/components/member-documents"
 
 export default function MemberDetailPage() {
   const params = useParams()
@@ -150,6 +151,14 @@ export default function MemberDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Documents Section */}
+      <section className="mt-8">
+        <h2 className="text-[26px] font-serif font-normal text-ink-black tracking-[-0.23px] mb-6">
+          Documents
+        </h2>
+        <MemberDocuments memberId={memberId} />
+      </section>
     </div>
   )
 }

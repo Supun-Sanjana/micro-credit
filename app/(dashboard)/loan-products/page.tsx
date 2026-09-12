@@ -3,13 +3,6 @@
 import { useState } from "react"
 import { mockLoanProducts } from "@/lib/mock-data"
 import { LoanProduct } from "@/lib/types"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 
 // Extended type to support UI requirements before backend is updated
 interface ExtendedLoanProduct extends LoanProduct {
@@ -49,6 +42,8 @@ export default function LoanProductsPage() {
         id: `prod_${Date.now()}`,
         ...formData,
         organizationId: 'mock-org-id', // Just for UI mock
+        multiplier: 1.17 as any, // Mock Decimal
+        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -87,137 +82,204 @@ export default function LoanProductsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Loan Products</h1>
-        <p className="text-gray-500">Configure loan types, interest rates, and fees.</p>
+    <div className="flex flex-col gap-[80px]">
+      
+      {/* Hero Section */}
+      <div className="flex flex-col gap-4">
+        <h1 
+          className="text-[44px] leading-[1.3] text-ink-black font-serif font-normal"
+          style={{ letterSpacing: '-0.66px' }}
+        >
+          Loan Products
+        </h1>
+        <p className="text-[17px] text-slate-gray max-w-[600px] leading-[1.35]">
+          Configure lending instruments, term duration, and interest schedules.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form */}
-        <Card className="lg:col-span-1 h-fit">
-          <CardHeader>
-            <CardTitle>{isEditing ? "Edit Product" : "New Product"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Product Name</Label>
-                <Input required id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Quick 13W" />
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[80px]">
+        
+        {/* Form (Floating Product Artifact) */}
+        <div className="lg:col-span-4 h-fit">
+          <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">
+            <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">
+              {isEditing ? "Edit Product" : "New Product"}
+            </h2>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Product Name</label>
+                <input 
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g. Quick 13W"
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="loanType">Category</Label>
-                  <Select value={formData.loanType} onValueChange={v => setFormData({ ...formData, loanType: v as any })}>
-                    <SelectTrigger id="loanType"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="QUICK">QUICK</SelectItem>
-                      <SelectItem value="BUSINESS">BUSINESS</SelectItem>
-                      <SelectItem value="MICRO">MICRO</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Category</label>
+                  <select 
+                    value={formData.loanType}
+                    onChange={e => setFormData({ ...formData, loanType: e.target.value as any })}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                  >
+                    <option value="QUICK">QUICK</option>
+                    <option value="BUSINESS">BUSINESS</option>
+                    <option value="MICRO">MICRO</option>
+                  </select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="numberOfWeeks">Weeks</Label>
-                  <Input required id="numberOfWeeks" type="number" min="1" value={formData.numberOfWeeks} onChange={e => setFormData({ ...formData, numberOfWeeks: parseInt(e.target.value) || 0 })} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="interestType">Interest Type</Label>
-                  <Select value={formData.interestType} onValueChange={v => setFormData({ ...formData, interestType: v as any })}>
-                    <SelectTrigger id="interestType"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="FLAT">FLAT</SelectItem>
-                      <SelectItem value="REDUCING">REDUCING</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="rate">Rate (%)</Label>
-                  <Input required id="rate" type="number" step="0.1" value={formData.rate} onChange={e => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })} />
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Weeks</label>
+                  <input 
+                    required
+                    type="number"
+                    min="1"
+                    value={formData.numberOfWeeks}
+                    onChange={e => setFormData({ ...formData, numberOfWeeks: parseInt(e.target.value) || 0 })}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  />
                 </div>
               </div>
 
-              <div className="space-y-3 border-t pt-4">
-                <Label className="text-gray-500 font-semibold uppercase text-xs">Fees & Penalties</Label>
+              <div className="grid grid-cols-2 gap-4 border-t border-[#ececec] pt-5">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Interest Type</label>
+                  <select 
+                    value={formData.interestType}
+                    onChange={e => setFormData({ ...formData, interestType: e.target.value as any })}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                  >
+                    <option value="FLAT">FLAT</option>
+                    <option value="REDUCING">REDUCING</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[15px] text-ink-black font-sans ml-1">Rate (%)</label>
+                  <input 
+                    required
+                    type="number"
+                    step="0.1"
+                    value={formData.rate}
+                    onChange={e => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
+                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 border-t border-[#ececec] pt-5">
+                <label className="text-[14px] font-sans text-ash-gray uppercase tracking-wider ml-1">
+                  Fees & Penalties
+                </label>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="docFee" className="text-xs">Doc Fee (LKR)</Label>
-                    <Input id="docFee" type="number" value={formData.docFee} onChange={e => setFormData({ ...formData, docFee: parseFloat(e.target.value) || 0 })} />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[15px] text-ink-black font-sans ml-1">Doc Fee</label>
+                    <input 
+                      type="number"
+                      value={formData.docFee}
+                      onChange={e => setFormData({ ...formData, docFee: parseFloat(e.target.value) || 0 })}
+                      className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="insuranceFee" className="text-xs">Insurance (LKR)</Label>
-                    <Input id="insuranceFee" type="number" value={formData.insuranceFee} onChange={e => setFormData({ ...formData, insuranceFee: parseFloat(e.target.value) || 0 })} />
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[15px] text-ink-black font-sans ml-1">Insurance</label>
+                    <input 
+                      type="number"
+                      value={formData.insuranceFee}
+                      onChange={e => setFormData({ ...formData, insuranceFee: parseFloat(e.target.value) || 0 })}
+                      className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                    />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="penaltyRate" className="text-xs">Default Penalty Rate (%)</Label>
-                  <Input id="penaltyRate" type="number" step="0.1" value={formData.penaltyRate} onChange={e => setFormData({ ...formData, penaltyRate: parseFloat(e.target.value) || 0 })} />
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" className="flex-1">
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="submit"
+                  className="flex-1 flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                >
                   {isEditing ? "Update" : "Create"}
-                </Button>
+                </button>
                 {isEditing && (
-                  <Button type="button" variant="outline" onClick={resetForm} className="flex-1">
+                  <button 
+                    type="button"
+                    onClick={resetForm}
+                    className="flex-1 flex items-center justify-center bg-transparent border border-ink-black text-ink-black rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-70"
+                  >
                     Cancel
-                  </Button>
+                  </button>
                 )}
               </div>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* List */}
-        <Card className="lg:col-span-2">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Terms</TableHead>
-                  <TableHead>Fees</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50">
-                        {product.loanType}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-500">
-                      <div>{product.numberOfWeeks}W</div>
-                      <div className="text-xs">{product.rate || 0}% {product.interestType || "FLAT"}</div>
-                    </TableCell>
-                    <TableCell className="text-gray-500 text-xs">
-                      <div>Doc: {product.docFee || 0}</div>
-                      <div>Ins: {product.insuranceFee || 0}</div>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(product)} className="text-blue-600 hover:text-blue-900">Edit</Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-red-900 hover:bg-red-50">Delete</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {products.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-500 py-6">No loan products found.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* List (Neutral Card) */}
+        <div className="lg:col-span-8">
+          <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border/40">
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Name</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Category</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Terms</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Fees</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product) => (
+                    <tr key={product.id} className="border-b border-border/40 last:border-0">
+                      <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
+                        {product.name}
+                      </td>
+                      <td className="py-5 pr-4">
+                         <span className="text-[14px] font-sans text-ash-gray uppercase tracking-wider">
+                           {product.loanType}
+                         </span>
+                      </td>
+                      <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
+                        <div className="text-ink-black">{product.numberOfWeeks}W</div>
+                        <div className="text-[14px] mt-1">{product.rate || 0}% {product.interestType || "FLAT"}</div>
+                      </td>
+                      <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
+                        <div>Doc: {product.docFee || 0}</div>
+                        <div className="mt-1">Ins: {product.insuranceFee || 0}</div>
+                      </td>
+                      <td className="py-5 pl-4 text-right">
+                        <div className="flex items-center justify-end gap-4">
+                          <button 
+                            onClick={() => handleEdit(product)} 
+                            className="text-[15px] text-ink-black hover:underline underline-offset-4"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(product.id)} 
+                            className="text-[15px] text-sienna-brown hover:underline underline-offset-4"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {products.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
+                        No loan products configured.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )

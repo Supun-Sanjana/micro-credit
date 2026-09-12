@@ -76,6 +76,33 @@ async function main() {
   }
 
   console.log('Seed completed successfully.')
+
+  // 5. Create Placeholder Subscription Plan
+  const plan = await prisma.subscriptionPlan.upsert({
+    where: { id: 'plan_placeholder' },
+    update: {},
+    create: {
+      id: 'plan_placeholder',
+      name: 'Standard Tier (Placeholder)',
+      maxOfficerSeats: 10,
+      maxBranches: 3,
+      storageQuotaMb: 5000,
+      monthlyPrice: 15000.00
+    }
+  })
+  console.log(`Upserted Subscription Plan: ${plan.name}`)
+
+  // 6. Create Platform Admin
+  const platformAdminPassword = await bcrypt.hash('supersecret123', 10)
+  const platformAdmin = await prisma.platformAdmin.upsert({
+    where: { email: 'super@steep.local' },
+    update: { password: platformAdminPassword },
+    create: {
+      email: 'super@steep.local',
+      password: platformAdminPassword
+    }
+  })
+  console.log(`Upserted Platform Admin: ${platformAdmin.email}`)
 }
 
 main()

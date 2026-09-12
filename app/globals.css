@@ -4,36 +4,49 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
+    /* Steep Colors */
+    --color-ink-black: #17191c;
+    --color-paper-white: #ffffff;
+    --color-mist-gray: #f2f2f3;
+    --color-fog-white: #fafafb;
+    --color-slate-gray: #777b86;
+    --color-ash-gray: #979799;
+    --color-smoke-gray: #a3a6af;
+    --color-blush-peach: #fbe1d1;
+    --color-sienna-brown: #5d2a1a;
+
+    /* Semantic Mappings for components using Shadcn defaults (fallback compatibility) */
+    --background: 0 0% 100%; /* paper-white */
+    --foreground: 222.2 84% 4.9%; /* ink-black approx */
+    --card: 210 40% 96.1%; /* mist-gray approx */
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 222.2 47.4% 11.2%; /* ink-black */
+    --primary-foreground: 210 40% 98%; /* paper-white */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 25 78% 90%; /* blush-peach approx */
+    --accent-foreground: 12 56% 23%; /* sienna-brown approx */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --ring: 222.2 84% 4.9%;
+    --radius: 24px; /* Default cards are 24px */
   }
- 
+
   .dark {
+    /* Steep is explicitly Theme: Light, so we keep light values or minimal dark fallbacks */
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -45,7 +58,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -54,6 +67,6 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[var(--color-paper-white)] text-[var(--color-ink-black)];
   }
 }

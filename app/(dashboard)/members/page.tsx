@@ -1,15 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { mockMembers, mockCentres } from "@/lib/mock-data"
 import { Member } from "@/lib/types"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search } from "lucide-react"
 
 export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>(mockMembers)
@@ -24,7 +18,6 @@ export default function MembersPage() {
   })
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterCentre, setFilterCentre] = useState("ALL")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,120 +46,170 @@ export default function MembersPage() {
     const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (m.nic && m.nic.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           m.memberNumber.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCentre = filterCentre === "ALL" || m.centreId === filterCentre
-    return matchesSearch && matchesCentre
+    return matchesSearch
   })
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Members</h1>
-        <p className="text-gray-500">Manage centre members.</p>
+    <div className="flex flex-col gap-[80px]">
+      
+      {/* Hero Section */}
+      <div className="flex flex-col gap-4">
+        <h1 
+          className="text-[44px] leading-[1.3] text-ink-black font-serif font-normal"
+          style={{ letterSpacing: '-0.66px' }}
+        >
+          Members Database
+        </h1>
+        <p className="text-[17px] text-slate-gray max-w-[600px] leading-[1.35]">
+          Manage community members across all operational centres.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card className="lg:col-span-1 h-fit">
-          <CardHeader>
-            <CardTitle>Register Member</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="centreId">Centre</Label>
-                <Select value={formData.centreId} onValueChange={v => setFormData({...formData, centreId: v || ""})}>
-                  <SelectTrigger id="centreId">
-                    <SelectValue placeholder="Select Centre" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockCentres.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name} ({c.centreCode})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[80px]">
+        
+        {/* Registration Form (Floating Product Artifact) */}
+        <div className="lg:col-span-4 h-fit">
+          <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">
+            <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">
+              Register Member
+            </h2>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Centre</label>
+                <select 
+                  required
+                  value={formData.centreId}
+                  onChange={e => setFormData({...formData, centreId: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                >
+                  <option value="" disabled className="text-smoke-gray">Select Centre</option>
+                  {mockCentres.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.centreCode})</option>
+                  ))}
+                </select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" required placeholder="Full Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nic">NIC</Label>
-                <Input id="nic" placeholder="NIC (Optional)" value={formData.nic} onChange={e => setFormData({...formData, nic: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact1">Contact Number</Label>
-                <Input id="contact1" placeholder="Contact Number" value={formData.contact1} onChange={e => setFormData({...formData, contact1: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="groupNumber">Group Number</Label>
-                <Input id="groupNumber" type="number" min="1" max="6" placeholder="Group Number (1-6)" value={formData.groupNumber} onChange={e => setFormData({...formData, groupNumber: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="Address" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
-              </div>
-              <Button type="submit" className="w-full">Register</Button>
-            </form>
-          </CardContent>
-        </Card>
 
-        <Card className="lg:col-span-3">
-          <CardContent className="p-0">
-            <div className="p-4 border-b flex flex-col sm:flex-row gap-4 items-center bg-gray-50/50">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input 
-                  placeholder="Search by name, NIC, or member no..." 
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Full Name</label>
+                <input 
+                  required
+                  placeholder="E.g. Kamal Perera"
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
                 />
               </div>
-              <Select value={filterCentre} onValueChange={(v) => setFilterCentre(v || "")}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by Centre" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Centres</SelectItem>
-                  {mockCentres.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">National ID</label>
+                <input 
+                  placeholder="Optional"
+                  value={formData.nic}
+                  onChange={e => setFormData({...formData, nic: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Contact</label>
+                <input 
+                  required
+                  placeholder="077XXXXXXX"
+                  value={formData.contact1}
+                  onChange={e => setFormData({...formData, contact1: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Group Number</label>
+                <input 
+                  type="number"
+                  min="1"
+                  max="6"
+                  placeholder="1-6"
+                  value={formData.groupNumber}
+                  onChange={e => setFormData({...formData, groupNumber: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                />
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  type="submit"
+                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                >
+                  Register
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Directory List (Neutral Card) */}
+        <div className="lg:col-span-8">
+          <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+            
+            {/* Search Input matching "Composer" style */}
+            <div className="mb-8">
+              <input 
+                placeholder="Search by name, NIC, or member no..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full max-w-[480px] bg-paper-white border border-[#ececec] rounded-[16px] p-[16px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+              />
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member No.</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>NIC</TableHead>
-                  <TableHead>Centre</TableHead>
-                  <TableHead>Group</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMembers.map(m => {
-                  const centre = mockCentres.find(c => c.id === m.centreId)
-                  return (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-mono font-medium text-blue-600">
-                        <a href={`/members/${m.id}`} className="hover:underline">{m.memberNumber}</a>
-                      </TableCell>
-                      <TableCell className="font-medium">{m.name}</TableCell>
-                      <TableCell className="text-gray-500">{m.nic || '-'}</TableCell>
-                      <TableCell className="text-gray-500">{centre?.name}</TableCell>
-                      <TableCell className="text-gray-500">{m.groupNumber ? `Group ${m.groupNumber}` : '-'}</TableCell>
-                    </TableRow>
-                  )
-                })}
-                {filteredMembers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-500 py-6">No members found.</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+
+            <div className="w-full overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border/40">
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Member No.</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Name</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">NIC</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Centre</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Group</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMembers.map(m => {
+                    const centre = mockCentres.find(c => c.id === m.centreId)
+                    return (
+                      <tr key={m.id} className="border-b border-border/40 last:border-0">
+                        <td className="py-5 pr-4">
+                          <Link href={`/members/${m.id}`} className="text-[16px] font-sans text-ink-black hover:text-slate-gray transition-colors">
+                            {m.memberNumber}
+                          </Link>
+                        </td>
+                        <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
+                          {m.name}
+                        </td>
+                        <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                          {m.nic || '—'}
+                        </td>
+                        <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                          {centre?.name || '—'}
+                        </td>
+                        <td className="py-5 pr-4">
+                           <span className="text-[14px] font-sans text-ash-gray font-normal">
+                            {m.groupNumber ? `Group ${m.groupNumber}` : '—'}
+                           </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              {filteredMembers.length === 0 && (
+                <div className="text-center py-12 text-[15px] text-slate-gray">
+                  No members found matching your search.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )
