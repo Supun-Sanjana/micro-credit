@@ -231,25 +231,35 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
               <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
                 Deposit Proof Slip / Document
               </label>
-              <div className="mt-2">
-                {claim.proofUrl ? (
-                  <div className="space-y-3">
-                    <a
-                      href={claim.proofUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] text-[14px] font-medium text-ink-black hover:bg-fog-white transition-colors"
-                    >
-                      <span>Open Slip / Document</span>
-                      <span aria-hidden="true">↗</span>
-                    </a>
-                  </div>
-                ) : (
-                  <span className="text-[15px] text-slate-gray italic">
-                    No proof document uploaded with this claim.
-                  </span>
-                )}
-              </div>
+                <div className="mt-2">
+                  {claim.proofUrl ? (
+                    <div className="space-y-4">
+                      {/* Check if it's likely an image by extension */}
+                      {/\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(claim.proofUrl) ? (
+                        <div className="overflow-hidden rounded-[12px] border border-[#ececec] max-w-lg bg-gray-50 flex justify-center">
+                          <img
+                            src={claim.proofUrl}
+                            alt="Deposit Proof"
+                            className="max-h-[400px] w-auto object-contain"
+                          />
+                        </div>
+                      ) : null}
+                      <a
+                        href={claim.proofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] text-[14px] font-medium text-ink-black hover:bg-fog-white transition-colors"
+                      >
+                        <span>Open Document (New Tab)</span>
+                        <span aria-hidden="true">↗</span>
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-[15px] text-slate-gray italic">
+                      No proof document uploaded with this claim.
+                    </span>
+                  )}
+                </div>
             </div>
           </div>
         </div>

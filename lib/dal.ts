@@ -24,7 +24,13 @@ export async function getScopedDal() {
     throw new Error("ORG_SUSPENDED")
   }
 
-  const scopedPrisma = prisma.$extends(withOrgScope(organizationId))
+  const role = (session.user as any).role
+  const branchId = (session.user as any).branchId
+
+  const scopedPrisma = prisma.$extends(withOrgScope(
+    organizationId, 
+    role === "USER" ? branchId : null
+  ))
 
   return {
     organizationId,

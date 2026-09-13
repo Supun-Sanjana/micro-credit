@@ -97,5 +97,16 @@ export async function POST(
     note: typeof note === "string" && note.trim() ? note.trim() : undefined,
   })
 
+  // If this was a standard browser form submission, redirect back to the org page
+  const accept = request.headers.get("accept") || ""
+  const contentType = request.headers.get("content-type") || ""
+  if (
+    accept.includes("text/html") ||
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    return NextResponse.redirect(new URL(`/admin/orgs/${id}`, request.url), { status: 303 })
+  }
+
   return NextResponse.json({ success: true })
 }

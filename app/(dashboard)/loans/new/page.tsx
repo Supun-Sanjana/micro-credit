@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { mockMembers, mockLoanProducts } from "@/lib/mock-data"
 
 export default function NewLoanPage() {
@@ -63,7 +64,12 @@ export default function NewLoanPage() {
           
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <label className="text-[15px] text-ink-black font-sans ml-1">Borrower (Member)</label>
+              <div className="flex items-center justify-between ml-1">
+                <label className="text-[15px] text-ink-black font-sans">Borrower (Member)</label>
+                <Link href="/members" className="text-[13px] text-slate-gray hover:text-ink-black hover:underline transition-colors font-medium">
+                  + Register New Member
+                </Link>
+              </div>
               <select 
                 value={formData.memberId} 
                 onChange={e => setFormData({...formData, memberId: e.target.value})}

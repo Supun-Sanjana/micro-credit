@@ -34,7 +34,7 @@ export default function ReportsPage() {
   }).filter(c => c.activeLoans > 0)
 
   return (
-    <div className="flex flex-col gap-[80px]">
+    <div className="flex flex-col gap-8 lg:gap-[48px]">
       
       {/* Hero Section */}
       <div className="flex flex-col gap-4">

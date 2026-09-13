@@ -82,7 +82,7 @@ export default function LoanProductsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-[80px]">
+    <div className="flex flex-col gap-8 lg:gap-[48px]">
       
       {/* Hero Section */}
       <div className="flex flex-col gap-4">
@@ -97,7 +97,7 @@ export default function LoanProductsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[80px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-[48px]">
         
         {/* Form (Floating Product Artifact) */}
         <div className="lg:col-span-4 h-fit">

@@ -179,7 +179,7 @@ export default function CollectionPage() {
   }, {} as Record<string, CollectionItem[]>)
 
   return (
-    <div className="flex flex-col gap-[80px]">
+    <div className="flex flex-col gap-8 lg:gap-[48px]">
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
         <div className="flex flex-col gap-4">
@@ -202,7 +202,7 @@ export default function CollectionPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[80px]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-[48px]">
         
         <div className="lg:col-span-4 h-fit flex flex-col gap-8">
           <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">

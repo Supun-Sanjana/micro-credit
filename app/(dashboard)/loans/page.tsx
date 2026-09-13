@@ -11,7 +11,7 @@ export default function LoansPage() {
   const activeLoans = loans.filter(l => l.verificationStatus !== "PENDING")
 
   return (
-    <div className="flex flex-col gap-[80px]">
+    <div className="flex flex-col gap-8 lg:gap-[48px]">
       
       {/* Hero Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">

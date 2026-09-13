@@ -15,7 +15,7 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
     const today = new Date()
     return today.toISOString().split("T")[0]
   })
-  const [proofUrl, setProofUrl] = useState("")
+  const [proofFile, setProofFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -44,17 +44,17 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
     setLoading(true)
 
     try {
+      const formData = new FormData()
+      formData.append("amount", amount)
+      formData.append("bankReference", bankReference)
+      formData.append("paidDate", paidDate)
+      if (proofFile) {
+        formData.append("proofFile", proofFile)
+      }
+
       const res = await fetch("/api/billing/claim", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount,
-          bankReference,
-          paidDate,
-          proofUrl: proofUrl || undefined,
-        }),
+        body: formData,
       })
 
       const data = await res.json()
@@ -148,16 +148,15 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
             </div>
 
             <div className="flex flex-col space-y-2">
-              <label htmlFor="claim-proof-url" className="text-[14px] text-ink-black font-medium ml-1">
-                Proof Document URL (Optional)
+              <label htmlFor="claim-proof-file" className="text-[14px] text-ink-black font-medium ml-1">
+                Proof Document (Optional)
               </label>
               <input
-                id="claim-proof-url"
-                type="url"
-                value={proofUrl}
-                onChange={(e) => setProofUrl(e.target.value)}
-                placeholder="https://..."
-                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                id="claim-proof-file"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[10px] text-[15px] text-ink-black outline-none focus:border-ink-black transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-ink-black file:text-white hover:file:opacity-90"
               />
             </div>
           </div>

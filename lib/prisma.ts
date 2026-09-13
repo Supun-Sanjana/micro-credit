@@ -13,10 +13,11 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
 export default prisma
 
 /**
- * Returns a Prisma client extension that automatically scopes queries to the given organization.
- * Usage: prisma.$extends(withOrgScope(orgId))
+ * Returns a Prisma client extension that automatically scopes queries to the given organization
+ * and optionally to a specific branch for Field Officers.
+ * Usage: prisma.$extends(withOrgScope(orgId, branchId))
  */
-export const withOrgScope = (organizationId: string) => {
+export const withOrgScope = (organizationId: string, branchId?: string | null) => {
   return {
     query: {
       $allModels: {
@@ -28,15 +29,27 @@ export const withOrgScope = (organizationId: string) => {
 
           if (['Branch', 'User', 'LoanProduct', 'Member'].includes(model)) {
             args.where = { ...args.where, organizationId }
+            if (branchId && model === 'Member') {
+              args.where = { ...args.where, centre: { ...args.where.centre, branchId } }
+            }
           }
           else if (['Centre', 'CashFlow'].includes(model)) {
             args.where = { ...args.where, branch: { ...args.where.branch, organizationId } }
+            if (branchId) {
+              args.where.branchId = branchId
+            }
           }
           else if (['Loan'].includes(model)) {
             args.where = { ...args.where, member: { ...args.where.member, organizationId } }
+            if (branchId) {
+              args.where.member = { ...args.where.member, centre: { ...args.where.member?.centre, branchId } }
+            }
           }
           else if (['LoanRepayment', 'RepaymentSchedule', 'Guarantor'].includes(model)) {
             args.where = { ...args.where, loan: { ...args.where.loan, member: { ...args.where.loan?.member, organizationId } } }
+            if (branchId) {
+              args.where.loan = { ...args.where.loan, member: { ...args.where.loan?.member, centre: { ...args.where.loan?.member?.centre, branchId } } }
+            }
           }
 
           return query(args)

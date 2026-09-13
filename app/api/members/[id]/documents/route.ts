@@ -2,8 +2,6 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { MemberDocumentType } from "@prisma/client"
-import fs from "fs"
-import path from "path"
 
 type RouteContext = {
   params: { id: string } | Promise<{ id: string }>
@@ -167,20 +165,31 @@ export async function POST(request: Request, { params }: RouteContext) {
       )
     }
 
-    // Prepare upload directory
-    const dir = `${process.cwd()}/public/uploads/${organizationId}/${memberId}/`
-    await fs.promises.mkdir(dir, { recursive: true })
+    const { supabase } = await import("@/lib/supabase")
 
-    // Generate filename: [type]_[Date.now()].[ext]
-    const filename = `${type.toLowerCase()}_${Date.now()}.${ext}`
-    const filepath = path.join(dir, filename)
+    // Generate filename: [organizationId]/[memberId]/[type]_[Date.now()].[ext]
+    const filename = `${organizationId}/${memberId}/${type.toLowerCase()}_${Date.now()}.${ext}`
 
-    // Write file buffer using Node.js fs
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    await fs.promises.writeFile(filepath, buffer)
+    
+    const { data, error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(filename, buffer, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      })
 
-    const url = `/uploads/${organizationId}/${memberId}/${filename}`
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError)
+      throw new Error("Failed to upload document to storage")
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from("documents")
+      .getPublicUrl(filename)
+
+    const url = publicUrlData.publicUrl
 
     // Create MemberDocument record in database
     const document = await prisma.memberDocument.create({
@@ -242,17 +251,19 @@ export async function DELETE(request: Request, { params }: RouteContext) {
       where: { id: document.id },
     })
 
-    // Try deleting file from disk
+    // Try deleting file from storage
     try {
-      const relativePath = document.url.startsWith("/")
-        ? document.url.slice(1)
-        : document.url
-      const filepath = path.join(process.cwd(), "public", relativePath)
-      if (fs.existsSync(filepath)) {
-        await fs.promises.unlink(filepath)
+      const { supabase } = await import("@/lib/supabase")
+      
+      // We need to extract the filename path from the public URL
+      // The public URL looks like: https://[project].supabase.co/storage/v1/object/public/documents/[organizationId]/[memberId]/[filename]
+      const urlParts = document.url.split("/documents/")
+      if (urlParts.length > 1) {
+        const filePathInBucket = urlParts[1]
+        await supabase.storage.from("documents").remove([filePathInBucket])
       }
-    } catch (fsErr) {
-      console.warn("Could not delete file from disk:", fsErr)
+    } catch (storageErr) {
+      console.warn("Could not delete file from Supabase storage:", storageErr)
     }
 
     return NextResponse.json({ success: true })

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
-
 export async function POST(req: Request) {
   try {
     const session = await auth()
@@ -14,8 +13,39 @@ export async function POST(req: Request) {
       )
     }
 
-    const body = await req.json()
-    const { amount, bankReference, paidDate, proofUrl } = body
+    const formData = await req.formData()
+    const amount = formData.get("amount") as string
+    const bankReference = formData.get("bankReference") as string
+    const paidDate = formData.get("paidDate") as string
+    const file = formData.get("proofFile") as File | null
+
+    let finalProofUrl = null
+
+    if (file && file.size > 0) {
+      const { supabase } = await import("@/lib/supabase")
+      const bytes = await file.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+
+      const fileName = `claims/${organizationId}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+      
+      const { data, error } = await supabase.storage
+        .from("claims")
+        .upload(fileName, buffer, {
+          contentType: file.type || "application/octet-stream",
+          upsert: true,
+        })
+
+      if (error) {
+        console.error("Supabase upload error:", error)
+        throw new Error("Failed to upload document to storage")
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("claims")
+        .getPublicUrl(fileName)
+
+      finalProofUrl = publicUrlData.publicUrl
+    }
 
     if (!amount || !bankReference || !paidDate) {
       return NextResponse.json(
@@ -93,7 +123,7 @@ export async function POST(req: Request) {
         amount: parsedAmount,
         bankReference: bankReference.trim(),
         paidDate: parsedDate,
-        proofUrl: proofUrl ? proofUrl.trim() : null,
+        proofUrl: finalProofUrl,
         status: "PENDING",
       },
     })
