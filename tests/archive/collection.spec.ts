@@ -13,7 +13,7 @@ test.describe('Collection Page E2E', () => {
     await expect(page).toHaveURL('/app/dashboard');
     
     // 2. Go to collection page
-    await page.goto('/collection');
+    await page.goto('/app/collection');
     
     // Wait for due list to load
     await expect(page.locator('text="Daily Collection"').first()).toBeVisible();

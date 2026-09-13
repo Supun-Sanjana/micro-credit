@@ -26,7 +26,7 @@ test.describe('Admin Authentication', () => {
     await page.click('button[type="submit"]');
 
     await page.waitForLoadState('networkidle');
-    await expect(page).toHaveURL(/\/admin\/login/, { timeout: 15000 });
+    await expect(page).toHaveURL(/\/app\/admin\/login/, { timeout: 15000 });
     await expect(page.locator('text=Invalid credentials')).toBeVisible({ timeout: 15000 });
   });
 });

@@ -10,9 +10,9 @@ test.describe('Document Upload E2E', () => {
     await page.click('button[type="submit"]');
     
     // 2. Navigate to first member detail
-    await page.goto('/members');
+    await page.goto('/app/members');
     
-    const memberLink = page.locator('a[href^="/members/"]').first();
+    const memberLink = page.locator('a[href^="/app/members/"]').first();
     // Only proceed if there is a member
     if (await memberLink.isVisible()) {
       await memberLink.click();

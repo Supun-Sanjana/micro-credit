@@ -80,7 +80,7 @@ function getClaimStatusBadge(status: string) {
 export default async function OrgDetailPage({ params }: PageProps) {
   const session = await verifyAdminSession()
   if (!session) {
-    redirect(/app/admin/login")
+    redirect("/app/admin/login")
   }
 
   const { id } = params
@@ -150,7 +150,7 @@ export default async function OrgDetailPage({ params }: PageProps) {
         {/* Navigation Breadcrumb */}
         <div>
           <Link
-            href=/app/admin/orgs"
+            href="/app/admin/orgs"
             className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Organizations

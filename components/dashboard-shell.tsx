@@ -39,25 +39,25 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
       name: "Core",
       items: [
         { href: "/app/dashboard", label: "Overview", icon: LayoutDashboard },
-        { href: "/reports", label: "Reports", icon: FileText },
+        { href: "/app/reports", label: "Reports", icon: FileText },
       ],
     },
     {
       name: "Operations",
       items: [
-        { href: "/members", label: "Members", icon: Users },
-        { href: "/loans", label: "Loans", icon: DollarSign },
-        { href: "/collection", label: "Collection", icon: Briefcase },
+        { href: "/app/members", label: "Members", icon: Users },
+        { href: "/app/loans", label: "Loans", icon: DollarSign },
+        { href: "/app/collection", label: "Collection", icon: Briefcase },
       ],
     },
     ...(isAdmin ? [{
       name: "Settings",
       items: [
-        { href: "/branches", label: "Branches", icon: Building },
-        { href: "/centres", label: "Centres", icon: MapPin },
-        { href: "/loan-products", label: "Loan Products", icon: Grid },
-        { href: "/settings/team", label: "Team", icon: Users },
-        { href: "/settings/billing", label: "Billing", icon: Settings },
+        { href: "/app/branches", label: "Branches", icon: Building },
+        { href: "/app/centres", label: "Centres", icon: MapPin },
+        { href: "/app/loan-products", label: "Loan Products", icon: Grid },
+        { href: "/app/settings/team", label: "Team", icon: Users },
+        { href: "/app/settings/billing", label: "Billing", icon: Settings },
       ],
     }] : [])
   ]

@@ -30,7 +30,7 @@ export default function NewLoanPage() {
 
   const handleSave = () => {
     alert("Application submitted for verification (Mock)")
-    router.push("/loans")
+    router.push("/app/loans")
   }
 
   return (
@@ -66,7 +66,7 @@ export default function NewLoanPage() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between ml-1">
                 <label className="text-[15px] text-ink-black font-sans">Borrower (Member)</label>
-                <Link href="/members" className="text-[13px] text-slate-gray hover:text-ink-black hover:underline transition-colors font-medium">
+                <Link href="/app/members" className="text-[13px] text-slate-gray hover:text-ink-black hover:underline transition-colors font-medium">
                   + Register New Member
                 </Link>
               </div>

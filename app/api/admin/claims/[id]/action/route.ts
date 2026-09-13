@@ -91,7 +91,7 @@ export async function POST(
       contentType.includes("application/x-www-form-urlencoded") ||
       contentType.includes("multipart/form-data")
     ) {
-      return NextResponse.redirect(new URL(/app/admin/claims", request.url), { status: 303 })
+      return NextResponse.redirect(new URL("/app/admin/claims", request.url), { status: 303 })
     }
     return NextResponse.json(
       { error: "Claim already processed" },
@@ -138,7 +138,7 @@ export async function POST(
       contentType.includes("application/x-www-form-urlencoded") ||
       contentType.includes("multipart/form-data")
     ) {
-      return NextResponse.redirect(new URL(/app/admin/claims", request.url), { status: 303 })
+      return NextResponse.redirect(new URL("/app/admin/claims", request.url), { status: 303 })
     }
 
     return NextResponse.json({ success: true })
@@ -172,7 +172,7 @@ export async function POST(
       contentType.includes("application/x-www-form-urlencoded") ||
       contentType.includes("multipart/form-data")
     ) {
-      return NextResponse.redirect(new URL(/app/admin/claims", request.url), { status: 303 })
+      return NextResponse.redirect(new URL("/app/admin/claims", request.url), { status: 303 })
     }
 
     return NextResponse.json({ success: true })

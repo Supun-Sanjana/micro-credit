@@ -12,8 +12,8 @@ export function AccessGate({ status }: AccessGateProps) {
   const router = useRouter()
 
   useEffect(() => {
-    if (status === "SUSPENDED" && !pathname.startsWith("/settings/billing")) {
-      router.push("/settings/billing")
+    if (status === "SUSPENDED" && !pathname.startsWith("/app/settings/billing")) {
+      router.push("/app/settings/billing")
     }
   }, [status, pathname, router])
 

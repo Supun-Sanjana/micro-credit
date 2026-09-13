@@ -16,7 +16,7 @@ test.describe('Auth Gate & Admin Approval', () => {
 
     // 2. Go to Claims and Approve
     await page.goto('/app/admin/claims');
-    await expect(page).toHaveURL(/\/admin\/claims/);
+    await expect(page).toHaveURL(/\/app\/admin\/claims/);
 
     // Click the first Review button if there are pending claims
     const reviewLink = page.locator('a:has-text("Review")').first();

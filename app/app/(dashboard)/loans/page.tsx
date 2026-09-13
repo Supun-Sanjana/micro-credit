@@ -27,7 +27,7 @@ export default function LoansPage() {
           </p>
         </div>
         <Link 
-          href="/loans/new"
+          href="/app/loans/new"
           className="flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[12px] text-[16px] font-sans transition-opacity hover:opacity-90"
         >
           New Application

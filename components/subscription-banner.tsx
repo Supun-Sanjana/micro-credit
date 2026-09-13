@@ -40,7 +40,7 @@ export async function SubscriptionBanner() {
     return (
       <div className="w-full bg-[#fce8e6] text-[#c5221f] py-2 px-4 text-center text-[13px] font-medium border-b border-[#c5221f]/15">
         Your account has been suspended due to billing issues. Please submit a payment claim in{" "}
-        <Link href="/settings/billing" className="underline font-semibold hover:opacity-80">
+        <Link href="/app/settings/billing" className="underline font-semibold hover:opacity-80">
           Settings
         </Link>{" "}
         to restore full access.
@@ -59,7 +59,7 @@ export async function SubscriptionBanner() {
     return (
       <div className="w-full bg-[#fbe1d1] text-[#5d2a1a] py-2 px-4 text-center text-[13px] font-medium border-b border-[#5d2a1a]/15">
         You are on a free trial with {daysRemaining} {daysRemaining === 1 ? "day" : "days"} remaining. Submit a payment claim in{" "}
-        <Link href="/settings/billing" className="underline font-semibold hover:opacity-80">
+        <Link href="/app/settings/billing" className="underline font-semibold hover:opacity-80">
           Settings
         </Link>{" "}
         to upgrade.
