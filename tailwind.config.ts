@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss";
+﻿import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
@@ -15,8 +15,8 @@ const config: Config = {
         instrument: ['var(--font-instrument)', 'serif'],
       },
       colors: {
-        'brand-violet': '#7c3aed',
-        'brand-violet-light': '#a78bfa',
+        'brand-green': '#166534',
+        'brand-green-light': '#a78bfa',
         'ink-black': 'var(--color-ink-black)',
         'paper-white': 'var(--color-paper-white)',
         'mist-gray': 'var(--color-mist-gray)',

@@ -2,7 +2,7 @@
 
 export function Gauge({
   value,
-  color = "#7c3aed",
+  color = "#166534",
   showLabels = false,
   min = 0,
   max = 100

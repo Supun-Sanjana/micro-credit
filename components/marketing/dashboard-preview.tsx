@@ -12,7 +12,7 @@ export function DashboardPreview() {
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-100 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-[#7c3aed] font-medium text-[13px]">Collection</span>
+                <span className="text-[#166534] font-medium text-[13px]">Collection</span>
                 <span className="text-neutral-500 text-[13px]">This Month</span>
               </div>
               <div className="flex items-end gap-3 mb-1">
@@ -29,7 +29,7 @@ export function DashboardPreview() {
             
             <div className="mt-6 flex flex-col items-center">
               <span className="text-[12px] font-medium text-neutral-700 mb-2">Month Target achieved</span>
-              <Gauge value={92} color="#7c3aed" showLabels min={0} max={4.5} />
+              <Gauge value={92} color="#166534" showLabels min={0} max={4.5} />
             </div>
             
             <div className="mt-6 bg-neutral-100/80 p-1 rounded-full flex gap-1 mx-auto w-max">
@@ -45,7 +45,7 @@ export function DashboardPreview() {
           {/* Card 2 — Target Adjustments */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-100 flex flex-col gap-5">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-[#7c3aed] font-medium text-[13px]">Adjust Targets</span>
+              <span className="text-[#166534] font-medium text-[13px]">Adjust Targets</span>
               <button className="text-neutral-400 hover:text-neutral-600 transition-colors">
                 <X className="w-4 h-4" />
               </button>
@@ -71,7 +71,7 @@ export function DashboardPreview() {
               <label className="text-[12px] font-medium text-neutral-700">Branch targets (This month)</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-[13px]">#</span>
-                <input type="text" defaultValue="15" className="w-full border border-neutral-200 rounded-lg pl-7 pr-3 py-2 text-[13px] text-neutral-800 focus:outline-none focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] transition-all" />
+                <input type="text" defaultValue="15" className="w-full border border-neutral-200 rounded-lg pl-7 pr-3 py-2 text-[13px] text-neutral-800 focus:outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534] transition-all" />
               </div>
             </div>
             
@@ -79,12 +79,12 @@ export function DashboardPreview() {
               <label className="text-[12px] font-medium text-neutral-700">Branch targets (This year)</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 text-[13px]">#</span>
-                <input type="text" defaultValue="180" className="w-full border border-neutral-200 rounded-lg pl-7 pr-3 py-2 text-[13px] text-neutral-800 focus:outline-none focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed] transition-all" />
+                <input type="text" defaultValue="180" className="w-full border border-neutral-200 rounded-lg pl-7 pr-3 py-2 text-[13px] text-neutral-800 focus:outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534] transition-all" />
               </div>
             </div>
             
             <div className="flex items-center gap-4 mt-auto pt-2">
-              <button className="bg-[#7c3aed] text-white text-[13px] font-medium rounded-lg px-5 py-2 hover:bg-[#6d28d9] transition-colors shadow-sm">
+              <button className="bg-[#166534] text-white text-[13px] font-medium rounded-lg px-5 py-2 hover:bg-[#6d28d9] transition-colors shadow-sm">
                 Save
               </button>
               <button className="text-[13px] font-medium text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors">
@@ -97,7 +97,7 @@ export function DashboardPreview() {
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-100 flex flex-col justify-between sm:hidden lg:flex">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-[#7c3aed] font-medium text-[13px]">New Members</span>
+                <span className="text-[#166534] font-medium text-[13px]">New Members</span>
                 <span className="text-neutral-500 text-[13px]">today</span>
               </div>
               <div className="flex items-end gap-3 mb-1">

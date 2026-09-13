@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -14,8 +14,8 @@ export function Navbar() {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-xl border-b border-white/[0.05] [mask-image:linear-gradient(to_bottom,black_60%,transparent)]" />
       <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between relative">
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-violet to-brand-violet/50 p-[1px] shadow-[0_0_15px_rgba(124,58,237,0.3)]">
-            <div className="w-full h-full rounded-[7px] bg-black flex items-center justify-center transition-colors group-hover:bg-brand-violet/10">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-green to-brand-green/50 p-[1px] shadow-[0_0_15px_rgba(22,101,52,0.3)]">
+            <div className="w-full h-full rounded-[7px] bg-black flex items-center justify-center transition-colors group-hover:bg-brand-green/10">
               <span className="text-white font-bold text-sm tracking-tighter">S</span>
             </div>
           </div>
