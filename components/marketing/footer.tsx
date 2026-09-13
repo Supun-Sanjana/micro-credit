@@ -10,10 +10,10 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-3 mb-6">
               <div className="w-6 h-6 rounded bg-gradient-to-br from-brand-violet to-brand-violet/50 p-[1px] shadow-[0_0_10px_rgba(124,58,237,0.2)]">
                 <div className="w-full h-full rounded-[3px] bg-black flex items-center justify-center">
-                  <span className="text-white font-bold text-[10px] tracking-tighter">C</span>
+                  <span className="text-white font-bold text-[10px] tracking-tighter">S</span>
                 </div>
               </div>
-              <span className="font-medium text-sm tracking-tight text-white/90">Cylvox Micro Finance</span>
+              <span className="font-medium text-sm tracking-tight text-white/90">Solida</span>
             </Link>
             <p className="text-white/40 text-sm max-w-xs leading-relaxed">
               Modern loan-collection and micro-finance management. Replace spreadsheets with a streamlined platform.

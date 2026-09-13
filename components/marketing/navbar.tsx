@@ -16,10 +16,10 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-violet to-brand-violet/50 p-[1px] shadow-[0_0_15px_rgba(124,58,237,0.3)]">
             <div className="w-full h-full rounded-[7px] bg-black flex items-center justify-center transition-colors group-hover:bg-brand-violet/10">
-              <span className="text-white font-bold text-sm tracking-tighter">C</span>
+              <span className="text-white font-bold text-sm tracking-tighter">S</span>
             </div>
           </div>
-          <span className="font-medium text-sm tracking-tight text-white/90 group-hover:text-white transition-colors">Micro Finance</span>
+          <span className="font-medium text-sm tracking-tight text-white/90 group-hover:text-white transition-colors">Solida</span>
         </Link>
         
         <div className="hidden md:flex items-center gap-8">
