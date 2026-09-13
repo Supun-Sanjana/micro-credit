@@ -10,14 +10,14 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const protectedPaths = ['/dashboard', '/branches', '/centres', '/members', '/loans', '/collection', '/reports', '/loan-products', '/settings']
+      const protectedPaths = ['/app/dashboard', '/app/branches', '/app/centres', '/app/members', '/app/loans', '/app/collection', '/app/reports', '/app/loan-products', '/app/settings']
       const isProtected = protectedPaths.some(p => nextUrl.pathname.startsWith(p))
       
       if (isProtected) {
         if (isLoggedIn) return true
-        return Response.redirect(new URL('/login', nextUrl))
-      } else if (isLoggedIn && (nextUrl.pathname === '/login' || nextUrl.pathname === '/signup')) {
-        return Response.redirect(new URL('/dashboard', nextUrl))
+        return Response.redirect(new URL('/app/login', nextUrl))
+      } else if (isLoggedIn && (nextUrl.pathname === '/app/login' || nextUrl.pathname === '/app/signup')) {
+        return Response.redirect(new URL('/app/dashboard', nextUrl))
       }
       return true
     },
