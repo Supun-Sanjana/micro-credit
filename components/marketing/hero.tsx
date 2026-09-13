@@ -8,15 +8,13 @@ export function Hero() {
 
   return (
     <div className="relative w-full h-[calc(100vh-24px)] sm:h-[calc(100vh-32px)] overflow-hidden bg-[#d9d9d9] rounded-2xl sm:rounded-3xl shadow-sm">
-        {/* Finance Background */}
-        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-          <img 
-            src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=2000&auto=format&fit=crop" 
-            alt="Finance"
-            className="w-full h-full object-cover transition-transform duration-[20000ms] ease-linear scale-110 hover:scale-100"
-          />
-        </div>
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]" />
+      {/* Abstract Background */}
+      <img 
+        src="https://images.unsplash.com/photo-1557683316-973673baf926?w=1600&q=60" 
+        alt="Abstract background"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-80"
+      />
+      <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]" />
 
         <div className="relative z-10 flex flex-col h-full overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: "none" }}>
           
