@@ -12,6 +12,7 @@ const config: Config = {
         sans: ['Sohne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         serif: ['Signifier', 'ui-serif', 'Georgia', 'serif'],
         geist: ['var(--font-geist-sans)', 'sans-serif'],
+        instrument: ['var(--font-instrument)', 'serif'],
       },
       colors: {
         'brand-violet': '#7c3aed',

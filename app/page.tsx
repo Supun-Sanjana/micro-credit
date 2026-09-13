@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Check, Users, LayoutGrid, FileText, CheckCircle2, Shield } from "lucide-react";
-import { Navbar } from "@/components/marketing/navbar";
+import { Hero } from "@/components/marketing/hero";
 import { Footer } from "@/components/marketing/footer";
 
 const spring = {
@@ -30,53 +30,9 @@ export default function Home() {
   return (
     <div className="relative min-h-screen bg-black text-white selection:bg-brand-violet/30 selection:text-brand-violet-light">
       <div className="fixed inset-0 bg-noise pointer-events-none z-50 opacity-30 mix-blend-overlay" />
-      <Navbar />
       
-      <main className="flex flex-col items-center pt-16">
-        {/* HERO SECTION */}
-        <section className="relative w-full py-32 lg:py-48 flex justify-center overflow-hidden">
-          {/* Subtle glowing orb */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-violet/20 blur-[120px] rounded-full pointer-events-none opacity-50" />
-          
-          <motion.div 
-            className="container px-4 md:px-6 text-center relative z-10"
-            initial="initial"
-            animate="animate"
-            variants={stagger}
-          >
-            <motion.div variants={fadeInUp} className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/70 backdrop-blur-md mb-8">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-brand-violet-light mr-2 shadow-[0_0_8px_rgba(167,139,250,0.8)] animate-pulse"></span>
-              Early Access Available
-            </motion.div>
-            
-            <motion.h1 variants={fadeInUp} className="mx-auto max-w-4xl text-5xl font-medium tracking-tighter sm:text-6xl md:text-7xl lg:text-[5.5rem] leading-[1.1]">
-              Replace the loan-collection <br className="hidden sm:block"/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">
-                spreadsheet.
-              </span>
-            </motion.h1>
-            
-            <motion.p variants={fadeInUp} className="mx-auto mt-8 max-w-2xl text-lg text-white/50 tracking-tight leading-relaxed">
-              Streamline branches, centers, and members. Track guarantors, manage weekly collection grids, and reconcile cash instantly with our modern platform.
-            </motion.p>
-            
-            <motion.div variants={fadeInUp} className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link
-                href="/app/signup"
-                className="group relative inline-flex h-11 items-center justify-center rounded-full bg-white px-8 text-sm font-semibold text-black transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.15)]"
-              >
-                Start free trial 
-                <ArrowRight className="ml-2 h-4 w-4 opacity-70 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="#contact"
-                className="inline-flex h-11 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:bg-white/10 hover:text-white"
-              >
-                Request demo
-              </Link>
-            </motion.div>
-          </motion.div>
-        </section>
+      <main className="flex flex-col items-center">
+        <Hero />
 
         {/* SOCIAL PROOF */}
         <section className="w-full py-16 flex justify-center relative">
@@ -279,9 +235,18 @@ export default function Home() {
                       <ArrowRight className="h-3 w-3" />
                     </div>
                     <span className="tracking-tight">Data migration support</span>
+                    </div>
+                  </div>
+                  <div className="mt-10 pt-8 border-t border-white/10">
+                    <p className="text-white/50 text-xs font-medium tracking-wide uppercase mb-3">Or email us directly</p>
+                    <a href="mailto:solida@cylvox.com" className="inline-flex items-center gap-2 text-white/90 hover:text-white transition-colors">
+                      <div className="h-8 w-8 rounded-full bg-brand-violet/20 flex items-center justify-center text-brand-violet">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                      </div>
+                      <span className="font-medium tracking-tight">solida@cylvox.com</span>
+                    </a>
                   </div>
                 </div>
-              </div>
               
               <div className="glass-card p-6 md:p-8">
                 <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
