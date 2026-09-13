@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Inter, Instrument_Serif, Playfair_Display } from "next/font/google";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 const instrumentSerif = Instrument_Serif({ weight: "400", style: ["normal", "italic"], subsets: ["latin"], variable: "--font-instrument" });
+const playfair = Playfair_Display({ subsets: ['latin'], style: ['normal', 'italic'], variable: '--font-playfair' });
 const geistFallback = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMonoFallback = Inter({ variable: "--font-geist-mono", subsets: ["latin"] });
 

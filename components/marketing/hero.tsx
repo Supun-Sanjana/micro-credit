@@ -1,124 +1,220 @@
-"use client";
+﻿"use client";
 import React, { useState } from "react";
-import { ChevronDown, ChevronRight, Menu } from "lucide-react";
-import { DashboardPreview } from "./dashboard-preview";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, ArrowRightCircle, Zap, Users, Shield } from "lucide-react";
+import Link from "next/link";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: (custom: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: custom * 0.15,
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  }),
+};
 
 export function Hero() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="relative w-full h-[calc(100vh-24px)] sm:h-[calc(100vh-32px)] overflow-hidden bg-[#d9d9d9] rounded-2xl sm:rounded-3xl shadow-sm">
-      {/* Mountains and Clouds Background */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        <img 
-          src="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?q=80&w=2000&auto=format&fit=crop" 
-          alt="Mountains and clouds"
-          className="w-full h-full object-cover animate-pan-slow opacity-90"
+    <div className="relative w-full min-h-screen font-sans text-[#192837] overflow-hidden" style={{ fontFamily: "var(--font-sans)" }}>
+      {/* Background Video */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      >
+        <source
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260518_003132_8b7edcb6-c64d-4a52-a9ca-879942e122ad.mp4"
+          type="video/mp4"
         />
-      </div>
+      </video>
       <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px]" />
 
-        <div className="relative z-10 flex flex-col h-full overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: "none" }}>
-          
-          {/* Navbar Pill */}
-          <div className="flex justify-center pt-4 sm:pt-6 px-3 sm:px-4 shrink-0">
-            <nav className="bg-white rounded-full shadow-sm border border-neutral-200 pl-2 pr-2 py-2 w-full max-w-[760px] relative flex items-center">
-              
-              {/* Logo */}
-              <div className="shrink-0 flex items-center gap-2 px-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-brand-violet to-brand-violet/50 p-[1px] shadow-[0_0_10px_rgba(124,58,237,0.2)]">
-                  <div className="w-full h-full rounded-[7px] bg-black flex items-center justify-center">
-                    <span className="text-white font-bold text-sm tracking-tighter">S</span>
-                  </div>
-                </div>
-                <span className="font-semibold text-[15px] tracking-tight hidden sm:block">Solida</span>
-              </div>
-              
-              {/* Desktop Links */}
-              <div className="hidden md:flex items-center gap-6 ml-10">
-                <a href="#" className="flex items-center gap-1.5 text-[14px] font-medium text-neutral-900">
-                  <div className="w-1.5 h-1.5 rounded-full bg-black" /> Home
-                </a>
-                <a href="#features" className="text-[14px] font-medium text-neutral-600 hover:text-neutral-900 transition-colors">Features</a>
-                <a href="#pricing" className="text-[14px] font-medium text-neutral-600 hover:text-neutral-900 transition-colors">Pricing</a>
-                <a href="#contact" className="flex items-center gap-1 text-[14px] font-medium text-[#7c3aed]">
-                  Contact <ChevronDown className="w-3.5 h-3.5" />
-                </a>
-              </div>
-              
-              {/* Right Cluster */}
-              <div className="ml-auto flex items-center gap-2">
-                <a href="/app/login" className="hidden sm:block text-[14px] font-medium text-neutral-600 hover:text-neutral-900 transition-colors px-3">
-                  Log in
-                </a>
-                <a href="/app/signup" className="flex items-center gap-2 bg-[#7c3aed] hover:bg-[#6d28d9] text-white rounded-full pl-4 pr-1.5 py-1.5 sm:py-2 transition-colors">
-                  <span className="text-[13px] sm:text-[14px] font-medium">Early access</span>
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/20 flex items-center justify-center">
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
-                </a>
-                <button 
-                  className="md:hidden flex items-center justify-center p-1.5 text-neutral-700 ml-1"
-                  onClick={() => setMenuOpen(!menuOpen)}
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Mobile Menu Dropdown */}
-              {menuOpen && (
-                <div className="absolute top-full left-2 right-2 mt-2 bg-white rounded-2xl shadow-lg border border-neutral-200 p-3 z-20 md:hidden flex flex-col gap-2">
-                   <a href="#" className="flex items-center gap-2 px-3 py-2 bg-neutral-50 rounded-lg text-[14px] font-medium text-neutral-900">
-                    <div className="w-1.5 h-1.5 rounded-full bg-black" /> Home
-                  </a>
-                  <a href="#features" className="px-3 py-2 text-[14px] font-medium text-neutral-600">Features</a>
-                  <a href="#pricing" className="px-3 py-2 text-[14px] font-medium text-neutral-600">Pricing</a>
-                  <a href="#contact" className="px-3 py-2 text-[14px] font-medium text-[#7c3aed]">Contact</a>
-                  <div className="h-px bg-neutral-100 my-1" />
-                  <a href="/app/login" className="px-3 py-2 text-[14px] font-medium text-neutral-600">Log in</a>
-                </div>
-              )}
-            </nav>
-          </div>
-
-          {/* Hero Content */}
-          <div className="flex flex-col items-center px-4 pt-10 sm:pt-16 pb-8 sm:pb-12 text-center shrink-0">
-            <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-1.5 shadow-sm border border-neutral-100 mb-6">
-              <div className="w-2 h-2 rounded-full bg-[#7c3aed] animate-pulse" />
-              <span className="text-[13px] font-medium text-neutral-800 tracking-wide">Solida Early Access</span>
+      {/* Navbar */}
+      <nav className="relative z-10 max-w-[1280px] mx-auto px-5 sm:px-8 py-4 sm:py-5 flex items-center justify-between">
+        {/* Left: Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#7c3aed]/50 p-[1px] shadow-[0_0_10px_rgba(124,58,237,0.2)]">
+            <div className="w-full h-full rounded-[7px] bg-black flex items-center justify-center">
+              <span className="text-white font-bold text-sm tracking-tighter">S</span>
             </div>
-            
-            <h1 
-              className="max-w-4xl text-neutral-900"
+          </div>
+          <span className="font-semibold text-lg tracking-tight text-[#192837]" style={{ fontFamily: "var(--font-heading)" }}>Solida</span>
+        </Link>
+
+        {/* Center: Links */}
+        <div className="hidden md:flex items-center gap-8">
+          {["Features", "Pricing", "About", "News", "Help"].map((item) => (
+            <Link
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className="text-sm font-medium text-[#192837] hover:opacity-70 transition-opacity"
+            >
+              {item}
+            </Link>
+          ))}
+        </div>
+
+        {/* Right: Actions */}
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/app/login"
+            className="bg-[#F2F2EE] text-[#192837] text-sm font-medium rounded-full px-5 py-2.5 hover:bg-[#e5e5e0] transition-colors"
+          >
+            Log In
+          </Link>
+          <Link
+            href="/app/signup"
+            className="bg-[#7c3aed] text-white text-sm font-medium rounded-full px-5 py-2.5 shadow-[0_4px_14px_rgba(124,58,237,0.28)] hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            Early Access
+          </Link>
+        </div>
+
+        {/* Mobile Menu Toggle */}
+        <button
+          className="md:hidden flex items-center justify-center p-2 text-[#192837]"
+          onClick={() => setIsMenuOpen(true)}
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </nav>
+
+      {/* Hero Content */}
+      <div
+        className="relative z-10 max-w-[1280px] mx-auto px-5 sm:px-8"
+        style={{ paddingTop: "clamp(40px, 8vw, 72px)" }}
+      >
+        <div className="max-w-[560px]">
+          <motion.h1
+            custom={0}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="text-[#192837] mb-6 relative"
+            style={{
+              fontFamily: "var(--font-heading)",
+              fontSize: "clamp(1.65rem, 5vw, 3rem)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Scale Your Collections{" "}
+            <Users className="inline-block w-6 h-6 text-[#192837] relative -top-[2px] mx-1" />{" "}
+            with Ironclad{" "}
+            <Shield className="inline-block w-6 h-6 text-[#192837] relative -top-[2px] mx-1" />{" "}
+            Security{" "}
+            <Zap className="inline-block w-6 h-6 text-[#192837] relative -top-[2px] ml-1" />
+          </motion.h1>
+
+          <motion.p
+            custom={1}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="text-[#192837]/80"
+            style={{
+              fontSize: "clamp(0.9rem, 2.5vw, 1.1rem)",
+              lineHeight: 1.65,
+              maxWidth: "560px",
+            }}
+          >
+            Zero stress, total control. Solida keeps you covered with hierarchical management, real-time collection grids, and pro-grade reporting for your growing institution.
+          </motion.p>
+
+          <motion.div
+            custom={2}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
+            className="mt-8 sm:mt-10"
+          >
+            <Link
+              href="/app/signup"
+              className="inline-flex items-center justify-between gap-8 bg-[#7c3aed] text-white rounded-full font-semibold transition-all hover:scale-[1.04] hover:brightness-110 active:scale-[0.96]"
               style={{
-                fontSize: "clamp(36px, 8vw, 72px)",
-                lineHeight: 1.05,
-                fontWeight: 500,
-                letterSpacing: "-0.02em"
+                padding: "17px 24px",
+                fontSize: "clamp(0.9rem, 2vw, 1rem)",
+                boxShadow: "0 4px 24px rgba(124,58,237,0.28)",
+                minWidth: "210px",
               }}
             >
-              Shaping <span className="font-instrument italic font-normal text-[#7c3aed]">Microfinance</span> <br /> of tomorrow
-            </h1>
-            
-            <p 
-              className="mt-4 sm:mt-6 text-neutral-700 px-2 max-w-2xl font-medium"
-              style={{ fontSize: "clamp(13px, 3.5vw, 16px)" }}
-            >
-              The All-In-One Core Banking Platform Powering the Future of Microfinance Institutions
-            </p>
-            
-            <a href="/app/signup" className="mt-6 sm:mt-8 inline-flex items-center gap-3 bg-[#0b0f1a] hover:bg-black text-white rounded-full pl-6 sm:pl-7 pr-2 py-2 sm:py-2.5 transition-transform hover:scale-105 shadow-xl shadow-black/10">
-              <span className="text-[14px] font-medium">Get Started</span>
-              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/15 flex items-center justify-center">
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </a>
-          </div>
-
-          {/* Dashboard Preview */}
-          <DashboardPreview />
-          
+              Get Started
+              <ArrowRightCircle className="w-5 h-5" />
+            </Link>
+          </motion.div>
         </div>
+      </div>
+
+      {/* Mobile Menu Sheet */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 z-40 bg-[#192837]/35 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.45 }}
+              className="fixed top-0 right-0 h-[100dvh] w-[min(88vw,360px)] bg-[#F2F2EE] shadow-[-12px_0_48px_rgba(25,40,55,0.18)] z-50 flex flex-col"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-[#192837]/10">
+                <span className="font-semibold text-lg tracking-tight text-[#192837]" style={{ fontFamily: "var(--font-heading)" }}>Solida</span>
+                <button onClick={() => setIsMenuOpen(false)} className="p-2 text-[#192837]">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="flex flex-col p-5 gap-6">
+                {["Features", "Pricing", "About", "News", "Help"].map((item, i) => (
+                  <motion.div
+                    key={item}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.18 + i * 0.07, duration: 0.4 }}
+                  >
+                    <Link
+                      href={`#${item.toLowerCase()}`}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="text-lg font-medium text-[#192837]"
+                    >
+                      {item}
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="mt-auto p-5 flex flex-col gap-3">
+                <Link
+                  href="/app/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full text-center bg-white border border-[#192837]/10 text-[#192837] text-sm font-medium rounded-full px-5 py-3"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/app/signup"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full text-center bg-[#7c3aed] text-white text-sm font-medium rounded-full px-5 py-3"
+                >
+                  Early Access
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
