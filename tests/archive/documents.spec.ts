@@ -4,7 +4,7 @@ import path from 'path';
 test.describe('Document Upload E2E', () => {
   test('upload NIC document', async ({ page }) => {
     // 1. Login
-    await page.goto('/login');
+    await page.goto('/app/login');
     await page.fill('input[type="email"]', 'admin@micro.local');
     await page.fill('input[type="password"]', 'admin123');
     await page.click('button[type="submit"]');

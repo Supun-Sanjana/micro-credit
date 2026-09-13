@@ -45,7 +45,7 @@ export default function SignupPage() {
       }
 
       // Success: redirect to login
-      router.push("/login?signup=success")
+      router.push("/app/login?signup=success")
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.")
     } finally {
@@ -192,7 +192,7 @@ export default function SignupPage() {
           <p className="text-[15px] text-[#777b86]">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href="/app/login"
               className="text-[#17191c] hover:underline underline-offset-4 ml-1 font-medium"
             >
               Sign in →

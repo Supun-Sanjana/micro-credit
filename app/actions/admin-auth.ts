@@ -68,11 +68,11 @@ export async function loginAdmin(formData: FormData) {
   })
 
   await clearFailedLogins(email)
-  redirect("/admin")
+  redirect("/app/admin")
 }
 
 export async function logoutAdmin() {
   const { clearAdminSession } = await import("@/lib/admin-session")
   clearAdminSession()
-  redirect("/admin/login")
+  redirect("/app/admin/login")
 }

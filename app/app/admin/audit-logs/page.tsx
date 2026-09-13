@@ -85,7 +85,7 @@ function getTargetBadge(targetType: string) {
 export default async function AdminAuditLogsPage() {
   const session = await verifyAdminSession()
   if (!session) {
-    redirect("/admin/login")
+    redirect("/app/admin/login")
   }
 
   const auditLogs = await prisma.platformAdminAuditLog.findMany({
@@ -108,7 +108,7 @@ export default async function AdminAuditLogsPage() {
         {/* Navigation Breadcrumb */}
         <div>
           <Link
-            href="/admin"
+            href="/app/admin"
             className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard
@@ -127,19 +127,19 @@ export default async function AdminAuditLogsPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/admin/orgs"
+              href="/app/admin/orgs"
               className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
             >
               Organizations
             </Link>
             <Link
-              href="/admin/claims"
+              href="/app/admin/claims"
               className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
             >
               Claims
             </Link>
             <Link
-              href="/admin/plans"
+              href="/app/admin/plans"
               className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
             >
               Plans

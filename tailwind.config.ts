@@ -11,8 +11,11 @@ const config: Config = {
       fontFamily: {
         sans: ['Sohne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         serif: ['Signifier', 'ui-serif', 'Georgia', 'serif'],
+        geist: ['var(--font-geist-sans)', 'sans-serif'],
       },
       colors: {
+        'brand-violet': '#7c3aed',
+        'brand-violet-light': '#a78bfa',
         'ink-black': 'var(--color-ink-black)',
         'paper-white': 'var(--color-paper-white)',
         'mist-gray': 'var(--color-mist-gray)',

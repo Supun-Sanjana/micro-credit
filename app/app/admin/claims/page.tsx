@@ -64,7 +64,7 @@ function formatAmount(amount: any) {
 export default async function AdminClaimsQueuePage() {
   const session = await verifyAdminSession()
   if (!session) {
-    redirect("/admin/login")
+    redirect("/app/admin/login")
   }
 
   const [pendingClaims, processedClaims] = await Promise.all([
@@ -117,7 +117,7 @@ export default async function AdminClaimsQueuePage() {
         {/* Navigation Breadcrumb */}
         <div>
           <Link
-            href="/admin"
+            href="/app/admin"
             className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard

@@ -45,7 +45,7 @@ function getStatusBadge(status?: string | null) {
 export default async function AdminOrganizationsPage() {
   const session = await verifyAdminSession()
   if (!session) {
-    redirect("/admin/login")
+    redirect("/app/admin/login")
   }
 
   const organizations = await prisma.organization.findMany({
@@ -76,7 +76,7 @@ export default async function AdminOrganizationsPage() {
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
           <Link
-            href="/admin"
+            href="/app/admin"
             className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard

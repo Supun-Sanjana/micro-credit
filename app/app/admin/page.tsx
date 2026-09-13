@@ -11,13 +11,13 @@ export default async function AdminDashboard() {
   const session = await verifyAdminSession()
   
   if (!session) {
-    redirect("/admin/login")
+    redirect("/app/admin/login")
   }
 
   const handleLogout = async () => {
     "use server"
     cookies().set("admin_session", "", { expires: new Date(0) })
-    redirect("/admin/login")
+    redirect("/app/admin/login")
   }
 
   // Aggregate Metrics (Phase A6.1)
@@ -73,7 +73,7 @@ export default async function AdminDashboard() {
 
         {/* Navigation Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Link href="/admin/orgs" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3">
+          <Link href="/app/admin/orgs" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3">
             <div className="h-10 w-10 rounded-full bg-mist-gray flex items-center justify-center text-ink-black group-hover:bg-ink-black group-hover:text-paper-white transition-colors">
               <Building2 className="h-5 w-5" />
             </div>
@@ -83,7 +83,7 @@ export default async function AdminDashboard() {
             </div>
           </Link>
 
-          <Link href="/admin/claims" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3 relative">
+          <Link href="/app/admin/claims" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3 relative">
             <div className="h-10 w-10 rounded-full bg-mist-gray flex items-center justify-center text-ink-black group-hover:bg-ink-black group-hover:text-paper-white transition-colors">
               <FileText className="h-5 w-5" />
             </div>
@@ -98,7 +98,7 @@ export default async function AdminDashboard() {
             </div>
           </Link>
 
-          <Link href="/admin/plans" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3">
+          <Link href="/app/admin/plans" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3">
             <div className="h-10 w-10 rounded-full bg-mist-gray flex items-center justify-center text-ink-black group-hover:bg-ink-black group-hover:text-paper-white transition-colors">
               <ListTodo className="h-5 w-5" />
             </div>
@@ -108,7 +108,7 @@ export default async function AdminDashboard() {
             </div>
           </Link>
 
-          <Link href="/admin/audit-logs" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3">
+          <Link href="/app/admin/audit-logs" className="bg-paper-white p-5 rounded-[20px] border border-[#ececec] shadow-subtle-3 hover:border-ink-black transition-colors group flex flex-col gap-3">
             <div className="h-10 w-10 rounded-full bg-mist-gray flex items-center justify-center text-ink-black group-hover:bg-ink-black group-hover:text-paper-white transition-colors">
               <ShieldCheck className="h-5 w-5" />
             </div>

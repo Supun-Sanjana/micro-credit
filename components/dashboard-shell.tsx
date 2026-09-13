@@ -38,7 +38,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
     {
       name: "Core",
       items: [
-        { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+        { href: "/app/dashboard", label: "Overview", icon: LayoutDashboard },
         { href: "/reports", label: "Reports", icon: FileText },
       ],
     },
@@ -71,7 +71,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
           </h3>
           <div className="flex flex-col gap-1">
             {group.items.map((item) => {
-              const isActive = pathname.startsWith(item.href) && (item.href !== "/dashboard" || pathname === "/dashboard")
+              const isActive = pathname.startsWith(item.href) && (item.href !== "/app/dashboard" || pathname === "/app/dashboard")
               const Icon = item.icon
               return (
                 <Link
@@ -107,7 +107,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
-          <Link href="/dashboard" className="flex items-center gap-3">
+          <Link href="/app/dashboard" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blush-peach rounded-xl flex items-center justify-center border border-[#ececec]">
               <div className="w-5 h-5 border-2 border-sienna-brown rounded-sm transform rotate-45" />
             </div>
@@ -140,7 +140,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
                 <p className="text-xs text-slate-gray truncate">{user?.email}</p>
               </div>
               <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => signOut({ callbackUrl: "/app/login" })}
                 className="w-full text-left px-4 py-2.5 text-[15px] text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
               >
                 <LogOut className="w-4 h-4" />

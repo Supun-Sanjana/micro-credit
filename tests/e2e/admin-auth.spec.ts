@@ -4,7 +4,7 @@ test.describe('Admin Authentication', () => {
   test.setTimeout(60000);
 
   test('admin login with correct creds redirects to /admin', async ({ page }) => {
-    await page.goto('/admin/login');
+    await page.goto('/app/admin/login');
     await page.waitForLoadState('networkidle');
 
     await page.fill('input[name="email"]', 'super@steep.local');
@@ -13,12 +13,12 @@ test.describe('Admin Authentication', () => {
 
     await page.waitForLoadState('networkidle');
     await page.waitForURL('**/admin', { timeout: 15000 });
-    await expect(page).toHaveURL('/admin', { timeout: 15000 });
+    await expect(page).toHaveURL('/app/admin', { timeout: 15000 });
     await expect(page.locator('h1')).toBeVisible();
   });
 
   test('admin login with wrong password stays on /admin/login and shows error', async ({ page }) => {
-    await page.goto('/admin/login');
+    await page.goto('/app/admin/login');
     await page.waitForLoadState('networkidle');
 
     await page.fill('input[name="email"]', 'super@steep.local');

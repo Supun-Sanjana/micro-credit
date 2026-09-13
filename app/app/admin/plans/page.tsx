@@ -23,7 +23,7 @@ function formatStorage(quotaMb: number) {
 export default async function AdminPlansPage() {
   const session = await verifyAdminSession()
   if (!session) {
-    redirect("/admin/login")
+    redirect("/app/admin/login")
   }
 
   const plans = await prisma.subscriptionPlan.findMany({
@@ -45,7 +45,7 @@ export default async function AdminPlansPage() {
         {/* Navigation Breadcrumb */}
         <div>
           <Link
-            href="/admin"
+            href="/app/admin"
             className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard
@@ -64,19 +64,19 @@ export default async function AdminPlansPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/admin/orgs"
+              href="/app/admin/orgs"
               className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
             >
               Organizations
             </Link>
             <Link
-              href="/admin/claims"
+              href="/app/admin/claims"
               className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
             >
               Claims
             </Link>
             <Link
-              href="/admin/audit-logs"
+              href="/app/admin/audit-logs"
               className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
             >
               Audit Logs

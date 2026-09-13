@@ -79,7 +79,7 @@ test.describe('Cross-Organization Security', () => {
 
   test('rejects collection POST with valid loanId from another organization', async ({ page }) => {
     // 1. Login as standard Tenant (micro.local)
-    await page.goto('/login');
+    await page.goto('/app/login');
     await page.waitForLoadState('networkidle');
     await page.fill('input[type="email"]', 'admin@micro.local');
     await page.fill('input[name="password"]', 'admin123');
@@ -87,7 +87,7 @@ test.describe('Cross-Organization Security', () => {
 
     await page.waitForLoadState('networkidle');
     await page.waitForURL('**/dashboard', { timeout: 15000 });
-    await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+    await expect(page).toHaveURL('/app/dashboard', { timeout: 15000 });
 
     // 2. POST to /api/collection with the REAL loanId from the other org
     const response = await page.request.post('/api/collection', {

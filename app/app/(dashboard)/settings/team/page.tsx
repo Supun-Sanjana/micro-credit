@@ -8,12 +8,12 @@ export default async function TeamSettingsPage() {
   const organizationId = (session?.user as any)?.organizationId
 
   if (!session?.user || !organizationId) {
-    redirect("/login")
+    redirect("/app/login")
   }
 
   // Check if admin
   if ((session.user as any).role !== "ADMIN") {
-    redirect("/dashboard")
+    redirect("/app/dashboard")
   }
 
   const users = await prisma.user.findMany({

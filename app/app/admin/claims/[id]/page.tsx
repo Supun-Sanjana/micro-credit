@@ -73,7 +73,7 @@ function formatAmount(amount: any) {
 export default async function ClaimDetailPage({ params, searchParams }: PageProps) {
   const session = await verifyAdminSession()
   if (!session) {
-    redirect("/admin/login")
+    redirect(/app/admin/login")
   }
 
   const { id } = params
@@ -121,7 +121,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
         {/* Navigation Breadcrumb */}
         <div>
           <Link
-            href="/admin/claims"
+            href=/app/admin/claims"
             className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Claims Queue
@@ -479,7 +479,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                     }
 
                     setTimeout(function() {
-                      window.location.href = '/admin/claims';
+                      window.location.href = /app/admin/claims';
                     }, 1000);
                   } catch (err) {
                     if (feedback) {

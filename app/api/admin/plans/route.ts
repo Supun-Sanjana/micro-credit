@@ -139,7 +139,7 @@ export async function POST(request: Request) {
       contentType.includes("application/x-www-form-urlencoded") ||
       contentType.includes("multipart/form-data")
     ) {
-      return NextResponse.redirect(new URL("/admin/plans", request.url), { status: 303 })
+      return NextResponse.redirect(new URL("/app/admin/plans", request.url), { status: 303 })
     }
 
     return NextResponse.json({ success: true, plan }, { status: 201 })

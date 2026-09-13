@@ -9,7 +9,7 @@ export default async function BillingSettingsPage() {
   const organizationId = (session?.user as any)?.organizationId
 
   if (!session?.user || !organizationId) {
-    redirect("/login")
+    redirect("/app/login")
   }
 
   // Fetch tenant's Subscription with plan and payment claims

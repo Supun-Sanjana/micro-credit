@@ -19,7 +19,7 @@ export async function authenticate(
   }
 
   try {
-    formData.append("redirectTo", "/dashboard")
+    formData.append("redirectTo", "/app/dashboard")
     await signIn("credentials", formData)
   } catch (error) {
     if (error instanceof AuthError) {

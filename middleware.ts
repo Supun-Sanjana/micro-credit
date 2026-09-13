@@ -7,11 +7,11 @@ const nextAuthMiddleware = NextAuth(authConfig).auth
 export default async function middleware(req: any) {
   const { nextUrl } = req
 
-  // Intercept /admin paths for Platform Admin auth
-  if (nextUrl.pathname.startsWith("/admin") && !nextUrl.pathname.startsWith("/admin/login")) {
+  // Intercept /app/admin paths for Platform Admin auth
+  if (nextUrl.pathname.startsWith("/app/admin") && !nextUrl.pathname.startsWith("/app/admin/login")) {
     const cookie = req.cookies.get("admin_session")?.value
     if (!cookie) {
-      return Response.redirect(new URL("/admin/login", nextUrl))
+      return Response.redirect(new URL("/app/admin/login", nextUrl))
     }
     
     try {
@@ -23,7 +23,7 @@ export default async function middleware(req: any) {
     } catch (err: any) {
       // Only swallow JWT verification failures (invalid/expired token). Hard config errors must propagate.
       if (err?.message === "AUTH_SECRET is not set in environment variables") throw err
-      return Response.redirect(new URL("/admin/login", nextUrl))
+      return Response.redirect(new URL("/app/admin/login", nextUrl))
     }
   }
 
@@ -32,5 +32,5 @@ export default async function middleware(req: any) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+  matcher: ['/app/dashboard/:path*', '/app/admin/:path*', '/app/login', '/app/signup'],
 }

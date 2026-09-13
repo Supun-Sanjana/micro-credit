@@ -3,14 +3,14 @@ import { test, expect } from '@playwright/test';
 test.describe('Collection Page E2E', () => {
   test('fetch list, toggle status, and bulk save', async ({ page }) => {
     // 1. Login as Tenant
-    await page.goto('/login');
+    await page.goto('/app/login');
     await page.waitForLoadState('networkidle');
     await page.fill('input[type="email"]', 'admin@micro.local');
     await page.fill('input[type="password"]', 'admin123');
     await page.click('button[type="submit"]');
     
     // Wait for successful login redirect
-    await expect(page).toHaveURL('/dashboard');
+    await expect(page).toHaveURL('/app/dashboard');
     
     // 2. Go to collection page
     await page.goto('/collection');

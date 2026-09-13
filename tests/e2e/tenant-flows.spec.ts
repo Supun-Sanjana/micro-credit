@@ -4,7 +4,7 @@ test.describe('Tenant Flows', () => {
   test.setTimeout(60000);
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
+    await page.goto('/app/login');
     await page.waitForLoadState('networkidle');
     await page.fill('input[type="email"]', 'admin@micro.local');
     await page.fill('input[name="password"]', 'admin123');
@@ -14,8 +14,8 @@ test.describe('Tenant Flows', () => {
   });
 
   test('dashboard page loads /dashboard', async ({ page }) => {
-    await page.goto('/dashboard');
-    await expect(page).toHaveURL('/dashboard', { timeout: 15000 });
+    await page.goto('/app/dashboard');
+    await expect(page).toHaveURL('/app/dashboard', { timeout: 15000 });
     await page.waitForLoadState('networkidle');
     await expect(page.locator('main')).toBeVisible();
     await expect(page.locator('h1')).toBeVisible();
