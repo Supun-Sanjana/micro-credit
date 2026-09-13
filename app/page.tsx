@@ -28,7 +28,7 @@ const stagger = {
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen bg-black selection:bg-brand-violet/30 selection:text-brand-violet-light">
+    <div className="relative min-h-screen bg-black text-white selection:bg-brand-violet/30 selection:text-brand-violet-light">
       <div className="fixed inset-0 bg-noise pointer-events-none z-50 opacity-30 mix-blend-overlay" />
       <Navbar />
       
