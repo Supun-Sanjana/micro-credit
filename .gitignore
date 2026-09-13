@@ -44,3 +44,7 @@ next-env.d.ts
 .claude
 .windsurf
 .agents
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
