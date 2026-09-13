@@ -35,7 +35,7 @@ export const withOrgScope = (organizationId: string) => {
           else if (['Loan'].includes(model)) {
             args.where = { ...args.where, member: { ...args.where.member, organizationId } }
           }
-          else if (['LoanRepayment'].includes(model)) {
+          else if (['LoanRepayment', 'RepaymentSchedule', 'Guarantor'].includes(model)) {
             args.where = { ...args.where, loan: { ...args.where.loan, member: { ...args.where.loan?.member, organizationId } } }
           }
 

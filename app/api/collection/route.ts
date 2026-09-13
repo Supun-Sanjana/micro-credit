@@ -103,7 +103,22 @@ export async function POST(request: Request) {
 
     const paidDate = new Date(date)
 
-    const result = await dal.prisma.$transaction(async (tx) => {
+    // Issue 2: Cross-org bypass fix.
+    // Validate all loanIds belong to the caller's organization using the scoped Prisma client.
+    const loanIds = entries.map((e: any) => e.loanId)
+    const validLoans = await dal.prisma.loan.findMany({
+      where: { id: { in: loanIds } },
+      select: { id: true }
+    })
+    const validLoanIds = new Set(validLoans.map((l: any) => l.id))
+
+    for (const entry of entries) {
+      if (!validLoanIds.has(entry.loanId)) {
+        return NextResponse.json({ error: `Invalid or unauthorized loan ID: ${entry.loanId}` }, { status: 403 })
+      }
+    }
+
+    const result = await dal.prisma.$transaction(async (tx: any) => {
       let savedCount = 0
       let totalCollected = 0
 
@@ -111,6 +126,18 @@ export async function POST(request: Request) {
         const { loanId, scheduleId, instalmentNumber, amount, status, note } = entry
         
         const decimalAmount = new Prisma.Decimal(amount || 0)
+
+        // Issue 3: Idempotency check. Avoid double-billing if the request is retried.
+        const existingRepayment = await tx.loanRepayment.findFirst({
+          where: {
+            loanId,
+            instalmentNumber,
+            paidDate
+          }
+        })
+        if (existingRepayment) {
+          continue // Skip this entry as it was already processed
+        }
 
         if (status !== 'NP' && amount > 0) {
           await tx.loanRepayment.create({
@@ -125,34 +152,36 @@ export async function POST(request: Request) {
             }
           })
 
-          const loan = await tx.loan.findUnique({ where: { id: loanId } })
-          if (loan) {
-            const newPaid = loan.totalPaid.add(decimalAmount)
-            const newOutstanding = loan.outstanding.minus(decimalAmount)
-            const newStatus = newOutstanding.lte(0) ? 'SETTLED' : loan.status
+          // Issue 4: Race condition fix. Use atomic increment/decrement.
+          const updatedLoan = await tx.loan.update({
+            where: { id: loanId },
+            data: {
+              totalPaid: { increment: decimalAmount },
+              outstanding: { decrement: decimalAmount }
+            }
+          })
 
+          // Check if loan is now settled
+          if (updatedLoan.outstanding.lte(0) && updatedLoan.status !== 'SETTLED') {
             await tx.loan.update({
               where: { id: loanId },
-              data: {
-                totalPaid: newPaid,
-                outstanding: newOutstanding,
-                status: newStatus
-              }
+              data: { status: 'SETTLED' }
             })
           }
 
           if (scheduleId) {
-            const schedule = await tx.repaymentSchedule.findUnique({ where: { id: scheduleId } })
-            if (schedule) {
-              const newPaidAmount = schedule.paidAmount.add(decimalAmount)
-              const newScheduleStatus = newPaidAmount.gte(schedule.scheduledAmount) ? 'PAID' : 'PARTIALLY_PAID'
-
+            const updatedSchedule = await tx.repaymentSchedule.update({
+              where: { id: scheduleId },
+              data: {
+                paidAmount: { increment: decimalAmount }
+              }
+            })
+            
+            const newScheduleStatus = updatedSchedule.paidAmount.gte(updatedSchedule.scheduledAmount) ? 'PAID' : 'PARTIALLY_PAID'
+            if (updatedSchedule.status !== newScheduleStatus) {
               await tx.repaymentSchedule.update({
                 where: { id: scheduleId },
-                data: {
-                  paidAmount: newPaidAmount,
-                  status: newScheduleStatus
-                }
+                data: { status: newScheduleStatus }
               })
             }
           }

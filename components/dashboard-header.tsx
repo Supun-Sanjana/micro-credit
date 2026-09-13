@@ -57,9 +57,9 @@ export function DashboardHeader({ isSuspended = false }: DashboardHeaderProps) {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-black text-paper-white">
             <WalletCards className="h-4 w-4" />
           </div>
-          <span className="font-serif text-xl tracking-tight font-medium">
-            Steep MicroFinance
-          </span>
+            <span className="font-serif text-xl tracking-tight font-medium">
+              Solida
+            </span>
         </Link>
 
         {/* Categories - Center */}

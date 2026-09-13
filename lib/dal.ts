@@ -14,6 +14,16 @@ export async function getScopedDal() {
 
   const organizationId = session.user.organizationId
 
+  // Issue 6: Enforce Subscription Gate at API layer
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    include: { subscription: true }
+  })
+
+  if (org?.subscription?.status === 'SUSPENDED') {
+    throw new Error("ORG_SUSPENDED")
+  }
+
   const scopedPrisma = prisma.$extends(withOrgScope(organizationId))
 
   return {

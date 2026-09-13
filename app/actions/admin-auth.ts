@@ -6,6 +6,8 @@ import { createAdminSession } from "@/lib/admin-session"
 import { logAdminAction } from "@/lib/admin-audit"
 import { redirect } from "next/navigation"
 
+import { checkRateLimit, recordFailedLogin, clearFailedLogins } from "@/lib/rate-limit"
+
 export async function loginAdmin(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
@@ -15,17 +17,24 @@ export async function loginAdmin(formData: FormData) {
     return { error: "Email and password are required" }
   }
 
+  try {
+    await checkRateLimit(email)
+  } catch (error: any) {
+    return { error: error.message }
+  }
+
   const admin = await prisma.platformAdmin.findUnique({
     where: { email }
   })
 
   if (!admin) {
-    // Return generic error
+    await recordFailedLogin(email)
     return { error: "Invalid credentials" }
   }
 
   const isValid = await bcrypt.compare(password, admin.password)
   if (!isValid) {
+    await recordFailedLogin(email)
     return { error: "Invalid credentials" }
   }
 
@@ -41,6 +50,7 @@ export async function loginAdmin(formData: FormData) {
     const isTokenValid = await totp.verify(token, { secret: admin.totpSecret })
     
     if (!isTokenValid) {
+      await recordFailedLogin(email)
       return { error: "Invalid 2FA code", requiresTwoFactor: true }
     }
   }
@@ -57,6 +67,7 @@ export async function loginAdmin(formData: FormData) {
     note: "Platform Admin logged in successfully"
   })
 
+  await clearFailedLogins(email)
   redirect("/admin")
 }
 

@@ -71,7 +71,7 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p className="text-[16px] leading-[1.4] text-[#777b86] mt-2">
-            Start your 14-day free trial of Steep MicroFinance
+            Start your 14-day free trial of Solida
           </p>
         </div>
 

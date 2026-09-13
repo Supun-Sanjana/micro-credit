@@ -15,11 +15,14 @@ export default async function middleware(req: any) {
     }
     
     try {
-      const secret = process.env.AUTH_SECRET || "dev-secret-do-not-use-in-prod"
+      const secret = process.env.AUTH_SECRET
+      if (!secret) throw new Error("AUTH_SECRET is not set in environment variables")
       await jwtVerify(cookie, new TextEncoder().encode(secret), {
         algorithms: ["HS256"],
       })
-    } catch (err) {
+    } catch (err: any) {
+      // Only swallow JWT verification failures (invalid/expired token). Hard config errors must propagate.
+      if (err?.message === "AUTH_SECRET is not set in environment variables") throw err
       return Response.redirect(new URL("/admin/login", nextUrl))
     }
   }

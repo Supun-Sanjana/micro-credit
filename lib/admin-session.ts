@@ -1,7 +1,8 @@
 import { SignJWT, jwtVerify } from "jose"
 import { cookies } from "next/headers"
 
-const secretKey = process.env.AUTH_SECRET || "dev-secret-do-not-use-in-prod"
+const secretKey = process.env.AUTH_SECRET
+if (!secretKey) throw new Error("AUTH_SECRET is not set in environment variables")
 const key = new TextEncoder().encode(secretKey)
 
 export async function createAdminSession(adminId: string, email: string) {

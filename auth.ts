@@ -17,9 +17,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
+        
+        const email = credentials.email as string
+        const { checkRateLimit, recordFailedLogin, clearFailedLogins } = await import("./lib/rate-limit")
+
+        try {
+          await checkRateLimit(email)
+        } catch (e: any) {
+          throw new Error(e.message) // NextAuth will catch this
+        }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string }
+          where: { email }
         })
 
         // Always compare to prevent timing side-channel that leaks user existence
@@ -29,8 +38,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           user?.password ?? DUMMY_HASH
         )
 
-        if (!user || !passwordsMatch) return null
+        if (!user || !passwordsMatch) {
+          await recordFailedLogin(email)
+          return null
+        }
 
+        await clearFailedLogins(email)
         const { password, ...safeUser } = user
         return safeUser
       }

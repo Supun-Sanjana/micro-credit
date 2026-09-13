@@ -104,7 +104,7 @@ export async function POST(
   if (action === "APPROVE") {
     const currentPeriodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
-    // Execute claim update and subscription update in a single transaction
+    // Execute claim update, subscription update, and audit log in a single transaction
     await prisma.$transaction([
       prisma.paymentClaim.update({
         where: { id },
@@ -122,15 +122,16 @@ export async function POST(
           currentPeriodEnd,
         },
       }),
+      prisma.platformAdminAuditLog.create({
+        data: {
+          platformAdminId: session.adminId,
+          action: "APPROVE_CLAIM",
+          targetType: "PaymentClaim",
+          targetId: id,
+          note: trimmedNote || undefined,
+        }
+      })
     ])
-
-    await logAdminAction({
-      platformAdminId: session.adminId,
-      action: "APPROVE_CLAIM",
-      targetType: "PaymentClaim",
-      targetId: id,
-      note: trimmedNote || undefined,
-    })
 
     const contentType = request.headers.get("content-type") || ""
     if (
@@ -144,7 +145,7 @@ export async function POST(
   }
 
   if (action === "REJECT") {
-    // Execute claim update in a transaction without modifying subscription
+    // Execute claim update and audit log in a single transaction
     await prisma.$transaction([
       prisma.paymentClaim.update({
         where: { id },
@@ -155,15 +156,16 @@ export async function POST(
           verifiedByPlatformAdminId: session.adminId,
         },
       }),
+      prisma.platformAdminAuditLog.create({
+        data: {
+          platformAdminId: session.adminId,
+          action: "REJECT_CLAIM",
+          targetType: "PaymentClaim",
+          targetId: id,
+          note: trimmedNote,
+        }
+      })
     ])
-
-    await logAdminAction({
-      platformAdminId: session.adminId,
-      action: "REJECT_CLAIM",
-      targetType: "PaymentClaim",
-      targetId: id,
-      note: trimmedNote,
-    })
 
     const contentType = request.headers.get("content-type") || ""
     if (

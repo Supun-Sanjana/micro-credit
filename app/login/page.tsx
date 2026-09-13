@@ -31,7 +31,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="text-[17px] leading-[1.35] text-[#777b86] mt-2">
-            Sign in to your MicroCredit account to continue
+            Sign in to your Solida workspace to continue
           </p>
         </div>
         

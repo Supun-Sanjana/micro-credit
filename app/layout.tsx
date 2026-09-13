@@ -6,8 +6,11 @@ import { cn } from "@/lib/utils";
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "MicroCredit",
-  description: "Microfinance Management System",
+  title: {
+    template: "%s | Solida",
+    default: "Solida | Core Banking for Microfinance",
+  },
+  description: "Enterprise-grade core banking and operations platform for modern microfinance institutions.",
 };
 
 export default function RootLayout({
