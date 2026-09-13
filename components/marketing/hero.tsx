@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -46,18 +46,9 @@ export function Hero() {
       />
 
       <nav className="relative z-10 mx-auto flex max-w-[1280px] items-center justify-between px-5 py-4 sm:px-8 sm:py-5">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#166534] to-[#c9943e] p-[1px]">
-            <div className="flex h-full w-full items-center justify-center rounded-[7px] bg-[#0c1c15]">
-              <span className="text-sm font-bold tracking-tighter text-white">S</span>
-            </div>
-          </div>
-          <span
-            className="text-lg font-semibold tracking-tight text-[#f4efe6]"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Solida
-          </span>
+        {/* Left: Logo */}
+        <Link href="/" className="flex flex-col">
+          <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-[#166534]" style={{ fontFamily: "var(--font-outfit)" }}>solida</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
@@ -276,8 +267,11 @@ export function Hero() {
               className="fixed right-0 top-0 z-50 flex h-[100dvh] w-[min(88vw,360px)] flex-col bg-[#f4efe6] text-[#10261c] shadow-[-12px_0_48px_rgba(16,38,28,0.18)]"
             >
               <div className="flex items-center justify-between border-b border-[#10261c]/10 p-5">
-                <span className="text-lg font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-                  Solida
+                <span
+                  className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#166534]"
+                  style={{ fontFamily: "var(--font-outfit)" }}
+                >
+                  solida
                 </span>
                 <button onClick={() => setIsMenuOpen(false)} className="p-2" aria-label="Close menu">
                   <X className="h-6 w-6" />

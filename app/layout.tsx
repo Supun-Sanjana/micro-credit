@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter, Instrument_Serif, Playfair_Display } from "next/font/google";
+import { Inter, Instrument_Serif, Playfair_Display, Outfit } from "next/font/google";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 const instrumentSerif = Instrument_Serif({ weight: "400", style: ["normal", "italic"], subsets: ["latin"], variable: "--font-instrument" });
 const playfair = Playfair_Display({ subsets: ['latin'], style: ['normal', 'italic'], variable: '--font-playfair' });
 const geistFallback = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -23,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", inter.variable, instrumentSerif.variable, geistFallback.variable, geistMonoFallback.variable)}>
+    <html lang="en" className={cn("h-full antialiased", inter.variable, outfit.variable, instrumentSerif.variable, geistFallback.variable, geistMonoFallback.variable)}>
       <body className="min-h-full flex flex-col">
         {children}
       </body>
