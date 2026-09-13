@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState } from "react";
 import { ChevronDown, ChevronRight, Menu } from "lucide-react";
 import { DashboardPreview } from "./dashboard-preview";
@@ -7,10 +7,8 @@ export function Hero() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <div className="w-full bg-[#ededed] p-3 sm:p-4 font-sans text-neutral-900 pb-20">
-      <div className="relative w-full h-[calc(100vh-24px)] sm:h-[calc(100vh-32px)] overflow-hidden bg-[#d9d9d9] rounded-2xl sm:rounded-3xl shadow-sm">
-        
-        {/* Video Background */}
+    <div className="relative w-full h-[calc(100vh-24px)] sm:h-[calc(100vh-32px)] overflow-hidden bg-[#d9d9d9] rounded-2xl sm:rounded-3xl shadow-sm">
+      {/* Video Background */}
         <video 
           autoPlay 
           loop 
@@ -126,7 +124,6 @@ export function Hero() {
           <DashboardPreview />
           
         </div>
-      </div>
     </div>
   );
 }
