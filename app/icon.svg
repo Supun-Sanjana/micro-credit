@@ -1,4 +1,9 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0d4020" />
-  <text x="50%" y="53%" font-family="Montserrat, system-ui, sans-serif" font-size="360" font-weight="bold" letter-spacing="-10" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">s</text>
+﻿<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rotated group to create the diagonal pills -->
+  <g transform="translate(256, 256) rotate(45) translate(-256, -256)">
+    <!-- Top-left (dark forest green) -->
+    <rect x="136" y="106" width="120" height="200" rx="60" fill="#0d4020" />
+    <!-- Bottom-right (lighter forest green) -->
+    <rect x="256" y="206" width="120" height="200" rx="60" fill="#166534" />
+  </g>
 </svg>
