@@ -8,20 +8,15 @@ export function Hero() {
 
   return (
     <div className="relative w-full h-[calc(100vh-24px)] sm:h-[calc(100vh-32px)] overflow-hidden bg-[#d9d9d9] rounded-2xl sm:rounded-3xl shadow-sm">
-      {/* Video Background */}
-        <video 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          preload="auto" 
-          disableRemotePlayback 
-          poster="https://images.unsplash.com/photo-1557683316-973673baf926?w=1600&q=60"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-        >
-          <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260424_064411_9e9d7f84-9277-41f4-ab10-59172d89e6be.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-white/10" />
+        {/* Finance Background */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+          <img 
+            src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=2000&auto=format&fit=crop" 
+            alt="Finance"
+            className="w-full h-full object-cover transition-transform duration-[20000ms] ease-linear scale-110 hover:scale-100"
+          />
+        </div>
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]" />
 
         <div className="relative z-10 flex flex-col h-full overflow-y-auto overflow-x-hidden" style={{ scrollbarWidth: "none" }}>
           
