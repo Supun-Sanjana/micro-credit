@@ -70,6 +70,15 @@ const config: Config = {
         'subtle': '0 0 0 1px rgba(0,0,0,0.05), 0 4px 24px 0 rgba(0,0,0,0.08)',
         'subtle-2': '0 0 0 1px rgba(0,0,0,0.05), 0 8px 40px 0 rgba(0,0,0,0.1)',
         'subtle-3': '0 0 0 1px rgba(4,23,43,0.05), 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+      },
+      animation: {
+        'pan-slow': 'pan 40s linear infinite alternate',
+      },
+      keyframes: {
+        pan: {
+          '0%': { transform: 'scale(1.05) translate(0, 0)' },
+          '100%': { transform: 'scale(1.05) translate(-2%, 2%)' },
+        }
       }
     },
   },
