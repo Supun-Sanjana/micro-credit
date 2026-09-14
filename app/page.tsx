@@ -1,4 +1,6 @@
-﻿"use client";
+"use client";
+
+import { useState } from "react";
 
 import Link from "next/link";
 import {
@@ -74,6 +76,18 @@ const features = [
 ];
 
 export default function Home() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Simulate network request for the form submission
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    setIsSubmitting(false);
+    setIsSubmitted(true);
+  };
+
   return (
     <div className="relative min-h-screen bg-[#efe8dc] text-[#14231c] font-sans selection:bg-[#166534]/25 selection:text-[#166534] p-3 sm:p-4">
       <main className="flex flex-col items-center">
@@ -387,29 +401,41 @@ export default function Home() {
               </div>
 
               <div className="rounded-3xl border border-[#d9cfc0] bg-[#f7f1e8] p-6 shadow-xl shadow-[#14231c]/5 md:p-8">
-                <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="name" className="text-[13px] font-semibold">Name</label>
-                      <input id="name" className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Nimali Perera" />
+                {isSubmitted ? (
+                  <div className="flex flex-col items-center justify-center text-center py-12 space-y-4">
+                    <div className="w-16 h-16 bg-[#166534]/10 rounded-full flex items-center justify-center mb-2">
+                      <Check className="w-8 h-8 text-[#166534]" />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-tight">Request Received!</h3>
+                    <p className="text-[14px] text-[#5d6b63] max-w-sm">
+                      Thank you for reaching out. We'll be in touch with you shortly to schedule a personalized walkthrough of Solida.
+                    </p>
+                  </div>
+                ) : (
+                  <form className="space-y-5" onSubmit={handleSubmit}>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label htmlFor="name" className="text-[13px] font-semibold">Name</label>
+                        <input id="name" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Nimali Perera" />
+                      </div>
+                      <div className="space-y-2">
+                        <label htmlFor="org" className="text-[13px] font-semibold">Institution</label>
+                        <input id="org" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Community MFI" />
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="org" className="text-[13px] font-semibold">Institution</label>
-                      <input id="org" className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Community MFI" />
+                      <label htmlFor="email" className="text-[13px] font-semibold">Email</label>
+                      <input id="email" type="email" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="ops@yourmfi.org" />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="text-[13px] font-semibold">Email</label>
-                    <input id="email" type="email" className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="ops@yourmfi.org" />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="message" className="text-[13px] font-semibold">How you collect today</label>
-                    <textarea id="message" rows={4} className="w-full resize-none rounded-xl border border-[#d9cfc0] bg-white px-4 py-3 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Centers per officer, weekly meetings, current ledgers…" />
-                  </div>
-                  <button type="submit" className="mt-2 w-full rounded-xl bg-[#10261c] px-4 py-3 text-[14px] font-semibold text-[#f4efe6] shadow-md transition-all hover:bg-[#0c1c15] active:scale-[0.98]">
-                    Request a walkthrough
-                  </button>
-                </form>
+                    <div className="space-y-2">
+                      <label htmlFor="message" className="text-[13px] font-semibold">How you collect today</label>
+                      <textarea id="message" required rows={4} className="w-full resize-none rounded-xl border border-[#d9cfc0] bg-white px-4 py-3 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Centers per officer, weekly meetings, current ledgers." />
+                    </div>
+                    <button disabled={isSubmitting} type="submit" className="mt-2 w-full rounded-xl bg-[#10261c] px-4 py-3 text-[14px] font-semibold text-[#f4efe6] shadow-md transition-all hover:bg-[#0c1c15] active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none">
+                      {isSubmitting ? "Sending request..." : "Request a walkthrough"}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>
