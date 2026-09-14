@@ -17,7 +17,7 @@ export async function submitContactForm(formData: FormData) {
   try {
     const data = await resend.emails.send({
       from: "Solida Contact <onboarding@resend.dev>",
-      to: ["solida@cylvox.com"],
+      to: ["infor.ssupun@gmail.com"],
       subject: `New Walkthrough Request: ${name} (${org})`,
       replyTo: email,
       text: `New Walkthrough Request
