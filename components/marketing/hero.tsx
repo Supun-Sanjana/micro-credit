@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import {
   Menu,
   X,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: (custom: number) => ({
     opacity: 1,
@@ -20,7 +20,7 @@ const fadeUp = {
     transition: {
       delay: custom * 0.12,
       duration: 0.55,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.22, 1, 0.36, 1] as any,
     },
   }),
 };
