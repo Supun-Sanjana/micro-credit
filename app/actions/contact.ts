@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { Resend } from "resend";
 
@@ -19,7 +19,7 @@ export async function submitContactForm(formData: FormData) {
       from: "Solida Contact <onboarding@resend.dev>",
       to: ["solida@cylvox.com"],
       subject: `New Walkthrough Request: ${name} (${org})`,
-      reply_to: email,
+      replyTo: email,
       text: `New Walkthrough Request
 
 Name: ${name}
