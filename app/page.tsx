@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -17,17 +17,18 @@ import {
 } from "lucide-react";
 import { Hero } from "@/components/marketing/hero";
 import { Footer } from "@/components/marketing/footer";
+import { submitContactForm } from "./actions/contact";
 
 const operations = [
   {
     step: "01",
     title: "Branch",
-    copy: "The institution’s local book. Managers see disbursements, cash in vault, and officer performance.",
+    copy: "The institutionâ€™s local book. Managers see disbursements, cash in vault, and officer performance.",
   },
   {
     step: "02",
     title: "Center",
-    copy: "The weekly meeting point. Attendance, installments, and peer pressure sit in one grid — not a notebook.",
+    copy: "The weekly meeting point. Attendance, installments, and peer pressure sit in one grid â€” not a notebook.",
   },
   {
     step: "03",
@@ -71,7 +72,7 @@ const features = [
     icon: Shield,
     title: "Roles that match the field",
     description:
-      "Field officers, branch managers, and head office each see only what they should — including cash.",
+      "Field officers, branch managers, and head office each see only what they should â€” including cash.",
   },
 ];
 
@@ -79,13 +80,19 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate network request for the form submission
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const formData = new FormData(e.currentTarget);
+    const result = await submitContactForm(formData);
+    
     setIsSubmitting(false);
-    setIsSubmitted(true);
+    if (result?.error) {
+      alert("Failed to send: " + result.error);
+    } else {
+      setIsSubmitted(true);
+    }
   };
 
   return (
@@ -162,7 +169,7 @@ export default function Home() {
                 </h3>
                 <ol className="mt-8 space-y-5 text-[14px] font-medium">
                   {[
-                    "Officer opens the center grid — names in the order they sit.",
+                    "Officer opens the center grid â€” names in the order they sit.",
                     "Installments marked paid, partial, or skipped with a reason.",
                     "Guarantor notified when a member slips into arrears.",
                     "Cash counted against the grid before returning to branch.",
@@ -178,7 +185,7 @@ export default function Home() {
               </div>
               <div className="flex min-h-[280px] flex-col justify-center border-t border-white/10 bg-[#0c1c15] p-6 sm:p-8 lg:border-l lg:border-t-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#e6c27a]">
-                  End of day · Branch Kandy
+                  End of day Â· Branch Kandy
                 </p>
                 <div className="mt-5 space-y-3">
                   {[
@@ -211,8 +218,8 @@ export default function Home() {
                 Operations the industry already lives.
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-[15px] font-medium leading-relaxed text-[#5d6b63]">
-                Not another CRM. The daily work of an MFI — collections, groups, cash, and
-                control — without inventing a new way of doing business.
+                Not another CRM. The daily work of an MFI â€” collections, groups, cash, and
+                control â€” without inventing a new way of doing business.
               </p>
             </div>
 
@@ -242,7 +249,7 @@ export default function Home() {
                 {
                   icon: Landmark,
                   title: "Institutional, not startup-flavored",
-                  copy: "Designed for MFIs, cooperatives, and last-mile lenders — the vocabulary of centers, not ‘users’.",
+                  copy: "Designed for MFIs, cooperatives, and last-mile lenders â€” the vocabulary of centers, not â€˜usersâ€™.",
                 },
                 {
                   icon: UsersRound,
@@ -371,7 +378,7 @@ export default function Home() {
                   Bring your centers onto one book.
                 </h2>
                 <p className="mb-10 max-w-sm text-[15px] font-medium leading-relaxed text-[#5d6b63]">
-                  Ask for a walkthrough with your own branch structure — or talk through
+                  Ask for a walkthrough with your own branch structure â€” or talk through
                   migrating members, loans, and historical collections.
                 </p>
                 <div className="space-y-6 text-[14px] font-medium text-[#3d4a44]">
@@ -416,20 +423,20 @@ export default function Home() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label htmlFor="name" className="text-[13px] font-semibold">Name</label>
-                        <input id="name" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Nimali Perera" />
+                        <input id="name" name="name" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Nimali Perera" />
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="org" className="text-[13px] font-semibold">Institution</label>
-                        <input id="org" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Community MFI" />
+                        <input id="org" name="org" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Community MFI" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="email" className="text-[13px] font-semibold">Email</label>
-                      <input id="email" type="email" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="ops@yourmfi.org" />
+                      <input id="email" name="email" type="email" required className="w-full rounded-xl border border-[#d9cfc0] bg-white px-4 py-2.5 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="ops@yourmfi.org" />
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="message" className="text-[13px] font-semibold">How you collect today</label>
-                      <textarea id="message" required rows={4} className="w-full resize-none rounded-xl border border-[#d9cfc0] bg-white px-4 py-3 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Centers per officer, weekly meetings, current ledgers." />
+                      <textarea id="message" name="message" required rows={4} className="w-full resize-none rounded-xl border border-[#d9cfc0] bg-white px-4 py-3 text-[14px] font-medium placeholder:text-[#8a948e] focus:border-[#166534] focus:outline-none focus:ring-2 focus:ring-[#166534]/20" placeholder="Centers per officer, weekly meetings, current ledgers." />
                     </div>
                     <button disabled={isSubmitting} type="submit" className="mt-2 w-full rounded-xl bg-[#10261c] px-4 py-3 text-[14px] font-semibold text-[#f4efe6] shadow-md transition-all hover:bg-[#0c1c15] active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none">
                       {isSubmitting ? "Sending request..." : "Request a walkthrough"}
