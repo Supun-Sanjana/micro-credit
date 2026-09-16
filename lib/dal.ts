@@ -34,6 +34,7 @@ export async function getScopedDal() {
 
   return {
     organizationId,
+    userId: session.user.id,
     prisma: scopedPrisma,
     // Provide explicit aliases for convenience if needed, but scopedPrisma is safe
     branches: scopedPrisma.branch,

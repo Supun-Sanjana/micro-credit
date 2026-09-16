@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
 import { Prisma } from "@prisma/client"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(
   request: Request,
@@ -50,6 +51,15 @@ export async function PUT(
           verificationStatus: json.status, // "VERIFIED" | "REJECTED"
           verificationNote: json.note
         }
+      })
+      await logAudit({
+        dal,
+        action: "UPDATE",
+        entityType: "Loan",
+        entityId: id,
+        before: loan,
+        after: updated,
+        note: `Verification: ${json.status}`
       })
       return NextResponse.json(updated)
     }
@@ -103,6 +113,16 @@ export async function PUT(
         include: { repaymentSchedule: true }
       })
       
+      await logAudit({
+        dal,
+        action: "UPDATE",
+        entityType: "Loan",
+        entityId: id,
+        before: loan,
+        after: updated,
+        note: `Disbursed`
+      })
+
       return NextResponse.json(updated)
     }
     
@@ -147,6 +167,15 @@ export async function PUT(
       include: { guarantors: true }
     })
     
+    await logAudit({
+      dal,
+      action: "UPDATE",
+      entityType: "Loan",
+      entityId: id,
+      before: loan,
+      after: updated
+    })
+
     return NextResponse.json(updated)
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 })

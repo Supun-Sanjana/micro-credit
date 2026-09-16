@@ -1,16 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { mockLoans, mockCashFlows, mockCentres, mockMembers, mockGuarantors } from "@/lib/mock-data"
 import { format } from "date-fns"
 import Link from "next/link"
 
-type Tab = "reconciliation" | "outstanding" | "member-search" | "exposure"
+type Tab = "reconciliation" | "outstanding" | "member-search" | "exposure" | "par" | "efficiency" | "aging"
 
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("reconciliation")
   const [searchNic, setSearchNic] = useState("")
   const [searchedMember, setSearchedMember] = useState<any>(null)
+  
+  const [parData, setParData] = useState<any>(null)
+  const [efficiencyData, setEfficiencyData] = useState<any[]>([])
+  const [agingData, setAgingData] = useState<any[]>([])
+  const [loadingNewReports, setLoadingNewReports] = useState(false)
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -24,6 +29,25 @@ export default function ReportsPage() {
       setSearchedMember("NOT_FOUND")
     }
   }
+
+  useEffect(() => {
+    if (activeTab === "par" && !parData) {
+      setLoadingNewReports(true)
+      fetch("/api/reports/par").then(r => r.json()).then(setParData).finally(() => setLoadingNewReports(false))
+    }
+    if (activeTab === "efficiency" && efficiencyData.length === 0) {
+      setLoadingNewReports(true)
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 30) // last 30 days
+      fetch(`/api/reports/collection-efficiency?startDate=${start.toISOString()}&endDate=${end.toISOString()}`)
+        .then(r => r.json()).then(setEfficiencyData).finally(() => setLoadingNewReports(false))
+    }
+    if (activeTab === "aging" && agingData.length === 0) {
+      setLoadingNewReports(true)
+      fetch("/api/reports/aging").then(r => r.json()).then(setAgingData).finally(() => setLoadingNewReports(false))
+    }
+  }, [activeTab, parData, efficiencyData.length, agingData.length])
 
   // Calculate Outstanding by Centre
   const outstandingByCentre = mockCentres.map(c => {
@@ -58,6 +82,15 @@ export default function ReportsPage() {
           </TabButton>
           <TabButton active={activeTab === "outstanding"} onClick={() => setActiveTab("outstanding")}>
             Outstanding by Centre
+          </TabButton>
+          <TabButton active={activeTab === "par"} onClick={() => setActiveTab("par")}>
+            Portfolio at Risk (PAR)
+          </TabButton>
+          <TabButton active={activeTab === "efficiency"} onClick={() => setActiveTab("efficiency")}>
+            Collection Efficiency
+          </TabButton>
+          <TabButton active={activeTab === "aging"} onClick={() => setActiveTab("aging")}>
+            Aging Report
           </TabButton>
           <TabButton active={activeTab === "member-search"} onClick={() => setActiveTab("member-search")}>
             Member History
@@ -254,6 +287,121 @@ export default function ReportsPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {activeTab === "par" && (
+            <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+              <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">Portfolio at Risk (PAR)</h2>
+              {loadingNewReports && <p>Loading...</p>}
+              {parData && (
+                <div className="flex flex-col gap-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-paper-white p-4 rounded-xl border border-border/40">
+                      <div className="text-[14px] text-slate-gray">PAR 1+</div>
+                      <div className="text-[20px] font-medium mt-1">LKR {parData.par1.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-paper-white p-4 rounded-xl border border-border/40">
+                      <div className="text-[14px] text-slate-gray">PAR 7+</div>
+                      <div className="text-[20px] font-medium mt-1">LKR {parData.par7.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-paper-white p-4 rounded-xl border border-border/40">
+                      <div className="text-[14px] text-slate-gray">PAR 30+</div>
+                      <div className="text-[20px] font-medium mt-1">LKR {parData.par30.toLocaleString()}</div>
+                    </div>
+                    <div className="bg-paper-white p-4 rounded-xl border border-border/40">
+                      <div className="text-[14px] text-slate-gray">PAR 90+</div>
+                      <div className="text-[20px] font-medium mt-1 text-sienna-brown">LKR {parData.par90.toLocaleString()}</div>
+                    </div>
+                  </div>
+                  <div className="bg-paper-white p-6 rounded-xl border border-border/40">
+                    <div className="text-[15px] text-slate-gray mb-2">Total Outstanding: LKR {parData.totalOutstanding.toLocaleString()}</div>
+                    <div className="text-[15px] text-slate-gray">Total PAR: LKR {parData.parTotal.toLocaleString()} ({((parData.parTotal / (parData.totalOutstanding || 1)) * 100).toFixed(2)}%)</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "efficiency" && (
+            <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+              <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">Collection Efficiency (Last 30 Days)</h2>
+              {loadingNewReports && <p>Loading...</p>}
+              {!loadingNewReports && (
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-border/40">
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Branch</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Centre</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Scheduled</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Collected</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Efficiency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {efficiencyData.map(d => (
+                        <tr key={d.centreName} className="border-b border-border/40 last:border-0">
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">{d.branchName}</td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-ink-black font-medium">{d.centreName}</td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray text-right">LKR {d.scheduled.toLocaleString()}</td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-ink-black text-right">LKR {d.collected.toLocaleString()}</td>
+                          <td className="py-5 pl-4 text-[16px] font-sans font-medium text-right">
+                            {d.efficiency.toFixed(2)}%
+                          </td>
+                        </tr>
+                      ))}
+                      {efficiencyData.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-5 text-center text-slate-gray">No data available for this period.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "aging" && (
+            <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+              <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">Aging Report</h2>
+              {loadingNewReports && <p>Loading...</p>}
+              {!loadingNewReports && (
+                <div className="w-full overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-border/40">
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Loan No</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Member</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-center">Days Past Due</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Overdue Amount</th>
+                        <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Total Outstanding</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {agingData.map(d => (
+                        <tr key={d.loanId} className="border-b border-border/40 last:border-0">
+                          <td className="py-5 pr-4 text-[16px] font-sans text-ink-black font-medium">
+                            <Link href={`/loans/${d.loanId}`} className="hover:underline">{d.loanNumber || d.loanId.slice(0,8)}</Link>
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">{d.memberName}</td>
+                          <td className={`py-5 pr-4 text-[16px] font-sans text-center font-medium ${d.daysPastDue > 30 ? 'text-sienna-brown' : 'text-ink-black'}`}>
+                            {d.daysPastDue}
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-sienna-brown text-right">LKR {d.overdueAmount.toLocaleString()}</td>
+                          <td className="py-5 pl-4 text-[16px] font-sans text-slate-gray text-right">LKR {d.outstanding.toLocaleString()}</td>
+                        </tr>
+                      ))}
+                      {agingData.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-5 text-center text-slate-gray">No overdue loans found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 

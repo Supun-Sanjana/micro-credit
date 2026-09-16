@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(
   request: Request,
@@ -30,6 +31,7 @@ export async function PUT(
     const { id } = await params
     const json = await request.json()
     
+    const existingProduct = await dal.prisma.loanProduct.findUnique({ where: { id } })
     const product = await dal.prisma.loanProduct.update({
       where: { id },
       data: {
@@ -41,6 +43,15 @@ export async function PUT(
       }
     })
     
+    await logAudit({
+      dal,
+      action: "UPDATE",
+      entityType: "LoanProduct",
+      entityId: id,
+      before: existingProduct,
+      after: product
+    })
+
     return NextResponse.json(product)
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 })
@@ -55,9 +66,20 @@ export async function DELETE(
     const dal = await getScopedDal()
     const { id } = await params
     
+    const product = await dal.prisma.loanProduct.findUnique({ where: { id } })
     await dal.prisma.loanProduct.delete({
       where: { id }
     })
+    
+    if (product) {
+      await logAudit({
+        dal,
+        action: "DELETE",
+        entityType: "LoanProduct",
+        entityId: id,
+        before: product
+      })
+    }
     
     return NextResponse.json({ success: true })
   } catch (error: any) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(
   request: Request,
@@ -47,6 +48,7 @@ export async function PUT(
       }
     }
     
+    const existingMember = await dal.prisma.member.findUnique({ where: { id } })
     const member = await dal.prisma.member.update({
       where: { id },
       data: {
@@ -60,6 +62,15 @@ export async function PUT(
       }
     })
     
+    await logAudit({
+      dal,
+      action: "UPDATE",
+      entityType: "Member",
+      entityId: id,
+      before: existingMember,
+      after: member
+    })
+
     return NextResponse.json(member)
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 })
@@ -74,9 +85,20 @@ export async function DELETE(
     const dal = await getScopedDal()
     const { id } = await params
     
+    const member = await dal.prisma.member.findUnique({ where: { id } })
     await dal.prisma.member.delete({
       where: { id }
     })
+    
+    if (member) {
+      await logAudit({
+        dal,
+        action: "DELETE",
+        entityType: "Member",
+        entityId: id,
+        before: member
+      })
+    }
     
     return NextResponse.json({ success: true })
   } catch (error: any) {

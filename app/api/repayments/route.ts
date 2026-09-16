@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { Prisma } from "@prisma/client"
+import { logAudit } from "@/lib/audit"
 
 export async function GET(request: Request) {
   try {
@@ -142,6 +143,14 @@ export async function POST(request: Request) {
         }
 
         processed.push(repayment)
+        
+        await logAudit({
+          dal,
+          action: "CREATE",
+          entityType: "LoanRepayment",
+          entityId: repayment.id,
+          after: repayment
+        })
       }
 
       return processed

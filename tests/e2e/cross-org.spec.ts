@@ -112,4 +112,27 @@ test.describe('Cross-Organization Security', () => {
     const body = await response.json();
     expect(body.error).toContain('Invalid or unauthorized loan ID');
   });
+
+  test('audit logs respect organization isolation', async ({ page }) => {
+    // We already created an Evil Corp with a member and loan
+    // Verify that Evil Corp's audit logs do not appear in micro.local's audit page
+    await page.goto('/app/login');
+    await page.waitForLoadState('networkidle');
+    await page.fill('input[type="email"]', 'admin@micro.local');
+    await page.fill('input[name="password"]', 'admin123');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
+
+    // Assuming we have an audit-log page at /app/settings/audit-log
+    await page.goto('/app/settings/audit-log');
+    await page.waitForLoadState('networkidle');
+
+    // Make sure we are on the page
+    await expect(page.locator('text=Audit Log').first()).toBeVisible();
+
+    // Verify Evil Member or Evil Corp's specific entity IDs do not appear here
+    // Our crossOrgLoanId should NOT be in the table
+    const tableBody = await page.locator('#audit-table-body').textContent();
+    expect(tableBody).not.toContain(crossOrgLoanId);
+  });
 });

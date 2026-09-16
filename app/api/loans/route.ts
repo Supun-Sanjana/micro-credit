@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
+import { logAudit } from "@/lib/audit"
 
 function getOrdinal(n: number) {
   const s = ["th", "st", "nd", "rd"]
@@ -87,6 +88,14 @@ export async function POST(request: Request) {
       include: { guarantors: true }
     })
     
+    await logAudit({
+      dal,
+      action: "CREATE",
+      entityType: "Loan",
+      entityId: loan.id,
+      after: loan
+    })
+
     return NextResponse.json(loan, { status: 201 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 })

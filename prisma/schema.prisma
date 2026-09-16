@@ -15,6 +15,12 @@ enum Role {
   USER
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 model Organization {
   id        String   @id @default(cuid())
   name      String
@@ -27,6 +33,7 @@ model Organization {
   members      Member[]
   subscription Subscription?
   memberDocuments MemberDocument[]
+  auditLogs       AuditLog[]
 }
 
 model User {
@@ -44,6 +51,7 @@ model User {
 
   accounts       Account[]
   sessions       Session[]
+  auditLogs      AuditLog[]
 
   @@index([organizationId])
 }
@@ -425,4 +433,24 @@ model LoginAttempt {
 
   @@index([email, timestamp])
   @@index([ip, timestamp])
+}
+
+model AuditLog {
+  id             String      @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         AuditAction
+  entityType     String      // "Loan", "Member", "LoanRepayment", "LoanProduct", etc.
+  entityId       String
+  before         Json?
+  after          Json?
+  note           String?
+  ip             String?
+  createdAt      DateTime    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
 }

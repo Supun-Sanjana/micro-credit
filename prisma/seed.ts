@@ -77,6 +77,77 @@ async function main() {
 
   console.log('Seed completed successfully.')
 
+  // Create a Centre for testing
+  const galleBranch = await prisma.branch.findUnique({ where: { code: 'SA01' } })
+  const testCentre = await prisma.centre.upsert({
+    where: { centreCode: 'PAR-TEST' },
+    update: {},
+    create: {
+      centreNumber: 999,
+      centreCode: 'PAR-TEST',
+      name: 'PAR Test Centre',
+      branchId: galleBranch!.id,
+    }
+  })
+
+  // Create a Member for PAR testing
+  const testMember = await prisma.member.upsert({
+    where: { memberNumber_organizationId: { memberNumber: 'PAR-M1', organizationId: org.id } },
+    update: {},
+    create: {
+      memberNumber: 'PAR-M1',
+      name: 'PAR Test Member',
+      nic: 'PAR123456789',
+      centreId: testCentre.id,
+      organizationId: org.id
+    }
+  })
+
+  // Create Loans with Missed Installments for PAR testing
+  const now = new Date()
+  
+  // PAR 30 (Missed 40 days ago)
+  const past40Days = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000)
+  await prisma.loan.create({
+    data: {
+      memberId: testMember.id,
+      loanType: 'QUICK',
+      loanAmount: 10000,
+      weeklyRental: 1000,
+      numberOfWeeks: 10,
+      totalReceivable: 10000,
+      outstanding: 5000,
+      status: 'ACTIVE',
+      grantedDate: past40Days,
+      repaymentSchedule: {
+        create: [
+          { instalmentNumber: 1, scheduledDate: past40Days, scheduledAmount: 1000, isPaid: false }
+        ]
+      }
+    }
+  })
+
+  // PAR 7 (Missed 10 days ago)
+  const past10Days = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
+  await prisma.loan.create({
+    data: {
+      memberId: testMember.id,
+      loanType: 'QUICK',
+      loanAmount: 10000,
+      weeklyRental: 1000,
+      numberOfWeeks: 10,
+      totalReceivable: 10000,
+      outstanding: 10000,
+      status: 'ACTIVE',
+      grantedDate: past10Days,
+      repaymentSchedule: {
+        create: [
+          { instalmentNumber: 1, scheduledDate: past10Days, scheduledAmount: 1000, isPaid: false }
+        ]
+      }
+    }
+  })
+
   // 5. Create Placeholder Subscription Plan
   const plan = await prisma.subscriptionPlan.upsert({
     where: { id: 'plan_placeholder' },
