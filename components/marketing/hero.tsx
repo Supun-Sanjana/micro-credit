@@ -125,7 +125,7 @@ export function Hero() {
             className="max-w-[540px] text-[15px] font-medium leading-relaxed text-[#f4efe6]/78 sm:text-[17px]"
           >
             Solida is built for last-mile lending: branches, centers, guarantors,
-            weekly collections, and cash that has to reconcile before dusk â€” not
+            weekly collections, and cash that has to reconcile before dusk &mdash; not
             generic banking software dressed up as inclusion.
           </motion.p>
 
@@ -182,7 +182,7 @@ export function Hero() {
             <div className="flex items-center justify-between border-b border-[#d9cfc0] bg-[#f7f1e8] px-4 py-3 sm:px-5">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#c9943e]">
-                  Center 14 Â· Tuesday meeting
+                  Center 14 &mdash; Tuesday meeting
                 </p>
                 <p className="mt-0.5 text-sm font-semibold tracking-tight">Weekly collection grid</p>
               </div>
@@ -242,7 +242,7 @@ export function Hero() {
                   <UsersRound className="h-3.5 w-3.5" />
                   PAR 30
                 </div>
-                <p className="text-sm font-semibold">2.4% Â· flagged</p>
+                <p className="text-sm font-semibold">2.4% &mdash; flagged</p>
               </div>
             </div>
           </div>
