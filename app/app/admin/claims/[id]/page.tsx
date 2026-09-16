@@ -138,7 +138,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
               Payment claim details for{" "}
               {org ? (
                 <Link
-                  href={`/admin/orgs/${org.id}`}
+                  href={`/app/admin/orgs/${org.id}`}
                   className="font-medium text-ink-black hover:underline"
                 >
                   {org.name}
@@ -165,7 +165,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
               <div className="mt-1 text-[16px] font-medium text-ink-black">
                 {org ? (
                   <Link
-                    href={`/admin/orgs/${org.id}`}
+                    href={`/app/admin/orgs/${org.id}`}
                     className="hover:underline inline-flex items-center gap-1"
                   >
                     {org.name} →
@@ -479,7 +479,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                     }
 
                     setTimeout(function() {
-                      window.location.href = "/app/admin/claims';
+                      window.location.href = '/app/admin/claims';
                     }, 1000);
                   } catch (err) {
                     if (feedback) {

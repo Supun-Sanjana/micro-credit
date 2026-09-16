@@ -203,13 +203,13 @@ export default async function AdminClaimsQueuePage() {
                       <td className="py-4 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link
-                            href={`/admin/claims/${claim.id}?action=approve`}
+                            href={`/app/admin/claims/${claim.id}?action=approve`}
                             className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-[#e6f4ea] text-[#137333] hover:bg-[#d2ebd7] transition-colors"
                           >
                             Approve
                           </Link>
                           <Link
-                            href={`/admin/claims/${claim.id}?action=reject`}
+                            href={`/app/admin/claims/${claim.id}?action=reject`}
                             className="inline-flex items-center justify-center px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-[#fce8e6] text-[#c5221f] hover:bg-[#fad2cf] transition-colors"
                           >
                             Reject
@@ -298,7 +298,7 @@ export default async function AdminClaimsQueuePage() {
                       </td>
                       <td className="py-4 px-4 text-right">
                         <Link
-                          href={`/admin/claims/${claim.id}`}
+                          href={`/app/admin/claims/${claim.id}`}
                           className="inline-flex items-center gap-1 text-[13px] font-medium text-ink-black hover:text-slate-gray transition-colors"
                         >
                           View →

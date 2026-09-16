@@ -176,7 +176,7 @@ export default async function AdminOrganizationsPage() {
                         </td>
                         <td className="py-4 px-4 text-right">
                           <Link
-                            href={`/admin/orgs/${org.id}`}
+                            href={`/app/admin/orgs/${org.id}`}
                             className="inline-flex items-center gap-1 text-[14px] font-medium text-ink-black hover:text-slate-gray transition-colors"
                           >
                             View →
