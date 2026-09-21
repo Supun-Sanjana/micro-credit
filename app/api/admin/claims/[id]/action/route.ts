@@ -63,7 +63,7 @@ export async function POST(
       contentType.includes("application/x-www-form-urlencoded") ||
       contentType.includes("multipart/form-data")
     ) {
-      return NextResponse.redirect(new URL(`/admin/claims/${id}?error=note_required`, request.url), { status: 303 })
+      return NextResponse.redirect(new URL(`/app/admin/claims/${id}?error=note_required`, request.url), { status: 303 })
     }
     return NextResponse.json(
       { error: "Verification note is required when rejecting a claim." },
