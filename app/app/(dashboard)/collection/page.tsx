@@ -14,7 +14,7 @@ interface CollectionItem {
   memberName: string
   memberNumber: string
   groupNumber: number | null
-  loanId: string
+  loanId: string | null
   scheduleId: string | null
   instalmentNumber: number | null
   scheduledAmount: number
@@ -23,12 +23,18 @@ interface CollectionItem {
   weeklyRental: number
   outstanding: number
   currentStatus: string
+  compulsorySavingsId: string | null
+  compulsorySavingsBalance: number
+  voluntarySavingsId: string | null
+  voluntarySavingsBalance: number
 }
 
 type EntryStatus = "FULL" | "PARTIAL" | "NP"
 
 interface CollectionEntry {
   amount: number | ""
+  compulsorySavingsDeposit: number | ""
+  voluntarySavingsDeposit: number | ""
   status: EntryStatus
   note: string
 }
@@ -64,9 +70,11 @@ export default function CollectionPage() {
         setDueList(data)
         const initialCollections: Record<string, CollectionEntry> = {}
         data.forEach(item => {
-          initialCollections[item.loanId] = {
+          initialCollections[item.memberId] = {
             amount: item.totalDue,
-            status: "FULL",
+            compulsorySavingsDeposit: item.compulsorySavingsId ? 0 : "",
+            voluntarySavingsDeposit: item.voluntarySavingsId ? 0 : "",
+            status: item.totalDue > 0 ? "FULL" : "NP",
             note: ""
           }
         })
@@ -85,25 +93,32 @@ export default function CollectionPage() {
     }
   }, [selectedCentre, selectedDate])
 
-  const handleAmountChange = (loanId: string, val: string) => {
-    setCollections(prev => ({
-      ...prev,
-      [loanId]: { 
-        ...prev[loanId], 
-        amount: val === "" ? "" : Number(val),
-        status: "PARTIAL"
+  const handleAmountChange = (memberId: string, val: string, field: "amount" | "compulsory" | "voluntary") => {
+    setCollections(prev => {
+      const current = prev[memberId]
+      const next = { ...current }
+      const numericVal = val === "" ? "" : Number(val)
+      
+      if (field === "amount") {
+        next.amount = numericVal
+        next.status = "PARTIAL"
+      } else if (field === "compulsory") {
+        next.compulsorySavingsDeposit = numericVal
+      } else if (field === "voluntary") {
+        next.voluntarySavingsDeposit = numericVal
       }
-    }))
+      return { ...prev, [memberId]: next }
+    })
   }
 
-  const handleStatusChange = (loanId: string, status: EntryStatus, totalDue: number) => {
+  const handleStatusChange = (memberId: string, status: EntryStatus, totalDue: number) => {
     setCollections(prev => {
       if (status === "FULL") {
-        return { ...prev, [loanId]: { amount: totalDue, status: "FULL", note: "" } }
+        return { ...prev, [memberId]: { ...prev[memberId], amount: totalDue, status: "FULL", note: "" } }
       } else if (status === "NP") {
-        return { ...prev, [loanId]: { amount: 0, status: "NP", note: "NP" } }
+        return { ...prev, [memberId]: { ...prev[memberId], amount: 0, status: "NP", note: "NP" } }
       } else {
-        return { ...prev, [loanId]: { ...prev[loanId], status: "PARTIAL" } }
+        return { ...prev, [memberId]: { ...prev[memberId], status: "PARTIAL" } }
       }
     })
   }
@@ -112,9 +127,10 @@ export default function CollectionPage() {
     setCollections(prev => {
       const next = { ...prev }
       dueList.forEach(item => {
-        next[item.loanId] = {
+        next[item.memberId] = {
+          ...next[item.memberId],
           amount: item.totalDue,
-          status: "FULL",
+          status: item.totalDue > 0 ? "FULL" : "NP",
           note: ""
         }
       })
@@ -125,14 +141,18 @@ export default function CollectionPage() {
   const handleSave = async () => {
     setIsSaving(true)
     const entries = dueList.map(item => {
-      const col = collections[item.loanId]
+      const col = collections[item.memberId]
       return {
         loanId: item.loanId,
         scheduleId: item.scheduleId,
         instalmentNumber: item.instalmentNumber,
         amount: col.amount === "" ? 0 : col.amount,
         status: col.status,
-        note: col.note
+        note: col.note,
+        compulsorySavingsId: item.compulsorySavingsId,
+        compulsorySavingsDeposit: col.compulsorySavingsDeposit === "" ? 0 : col.compulsorySavingsDeposit,
+        voluntarySavingsId: item.voluntarySavingsId,
+        voluntarySavingsDeposit: col.voluntarySavingsDeposit === "" ? 0 : col.voluntarySavingsDeposit
       }
     })
 
@@ -163,10 +183,17 @@ export default function CollectionPage() {
 
   const totalExpected = dueList.reduce((sum, item) => sum + item.totalDue, 0)
   const totalCollected = Object.values(collections).reduce((sum, col) => {
+    let amt = 0
     if (col.status !== "NP" && typeof col.amount === "number") {
-      return sum + col.amount
+      amt += col.amount
     }
-    return sum
+    if (typeof col.compulsorySavingsDeposit === "number") {
+      amt += col.compulsorySavingsDeposit
+    }
+    if (typeof col.voluntarySavingsDeposit === "number") {
+      amt += col.voluntarySavingsDeposit
+    }
+    return sum + amt
   }, 0)
   const shortfall = totalExpected - totalCollected
   const percentComplete = totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0
@@ -299,69 +326,126 @@ export default function CollectionPage() {
                       {groupName}
                     </h3>
                     {items.map((item) => {
-                      const loanId = item.loanId
-                      const col = collections[loanId] || { amount: "", status: "FULL", note: "" }
+                      const memberId = item.memberId
+                      const col = collections[memberId] || { amount: "", compulsorySavingsDeposit: "", voluntarySavingsDeposit: "", status: "FULL", note: "" }
                       
                       return (
-                        <div key={loanId} className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border/40 pb-4 last:border-0 last:pb-0 gap-4">
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[18px] font-sans text-ink-black font-medium">{item.memberName}</span>
+                        <div key={memberId} className="flex flex-col border-b border-border/40 pb-4 last:border-0 last:pb-0 gap-4">
+                          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[18px] font-sans text-ink-black font-medium">{item.memberName}</span>
+                              </div>
+                              <span className="text-[14px] text-slate-gray font-sans">{item.memberNumber}</span>
+                              <div className="text-[15px] font-sans text-ink-black mt-1">
+                                Loan Due: LKR {item.totalDue.toLocaleString()}
+                                {item.arrearsBF > 0 && (
+                                  <span className="text-sienna-brown text-[13px] ml-2">
+                                    (incl. Arrears: {item.arrearsBF.toLocaleString()})
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-4 mt-2">
+                                {item.compulsorySavingsId && (
+                                  <span className="text-[13px] text-slate-gray">
+                                    Comp. Savings Bal: LKR {item.compulsorySavingsBalance.toLocaleString()}
+                                  </span>
+                                )}
+                                {item.voluntarySavingsId && (
+                                  <span className="text-[13px] text-slate-gray">
+                                    Vol. Savings Bal: LKR {item.voluntarySavingsBalance.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <span className="text-[14px] text-slate-gray font-sans">{item.memberNumber}</span>
-                            <div className="text-[15px] font-sans text-ink-black mt-1">
-                              Due: LKR {item.totalDue.toLocaleString()}
-                              {item.arrearsBF > 0 && (
-                                <span className="text-sienna-brown text-[13px] ml-2">
-                                  (incl. Arrears: {item.arrearsBF.toLocaleString()})
-                                </span>
+
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                              {/* Loan Repayment Input */}
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[12px] text-slate-gray pl-1">Loan Repayment</label>
+                                <div className="relative">
+                                  <span className="absolute left-[12px] top-[10px] text-[14px] text-smoke-gray font-sans">Rs</span>
+                                  <input 
+                                    type="number"
+                                    value={col.amount}
+                                    onChange={(e) => handleAmountChange(memberId, e.target.value, 'amount')}
+                                    readOnly={col.status === 'FULL' || col.status === 'NP' || !item.loanId}
+                                    placeholder="0.00"
+                                    className={`w-[120px] border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors ${
+                                      !item.loanId ? 'bg-mist-gray text-smoke-gray cursor-not-allowed' :
+                                      col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32] border-[#a5d6a7]' :
+                                      col.status === 'NP' ? 'bg-[#ffebee] text-sienna-brown border-[#ffcdd2]' :
+                                      col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17] border-[#ffe082]' :
+                                      'bg-paper-white text-ink-black focus:border-ink-black'
+                                    }`}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Compulsory Savings Input */}
+                              {item.compulsorySavingsId && (
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[12px] text-slate-gray pl-1">Comp. Deposit</label>
+                                  <div className="relative">
+                                    <span className="absolute left-[12px] top-[10px] text-[14px] text-smoke-gray font-sans">Rs</span>
+                                    <input 
+                                      type="number"
+                                      value={col.compulsorySavingsDeposit}
+                                      onChange={(e) => handleAmountChange(memberId, e.target.value, 'compulsory')}
+                                      placeholder="0.00"
+                                      className="w-[120px] bg-paper-white text-ink-black focus:border-ink-black border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors"
+                                    />
+                                  </div>
+                                </div>
                               )}
-                            </div>
-                          </div>
 
-                          <div className="flex flex-wrap items-center gap-3">
-                            <div className="relative">
-                              <span className="absolute left-[16px] top-[14px] text-[16px] text-smoke-gray font-sans">Rs</span>
-                              <input 
-                                type="number"
-                                value={col.amount}
-                                onChange={(e) => handleAmountChange(loanId, e.target.value)}
-                                readOnly={col.status === 'FULL' || col.status === 'NP'}
-                                placeholder="0.00"
-                                className={`w-[140px] border border-[#ececec] rounded-[16px] pl-[40px] pr-[16px] py-[12px] text-[16px] outline-none transition-colors ${
-                                  col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32] border-[#a5d6a7]' :
-                                  col.status === 'NP' ? 'bg-[#ffebee] text-sienna-brown border-[#ffcdd2]' :
-                                  col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17] border-[#ffe082]' :
-                                  'bg-paper-white text-ink-black focus:border-ink-black'
-                                }`}
-                              />
-                            </div>
+                              {/* Voluntary Savings Input */}
+                              {item.voluntarySavingsId && (
+                                <div className="flex flex-col gap-1">
+                                  <label className="text-[12px] text-slate-gray pl-1">Vol. Deposit</label>
+                                  <div className="relative">
+                                    <span className="absolute left-[12px] top-[10px] text-[14px] text-smoke-gray font-sans">Rs</span>
+                                    <input 
+                                      type="number"
+                                      value={col.voluntarySavingsDeposit}
+                                      onChange={(e) => handleAmountChange(memberId, e.target.value, 'voluntary')}
+                                      placeholder="0.00"
+                                      className="w-[120px] bg-paper-white text-ink-black focus:border-ink-black border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors"
+                                    />
+                                  </div>
+                                </div>
+                              )}
 
-                            <div className="flex bg-paper-white border border-[#ececec] rounded-[16px] p-1 gap-1">
-                              <button
-                                onClick={() => handleStatusChange(loanId, 'FULL', item.totalDue)}
-                                className={`px-3 py-2 rounded-[12px] text-sm font-medium transition-colors ${
-                                  col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32]' : 'text-slate-gray hover:bg-mist-gray'
-                                }`}
-                              >
-                                FULL
-                              </button>
-                              <button
-                                onClick={() => handleStatusChange(loanId, 'PARTIAL', item.totalDue)}
-                                className={`px-3 py-2 rounded-[12px] text-sm font-medium transition-colors ${
-                                  col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17]' : 'text-slate-gray hover:bg-mist-gray'
-                                }`}
-                              >
-                                PARTIAL
-                              </button>
-                              <button
-                                onClick={() => handleStatusChange(loanId, 'NP', item.totalDue)}
-                                className={`px-3 py-2 rounded-[12px] text-sm font-medium transition-colors ${
-                                  col.status === 'NP' ? 'bg-[#ffebee] text-sienna-brown' : 'text-slate-gray hover:bg-mist-gray'
-                                }`}
-                              >
-                                NP
-                              </button>
+                              {item.loanId && (
+                                <div className="flex flex-col gap-1 mt-auto">
+                                  <div className="flex bg-paper-white border border-[#ececec] rounded-[12px] p-1 gap-1">
+                                    <button
+                                      onClick={() => handleStatusChange(memberId, 'FULL', item.totalDue)}
+                                      className={`px-2 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors ${
+                                        col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32]' : 'text-slate-gray hover:bg-mist-gray'
+                                      }`}
+                                    >
+                                      FULL
+                                    </button>
+                                    <button
+                                      onClick={() => handleStatusChange(memberId, 'PARTIAL', item.totalDue)}
+                                      className={`px-2 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors ${
+                                        col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17]' : 'text-slate-gray hover:bg-mist-gray'
+                                      }`}
+                                    >
+                                      PARTIAL
+                                    </button>
+                                    <button
+                                      onClick={() => handleStatusChange(memberId, 'NP', item.totalDue)}
+                                      className={`px-2 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors ${
+                                        col.status === 'NP' ? 'bg-[#ffebee] text-sienna-brown' : 'text-slate-gray hover:bg-mist-gray'
+                                      }`}
+                                    >
+                                      NP
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

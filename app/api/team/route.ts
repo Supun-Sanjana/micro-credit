@@ -76,3 +76,29 @@ export async function POST(req: Request) {
     )
   }
 }
+
+export async function GET(req: Request) {
+  try {
+    const session = await auth()
+    const organizationId = (session?.user as any)?.organizationId
+
+    if (!session || !organizationId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const users = await prisma.user.findMany({
+      where: { organizationId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        branchId: true,
+      }
+    })
+
+    return NextResponse.json(users)
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}

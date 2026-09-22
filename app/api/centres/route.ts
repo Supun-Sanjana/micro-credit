@@ -10,7 +10,7 @@ export async function GET() {
       where: {
         branch: { organizationId: dal.organizationId }
       },
-      include: { branch: true },
+      include: { branch: true, officer: true },
       orderBy: [{ branchId: 'asc' }, { centreNumber: 'asc' }]
     })
     
@@ -31,13 +31,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid branch" }, { status: 400 })
     }
 
+    if (json.officerId) {
+       // Verify officer is in same org
+       const officer = await dal.prisma.user.findFirst({
+         where: { id: json.officerId, organizationId: dal.organizationId }
+       })
+       if (!officer) return NextResponse.json({ error: "Invalid officer" }, { status: 400 })
+    }
+
     const centre = await dal.prisma.centre.create({
       data: {
         centreNumber: json.centreNumber,
         centreCode: json.centreCode,
         name: json.name,
         isMicro: json.isMicro,
-        branchId: json.branchId
+        branchId: json.branchId,
+        officerId: json.officerId || null
       }
     })
     

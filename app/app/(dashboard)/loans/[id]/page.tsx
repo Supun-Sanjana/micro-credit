@@ -1,149 +1,237 @@
 "use client"
-
 import { useParams } from "next/navigation"
-import { mockLoans, mockMembers, mockLoanProducts, mockRepayments, mockGuarantors } from "@/lib/mock-data"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useEffect, useState } from "react"
 import { format } from "date-fns"
-import { User, Calendar, DollarSign, ShieldCheck } from "lucide-react"
+import Link from "next/link"
+import { 
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog"
 
 export default function LoanDetailPage() {
-  const params = useParams()
-  const loanId = params.id as string
+  const { id } = useParams<{ id: string }>()
+  const [loan, setLoan] = useState<any>()
+  const [notice, setNotice] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [openDialog, setOpenDialog] = useState<string | null>(null)
 
-  const loan = mockLoans.find(l => l.id === loanId)
-  if (!loan) return <div className="p-8 text-center text-gray-500">Loan not found</div>
+  const load = async () => { 
+    const r = await fetch(`/api/loans/${id}`)
+    setLoan(await r.json()) 
+  }
+  
+  useEffect(() => { load() }, [id])
 
-  const member = mockMembers.find(m => m.id === loan.memberId)
-  const product = mockLoanProducts.find(p => p.id === loan.loanProductId)
-  const repayments = mockRepayments.filter(r => r.loanId === loanId)
-  const guarantors = mockGuarantors.filter(g => g.loanId === loanId)
+  const submit = async (action: string, payload: any) => {
+    setBusy(true)
+    const r = await fetch(`/api/loans/${id}/events`, { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ action, ...payload }) 
+    })
+    const body = await r.json()
+    setNotice(r.ok ? `${action.replace("_", " ")} recorded.` : body.error || "Action failed")
+    setBusy(false)
+    if (r.ok) {
+      setOpenDialog(null)
+      load()
+    }
+  }
+
+  if (!loan || loan.error) {
+    return <p className="p-8 text-slate-gray">{loan?.error || "Loading loan…"}</p>
+  }
+  
+  const totalWrittenOff = loan.repayments?.filter((r: any) => r.transactionType === "WRITE_OFF").reduce((acc: number, curr: any) => acc + Number(curr.amount || 0), 0) || 0
+  const totalRecovered = loan.repayments?.filter((r: any) => r.transactionType === "RECOVERY").reduce((acc: number, curr: any) => acc + Number(curr.amount || 0), 0) || 0
+
+  const totalReceivable = Number(loan.totalReceivable || 0)
+  const loanAmount = Number(loan.loanAmount || 0)
+  const interestPortion = totalReceivable - loanAmount
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="mx-auto max-w-6xl space-y-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-            Loan {loan.loanNumber ? `#${loan.loanNumber}` : "Details"}
-          </h1>
-          <p className="text-gray-500">{member?.name} ({member?.memberNumber})</p>
+          <h1 className="text-3xl font-serif">Loan {loan.loanNumber || "Details"}</h1>
+          <p className="text-slate-gray">{loan.member?.name} · {loan.member?.memberNumber}</p>
         </div>
-        <Badge 
-          variant={loan.status === "ACTIVE" ? "default" : loan.status === "SETTLED" ? "secondary" : "outline"} 
-          className={`px-3 py-1 text-sm ${loan.status === "ACTIVE" ? "bg-green-100 text-green-800" : ""}`}
-        >
-          {loan.status}
-        </Badge>
+        <span className="rounded-full bg-mist-gray px-4 py-2 text-sm">{loan.status}</span>
+      </header>
+
+      {notice && <p className="rounded-lg bg-mist-gray p-3">{notice}</p>}
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          ["Principal", loan.loanAmount],
+          ["Outstanding", loan.outstanding],
+          ["Total paid", loan.totalPaid]
+        ].map(([label, value]) => (
+          <div key={String(label)} className="rounded-2xl border p-5">
+            <p className="text-sm text-slate-gray">{label}</p>
+            <b className="text-xl">LKR {Number(value || 0).toLocaleString()}</b>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        
-        {/* Left Col - Summary Cards */}
-        <div className="md:col-span-1 space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 font-medium">Principal Amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">LKR {Number(loan.loanAmount).toLocaleString()}</div>
-              <div className="text-xs text-gray-500 mt-1">{product?.name || loan.loanType}</div>
-            </CardContent>
-          </Card>
+      <section className="rounded-2xl bg-mist-gray p-5">
+        <h2 className="font-medium">Financial events</h2>
+        <p className="mb-4 mt-1 text-sm text-slate-gray">These preserve the original loan and payment history.</p>
+        <div className="flex flex-wrap gap-3">
           
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 font-medium">Outstanding</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">LKR {Number(loan.outstanding).toLocaleString()}</div>
-              <div className="text-xs text-gray-500 mt-1">Paid: LKR {Number(loan.totalPaid).toLocaleString()}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 font-medium flex items-center gap-2">
-                <Calendar className="w-4 h-4" /> Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div>
-                <div className="text-gray-500">Granted</div>
-                <div className="font-medium">{loan.grantedDate ? format(loan.grantedDate, "PPP") : "-"}</div>
-              </div>
-              <div>
-                <div className="text-gray-500">Expected Expiry</div>
-                <div className="font-medium">{loan.expireDate ? format(loan.expireDate, "PPP") : "-"}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-gray-500 font-medium flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4" /> Guarantors
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {guarantors.map(g => (
-                <div key={g.id} className="text-sm">
-                  <div className="font-medium">{g.name}</div>
-                  <div className="text-gray-500 text-xs">{g.nic} • {g.relationship}</div>
-                  <div className="text-gray-500 text-xs">{g.contact}</div>
+          <Dialog open={openDialog === 'TOP_UP'} onOpenChange={(o) => setOpenDialog(o ? 'TOP_UP' : null)}>
+            <DialogTrigger disabled={busy} className="rounded-full border bg-paper-white px-4 py-2 text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors">
+              Top-up / Refinance
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Top-up / Refinance Loan</DialogTitle>
+                <DialogDescription>Provide new loan amount and reason.</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                const fd = new FormData(e.currentTarget)
+                submit("TOP_UP", { 
+                  newLoanAmount: fd.get("amount"), 
+                  reason: fd.get("reason") || "Top-up" 
+                })
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-sm text-slate-gray mb-1">New Loan Amount</label>
+                  <input required type="number" name="amount" min={Number(loan.outstanding) + 1} step="0.01" className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px]" placeholder={`Must exceed ${loan.outstanding}`} />
                 </div>
-              ))}
-              {guarantors.length === 0 && <div className="text-sm text-gray-500">No guarantors recorded.</div>}
-            </CardContent>
-          </Card>
-        </div>
+                <div>
+                  <label className="block text-sm text-slate-gray mb-1">Reason</label>
+                  <textarea name="reason" className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] min-h-[100px]" placeholder="Reason for top-up"></textarea>
+                </div>
+                <DialogFooter>
+                  <button type="submit" disabled={busy} className="bg-ink-black text-paper-white rounded-full px-6 py-2.5 text-sm font-medium hover:bg-ink-black/90 transition-colors">
+                    Confirm Top-up
+                  </button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
 
-        {/* Right Col - Repayment History */}
-        <div className="md:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>Repayment History</CardTitle>
-              <CardDescription>All recorded collections for this loan.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>No.</TableHead>
-                    <TableHead>Scheduled Date</TableHead>
-                    <TableHead>Paid Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Note</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {repayments.map((r, idx) => (
-                    <TableRow key={r.id}>
-                      <TableCell>{r.instalmentNumber || idx + 1}</TableCell>
-                      <TableCell>{r.scheduledDate ? format(r.scheduledDate, "PP") : "-"}</TableCell>
-                      <TableCell className="font-medium">{format(r.paidDate, "PP")}</TableCell>
-                      <TableCell className="font-bold text-green-600">LKR {Number(r.amount).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px]">{r.method}</Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-500">{r.note || "-"}</TableCell>
-                    </TableRow>
-                  ))}
-                  {repayments.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-gray-500 py-12">
-                        No repayments recorded yet.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
+          <Dialog open={openDialog === 'WRITE_OFF'} onOpenChange={(o) => setOpenDialog(o ? 'WRITE_OFF' : null)}>
+            <DialogTrigger disabled={busy} className="rounded-full border bg-paper-white px-4 py-2 text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors">
+              Write off
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Write off Loan</DialogTitle>
+                <DialogDescription>This will write off the remaining outstanding balance.</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                const fd = new FormData(e.currentTarget)
+                submit("WRITE_OFF", { reason: fd.get("reason") })
+              }} className="space-y-4">
+                <div className="bg-[#f8f8f8] rounded-[16px] p-4 text-sm border border-[#ececec]">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-slate-gray">Total Receivable:</span>
+                    <span className="font-medium">LKR {totalReceivable.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-slate-gray">Principal:</span>
+                    <span className="font-medium">LKR {loanAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-[#ececec]">
+                    <span className="text-slate-gray">Interest Portion:</span>
+                    <span className="font-medium">LKR {interestPortion.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-gray mb-1">Write-off Reason <span className="text-sienna-brown">*</span></label>
+                  <textarea required name="reason" className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] min-h-[100px]" placeholder="Enter reason for write-off..."></textarea>
+                </div>
+                <DialogFooter>
+                  <button type="submit" disabled={busy} className="bg-sienna-brown text-paper-white rounded-full px-6 py-2.5 text-sm font-medium hover:bg-sienna-brown/90 transition-colors">
+                    Confirm Write-off
+                  </button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
 
-      </div>
+          <Dialog open={openDialog === 'RECOVERY'} onOpenChange={(o) => setOpenDialog(o ? 'RECOVERY' : null)}>
+            <DialogTrigger disabled={busy} className="rounded-full border bg-paper-white px-4 py-2 text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors">
+              Record recovery
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Record Recovery</DialogTitle>
+                <DialogDescription>Record a recovery payment for a written-off loan.</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                const fd = new FormData(e.currentTarget)
+                submit("RECOVERY", { 
+                  amount: fd.get("amount"),
+                  date: fd.get("date"),
+                  note: fd.get("note")
+                })
+              }} className="space-y-4">
+                <div className="bg-[#f8f8f8] rounded-[16px] p-4 text-sm flex gap-4 border border-[#ececec]">
+                  <div className="flex-1">
+                    <span className="text-slate-gray block text-xs mb-1">Total Written Off</span>
+                    <span className="font-medium">LKR {totalWrittenOff.toLocaleString()}</span>
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-slate-gray block text-xs mb-1">Total Recovered</span>
+                    <span className="font-medium text-[#059669]">LKR {totalRecovered.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-gray mb-1">Amount <span className="text-sienna-brown">*</span></label>
+                  <input required type="number" name="amount" min="0.01" step="0.01" className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px]" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-gray mb-1">Date</label>
+                  <input required type="date" name="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px]" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-gray mb-1">Note (optional)</label>
+                  <textarea name="note" className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] min-h-[80px]" placeholder="Additional details..."></textarea>
+                </div>
+                <DialogFooter>
+                  <button type="submit" disabled={busy} className="bg-ink-black text-paper-white rounded-full px-6 py-2.5 text-sm font-medium hover:bg-ink-black/90 transition-colors">
+                    Save Recovery
+                  </button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+        </div>
+        
+        <div className="mt-6 pt-5 border-t border-[#ececec]">
+          <p className="mb-3 text-sm text-slate-gray">Restructuring requires a reviewed replacement schedule.</p>
+          <Link href={`/app/loans/${id}/restructure`} className="inline-flex items-center justify-center rounded-full border border-[#ececec] bg-paper-white text-ink-black px-6 py-2.5 text-sm font-medium hover:bg-[#fafafa] transition-colors shadow-subtle-1">
+            Restructure Loan
+          </Link>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border p-5">
+        <h2 className="mb-3 font-medium">Repayment history</h2>
+        <div className="divide-y border-t mt-3">
+          {loan.repayments?.map((r: any) => (
+            <div className="flex justify-between py-3 text-sm" key={r.id}>
+              <span className="text-slate-gray">{format(new Date(r.paidDate), "PP")} · {r.transactionType} {r.method ? `· ${r.method}` : ''}</span>
+              <b className="text-ink-black">LKR {Number(r.amount).toLocaleString()}</b>
+            </div>
+          ))}
+          {(!loan.repayments || loan.repayments.length === 0) && (
+            <p className="py-4 text-slate-gray text-sm">No repayments recorded.</p>
+          )}
+        </div>
+      </section>
     </div>
   )
 }

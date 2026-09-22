@@ -1,33 +1,69 @@
 "use client"
 
-import { useState } from "react"
-import { mockCentres, mockBranches } from "@/lib/mock-data"
-import { Centre } from "@/lib/types"
+import { useState, useEffect } from "react"
+import { Centre, Branch } from "@/lib/types"
 
 export default function CentresPage() {
-  const [centres, setCentres] = useState<Centre[]>(mockCentres)
+  const [centres, setCentres] = useState<Centre[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [officers, setOfficers] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  
   const [formData, setFormData] = useState({ 
     branchId: "", 
+    officerId: "",
     centreNumber: 1, 
     centreCode: "", 
     name: "", 
     isMicro: false 
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const newCentre: Centre = {
-      id: `ctr_${Date.now()}`,
-      branchId: formData.branchId,
-      centreNumber: formData.centreNumber,
-      centreCode: formData.centreCode,
-      name: formData.name,
-      isMicro: formData.isMicro,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+      const [centresRes, branchesRes, usersRes] = await Promise.all([
+        fetch('/api/centres'),
+        fetch('/api/branches'),
+        fetch('/api/team')
+      ])
+      
+      if (centresRes.ok) setCentres(await centresRes.json())
+      if (branchesRes.ok) setBranches(await branchesRes.json())
+      if (usersRes.ok) {
+        const users = await usersRes.json()
+        setOfficers(users.filter((u: any) => u.role === "USER"))
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
     }
-    setCentres([...centres, newCentre])
-    setFormData({ branchId: "", centreNumber: 1, centreCode: "", name: "", isMicro: false })
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setIsSubmitting(true)
+      const res = await fetch('/api/centres', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, officerId: formData.officerId || undefined })
+      })
+      if (res.ok) {
+        setFormData({ branchId: "", officerId: "", centreNumber: 1, centreCode: "", name: "", isMicro: false })
+        const data = await fetch('/api/centres')
+        if (data.ok) setCentres(await data.json())
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -65,8 +101,22 @@ export default function CentresPage() {
                   className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
                 >
                   <option value="" disabled className="text-smoke-gray">Select Branch</option>
-                  {mockBranches.map(b => (
+                  {branches.map(b => (
                     <option key={b.id} value={b.id}>{b.name} ({b.code})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[15px] text-ink-black font-sans ml-1">Assigned Officer</label>
+                <select 
+                  value={formData.officerId}
+                  onChange={e => setFormData({...formData, officerId: e.target.value})}
+                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                >
+                  <option value="" className="text-smoke-gray">None</option>
+                  {officers.map(o => (
+                    <option key={o.id} value={o.id}>{o.name}</option>
                   ))}
                 </select>
               </div>
@@ -128,9 +178,10 @@ export default function CentresPage() {
               <div className="pt-4">
                 <button 
                   type="submit"
-                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  Create Centre
+                  {isSubmitting ? "Creating..." : "Create Centre"}
                 </button>
               </div>
             </form>
@@ -147,37 +198,48 @@ export default function CentresPage() {
                     <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Branch</th>
                     <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Code</th>
                     <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Name</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Officer</th>
                     <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Type</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {centres.map(c => {
-                    const branch = mockBranches.find(b => b.id === c.branchId)
-                    return (
-                      <tr key={c.id} className="border-b border-border/40 last:border-0">
-                        <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
-                          {branch?.name || c.branchId}
-                        </td>
-                        <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
-                          {c.centreCode}
-                        </td>
-                        <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
-                          {c.name}
-                        </td>
-                        <td className="py-5 pr-4">
-                          <span className="text-[14px] font-sans text-ash-gray uppercase tracking-wider">
-                            {c.isMicro ? 'MICRO' : 'REGULAR'}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  {centres.length === 0 && (
+                  {isLoading ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-12 text-[15px] text-slate-gray">
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
+                        <div className="inline-block animate-spin w-5 h-5 border-2 border-ink-black border-t-transparent rounded-full"></div>
+                      </td>
+                    </tr>
+                  ) : centres.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
                         No centres found.
                       </td>
                     </tr>
+                  ) : (
+                    centres.map((c: any) => {
+                      const branch = branches.find(b => b.id === c.branchId)
+                      return (
+                        <tr key={c.id} className="border-b border-border/40 last:border-0">
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                            {branch?.name || c.branchId}
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
+                            {c.centreCode}
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
+                            {c.name}
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                            {c.officer?.name || <span className="text-smoke-gray italic">Unassigned</span>}
+                          </td>
+                          <td className="py-5 pr-4">
+                            <span className="text-[14px] font-sans text-ash-gray uppercase tracking-wider">
+                              {c.isMicro ? 'MICRO' : 'REGULAR'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })
                   )}
                 </tbody>
               </table>

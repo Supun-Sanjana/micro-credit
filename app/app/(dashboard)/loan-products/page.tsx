@@ -1,7 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { mockLoanProducts } from "@/lib/mock-data"
+import { useState, useEffect } from "react"
 import { LoanProduct } from "@/lib/types"
 
 // Extended type to support UI requirements before backend is updated
@@ -14,7 +13,9 @@ interface ExtendedLoanProduct extends LoanProduct {
 }
 
 export default function LoanProductsPage() {
-  const [products, setProducts] = useState<ExtendedLoanProduct[]>(mockLoanProducts)
+  const [products, setProducts] = useState<ExtendedLoanProduct[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   
   const [isEditing, setIsEditing] = useState(false)
   const [currentId, setCurrentId] = useState<string | null>(null)
@@ -29,32 +30,78 @@ export default function LoanProductsPage() {
     penaltyRate: 0
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (isEditing && currentId) {
-      setProducts(products.map(p => p.id === currentId ? {
-        ...p,
-        ...formData
-      } : p))
-    } else {
-      const newProduct: ExtendedLoanProduct = {
-        id: `prod_${Date.now()}`,
-        ...formData,
-        organizationId: 'mock-org-id', // Just for UI mock
-        multiplier: 1.17 as any, // Mock Decimal
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
+  const fetchProducts = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/loan-products')
+      if (res.ok) {
+        setProducts(await res.json())
       }
-      setProducts([...products, newProduct])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
     }
-    resetForm()
   }
 
-  const handleDelete = (id: string) => {
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setIsSubmitting(true)
+      
+      const payload = {
+        ...formData,
+        multiplier: 1.17, // Mock Decimal for API if required
+        calculationMethod: "FLAT",
+        interestMethod: "FLAT",
+        repaymentFrequency: "WEEKLY",
+        isActive: true,
+      }
+
+      if (isEditing && currentId) {
+        const res = await fetch(`/api/loan-products/${currentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (res.ok) {
+          fetchProducts()
+          resetForm()
+        }
+      } else {
+        const res = await fetch('/api/loan-products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (res.ok) {
+          fetchProducts()
+          resetForm()
+        }
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
     if (!confirm("Are you sure?")) return
-    setProducts(products.filter(p => p.id !== id))
+    try {
+      const res = await fetch(`/api/loan-products/${id}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        fetchProducts()
+      }
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const handleEdit = (product: ExtendedLoanProduct) => {
@@ -198,9 +245,10 @@ export default function LoanProductsPage() {
               <div className="flex gap-4 pt-4">
                 <button 
                   type="submit"
-                  className="flex-1 flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                  disabled={isSubmitting}
+                  className="flex-1 flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  {isEditing ? "Update" : "Create"}
+                  {isSubmitting ? "Saving..." : (isEditing ? "Update" : "Create")}
                 </button>
                 {isEditing && (
                   <button 
@@ -231,48 +279,55 @@ export default function LoanProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-b border-border/40 last:border-0">
-                      <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
-                        {product.name}
-                      </td>
-                      <td className="py-5 pr-4">
-                         <span className="text-[14px] font-sans text-ash-gray uppercase tracking-wider">
-                           {product.loanType}
-                         </span>
-                      </td>
-                      <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
-                        <div className="text-ink-black">{product.numberOfWeeks}W</div>
-                        <div className="text-[14px] mt-1">{product.rate || 0}% {product.interestType || "FLAT"}</div>
-                      </td>
-                      <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
-                        <div>Doc: {product.docFee || 0}</div>
-                        <div className="mt-1">Ins: {product.insuranceFee || 0}</div>
-                      </td>
-                      <td className="py-5 pl-4 text-right">
-                        <div className="flex items-center justify-end gap-4">
-                          <button 
-                            onClick={() => handleEdit(product)} 
-                            className="text-[15px] text-ink-black hover:underline underline-offset-4"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(product.id)} 
-                            className="text-[15px] text-sienna-brown hover:underline underline-offset-4"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
+                        <div className="inline-block animate-spin w-5 h-5 border-2 border-ink-black border-t-transparent rounded-full"></div>
                       </td>
                     </tr>
-                  ))}
-                  {products.length === 0 && (
+                  ) : products.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
                         No loan products configured.
                       </td>
                     </tr>
+                  ) : (
+                    products.map((product) => (
+                      <tr key={product.id} className="border-b border-border/40 last:border-0">
+                        <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
+                          {product.name}
+                        </td>
+                        <td className="py-5 pr-4">
+                           <span className="text-[14px] font-sans text-ash-gray uppercase tracking-wider">
+                             {product.loanType}
+                           </span>
+                        </td>
+                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
+                          <div className="text-ink-black">{product.numberOfWeeks}W</div>
+                          <div className="text-[14px] mt-1">{product.rate || 0}% {product.interestType || "FLAT"}</div>
+                        </td>
+                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
+                          <div>Doc: {product.docFee || 0}</div>
+                          <div className="mt-1">Ins: {product.insuranceFee || 0}</div>
+                        </td>
+                        <td className="py-5 pl-4 text-right">
+                          <div className="flex items-center justify-end gap-4">
+                            <button 
+                              onClick={() => handleEdit(product)} 
+                              className="text-[15px] text-ink-black hover:underline underline-offset-4"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(product.id)} 
+                              className="text-[15px] text-sienna-brown hover:underline underline-offset-4"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>

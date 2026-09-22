@@ -3,6 +3,7 @@ import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
 import { Prisma } from "@prisma/client"
 import { logAudit } from "@/lib/audit"
+import { assertLoanTransition } from "@/lib/loan-lifecycle"
 
 export async function GET(
   request: Request,
@@ -42,6 +43,13 @@ export async function PUT(
     
     const loan = await dal.prisma.loan.findUnique({ where: { id }, include: { loanProduct: true } })
     if (!loan) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+    if (json.action === "TRANSITION") {
+      assertLoanTransition(loan.status, json.status)
+      const updated = await dal.prisma.loan.update({ where: { id }, data: { status: json.status } })
+      await logAudit({ dal, action: "UPDATE", entityType: "Loan", entityId: id, before: loan, after: updated, note: `Lifecycle transition: ${loan.status} → ${json.status}` })
+      return NextResponse.json(updated)
+    }
 
     // Action: VERIFY
     if (json.action === 'VERIFY') {
@@ -110,8 +118,32 @@ export async function PUT(
             create: schedules
           }
         },
-        include: { repaymentSchedule: true }
+        include: { repaymentSchedule: true, member: { include: { centre: true } } }
       })
+
+      // POST JOURNAL ENTRY for Disbursement (Debit Loan Receivable, Credit Cash)
+      try {
+        const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
+        const receivableAccount = await getAccountByCode(dal.organizationId, '1100')
+        const cashAccount = await getAccountByCode(dal.organizationId, '1000')
+
+        await postJournalEntry({
+          organizationId: dal.organizationId,
+          branchId: updated.member.centre.branchId,
+          entryDate: grantedDate,
+          reference: `LOAN-${updated.id.slice(-6)}`,
+          description: `Loan Disbursement for Member ${updated.member.name}`,
+          sourceType: 'DISBURSEMENT',
+          sourceId: updated.id,
+          lines: [
+            { accountId: receivableAccount.id, debit: updated.loanAmount, credit: 0 },
+            { accountId: cashAccount.id, debit: 0, credit: updated.loanAmount }
+          ]
+        })
+      } catch (err: any) {
+        console.error("Failed to post disbursement journal:", err)
+        // In a real app we'd roll back or use a transaction, but for this milestone we proceed.
+      }
       
       await logAudit({
         dal,

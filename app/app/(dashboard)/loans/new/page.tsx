@@ -1,14 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { mockMembers, mockLoanProducts } from "@/lib/mock-data"
+import { Member, LoanProduct } from "@/lib/types"
 
 export default function NewLoanPage() {
   const router = useRouter()
   const [step, setStep] = useState<1 | 2>(1)
   
+  const [members, setMembers] = useState<Member[]>([])
+  const [products, setProducts] = useState<LoanProduct[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   const [formData, setFormData] = useState({
     memberId: "",
     loanProductId: "",
@@ -23,14 +28,49 @@ export default function NewLoanPage() {
     guarantorRelationship: ""
   })
 
-  const selectedProduct = mockLoanProducts.find(p => p.id === formData.loanProductId)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        const [membersRes, productsRes] = await Promise.all([
+          fetch('/api/members'),
+          fetch('/api/loan-products')
+        ])
+        
+        if (membersRes.ok) setMembers(await membersRes.json())
+        if (productsRes.ok) setProducts(await productsRes.json())
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const selectedProduct = products.find(p => p.id === formData.loanProductId)
   const rate = selectedProduct ? (selectedProduct as any).rate || 0.1 : 0
   const totalReceivable = formData.loanAmount * (1 + rate)
   const weeklyRental = selectedProduct ? totalReceivable / selectedProduct.numberOfWeeks : 0
 
-  const handleSave = () => {
-    alert("Application submitted for verification (Mock)")
-    router.push("/app/loans")
+  const handleSave = async () => {
+    try {
+      setIsSubmitting(true)
+      const res = await fetch('/api/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      if (res.ok) {
+        router.push("/app/loans")
+      } else {
+        alert("Failed to submit application")
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -75,8 +115,8 @@ export default function NewLoanPage() {
                 onChange={e => setFormData({...formData, memberId: e.target.value})}
                 className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
               >
-                <option value="" disabled className="text-smoke-gray">Select Member</option>
-                {mockMembers.map(m => (
+                <option value="" disabled className="text-smoke-gray">{isLoading ? "Loading..." : "Select Member"}</option>
+                {members.map(m => (
                   <option key={m.id} value={m.id}>{m.name} ({m.memberNumber})</option>
                 ))}
               </select>
@@ -90,8 +130,8 @@ export default function NewLoanPage() {
                   onChange={e => setFormData({...formData, loanProductId: e.target.value})}
                   className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
                 >
-                  <option value="" disabled className="text-smoke-gray">Select Product</option>
-                  {mockLoanProducts.map(p => (
+                  <option value="" disabled className="text-smoke-gray">{isLoading ? "Loading..." : "Select Product"}</option>
+                  {products.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
@@ -176,7 +216,7 @@ export default function NewLoanPage() {
                     className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
                   >
                     <option value="" disabled className="text-smoke-gray">Search member...</option>
-                    {mockMembers.filter(m => m.id !== formData.memberId).map(m => (
+                    {members.filter(m => m.id !== formData.memberId).map(m => (
                       <option key={m.id} value={m.id}>{m.name} ({m.nic})</option>
                     ))}
                   </select>
@@ -239,9 +279,10 @@ export default function NewLoanPage() {
               </button>
               <button 
                 onClick={handleSave}
-                className="flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                disabled={isSubmitting}
+                className="flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                Submit Application
+                {isSubmitting ? "Submitting..." : "Submit Application"}
               </button>
             </div>
           </div>

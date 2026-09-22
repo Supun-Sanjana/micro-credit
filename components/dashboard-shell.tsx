@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation"
 import { 
   Menu, X, LogOut, LayoutDashboard, FileText, 
   Users, DollarSign, Settings, Building, MapPin, 
-  Grid, Briefcase, ChevronDown, User as UserIcon
+  Grid, Briefcase, ChevronDown, User as UserIcon,
+  RotateCcw
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -46,18 +47,30 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
       name: "Operations",
       items: [
         { href: "/app/members", label: "Members", icon: Users },
+        { href: "/app/groups", label: "Groups", icon: Users },
         { href: "/app/loans", label: "Loans", icon: DollarSign },
         { href: "/app/collection", label: "Collection", icon: Briefcase },
       ],
     },
-    ...(isAdmin ? [{
+    ...(isAdmin ? [
+      {
+        name: "Finance",
+        items: [
+          { href: "/app/accounting", label: "Accounting", icon: FileText },
+          { href: "/app/cashflow", label: "Cash Flow", icon: DollarSign },
+          { href: "/app/loans/reversals", label: "Reversals", icon: RotateCcw },
+        ],
+      },
+      {
       name: "Settings",
       items: [
         { href: "/app/branches", label: "Branches", icon: Building },
         { href: "/app/centres", label: "Centres", icon: MapPin },
         { href: "/app/loan-products", label: "Loan Products", icon: Grid },
+        { href: "/app/savings-products", label: "Savings Products", icon: DollarSign },
         { href: "/app/settings/team", label: "Team", icon: Users },
         { href: "/app/settings/billing", label: "Billing", icon: Settings },
+        { href: "/app/settings/audit-log", label: "Audit Log", icon: FileText },
       ],
     }] : [])
   ]

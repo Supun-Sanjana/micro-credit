@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { mockMembers, mockCentres } from "@/lib/mock-data"
-import { Member } from "@/lib/types"
+import { Member, Centre } from "@/lib/types"
 
 export default function MembersPage() {
-  const [members, setMembers] = useState<Member[]>(mockMembers)
+  const [members, setMembers] = useState<Member[]>([])
+  const [centres, setCentres] = useState<Centre[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   
   const [formData, setFormData] = useState({ 
     centreId: "", 
@@ -16,36 +17,63 @@ export default function MembersPage() {
     contact1: "", 
     groupNumber: "" 
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    const centre = mockCentres.find(c => c.id === formData.centreId)
-    const newMember: Member = {
-      id: `mem_${Date.now()}`,
-      memberNumber: `${centre?.centreCode}/${members.length + 1}`.padStart(3, '0'),
-      name: formData.name,
-      organizationId: 'mock-org-id',
-      nic: formData.nic,
-      address: formData.address,
-      contact1: formData.contact1,
-      contact2: null,
-      groupNumber: formData.groupNumber ? parseInt(formData.groupNumber) : null,
-      centreId: formData.centreId,
-      createdAt: new Date(),
-      updatedAt: new Date()
+  const fetchData = async () => {
+    try {
+      setIsLoading(true)
+      const [membersRes, centresRes] = await Promise.all([
+        fetch('/api/members'),
+        fetch('/api/centres')
+      ])
+      
+      if (membersRes.ok) {
+        setMembers(await membersRes.json())
+      }
+      if (centresRes.ok) {
+        setCentres(await centresRes.json())
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    setMembers([...members, newMember])
-    setFormData({ centreId: "", name: "", nic: "", address: "", contact1: "", groupNumber: "" })
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setIsSubmitting(true)
+      const res = await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          groupNumber: formData.groupNumber ? parseInt(formData.groupNumber) : undefined
+        })
+      })
+      if (res.ok) {
+        setFormData({ centreId: "", name: "", nic: "", address: "", contact1: "", groupNumber: "" })
+        const membersData = await fetch('/api/members')
+        if (membersData.ok) setMembers(await membersData.json())
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const filteredMembers = members.filter(m => {
     const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (m.nic && m.nic.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          m.memberNumber.toLowerCase().includes(searchTerm.toLowerCase())
+                          (m.memberNumber && m.memberNumber.toLowerCase().includes(searchTerm.toLowerCase()))
     return matchesSearch
   })
 
@@ -84,7 +112,7 @@ export default function MembersPage() {
                   className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
                 >
                   <option value="" disabled className="text-smoke-gray">Select Centre</option>
-                  {mockCentres.map(c => (
+                  {centres.map(c => (
                     <option key={c.id} value={c.id}>{c.name} ({c.centreCode})</option>
                   ))}
                 </select>
@@ -138,9 +166,10 @@ export default function MembersPage() {
               <div className="pt-4">
                 <button 
                   type="submit"
-                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  Register
+                  {isSubmitting ? "Registering..." : "Register"}
                 </button>
               </div>
             </form>
@@ -173,39 +202,48 @@ export default function MembersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredMembers.map(m => {
-                    const centre = mockCentres.find(c => c.id === m.centreId)
-                    return (
-                      <tr key={m.id} className="border-b border-border/40 last:border-0">
-                        <td className="py-5 pr-4">
-                          <Link href={`/members/${m.id}`} className="text-[16px] font-sans text-ink-black hover:text-slate-gray transition-colors">
-                            {m.memberNumber}
-                          </Link>
-                        </td>
-                        <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
-                          {m.name}
-                        </td>
-                        <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
-                          {m.nic || '—'}
-                        </td>
-                        <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
-                          {centre?.name || '—'}
-                        </td>
-                        <td className="py-5 pr-4">
-                           <span className="text-[14px] font-sans text-ash-gray font-normal">
-                            {m.groupNumber ? `Group ${m.groupNumber}` : '—'}
-                           </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
+                        <div className="inline-block animate-spin w-5 h-5 border-2 border-ink-black border-t-transparent rounded-full"></div>
+                      </td>
+                    </tr>
+                  ) : filteredMembers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
+                        No members found matching your search.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredMembers.map(m => {
+                      const centre = centres.find(c => c.id === m.centreId)
+                      return (
+                        <tr key={m.id} className="border-b border-border/40 last:border-0">
+                          <td className="py-5 pr-4">
+                            <Link href={`/members/${m.id}`} className="text-[16px] font-sans text-ink-black hover:text-slate-gray transition-colors">
+                              {m.memberNumber}
+                            </Link>
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
+                            {m.name}
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                            {m.nic || '—'}
+                          </td>
+                          <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                            {centre?.name || '—'}
+                          </td>
+                          <td className="py-5 pr-4">
+                             <span className="text-[14px] font-sans text-ash-gray font-normal">
+                              {m.groupNumber ? `Group ${m.groupNumber}` : '—'}
+                             </span>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
                 </tbody>
               </table>
-              {filteredMembers.length === 0 && (
-                <div className="text-center py-12 text-[15px] text-slate-gray">
-                  No members found matching your search.
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -103,6 +103,15 @@ async function main() {
     }
   })
 
+  // Milestone 1 sample group. groupNumber remains on Member for backward compatibility.
+  const sampleGroup = await prisma.group.upsert({
+    where: { organizationId_centreId_groupNumber: { organizationId: org.id, centreId: testCentre.id, groupNumber: 1 } },
+    update: { name: 'PAR Test Group' },
+    create: { organizationId: org.id, branchId: galleBranch!.id, centreId: testCentre.id, groupNumber: 1, name: 'PAR Test Group', meetingDay: 'Monday' }
+  })
+  const membership = await prisma.groupMembership.findFirst({ where: { groupId: sampleGroup.id, memberId: testMember.id, status: 'ACTIVE' } })
+  if (!membership) await prisma.groupMembership.create({ data: { groupId: sampleGroup.id, memberId: testMember.id, role: 'LEADER' } })
+
   // Create Loans with Missed Installments for PAR testing
   const now = new Date()
   
@@ -174,6 +183,14 @@ async function main() {
     }
   })
   console.log(`Upserted Platform Admin: ${platformAdmin.email}`)
+
+  // Milestone 2 sample financial-event trail. It is idempotent and does not alter existing PAR fixtures.
+  const eventLoan = await prisma.loan.findFirst({ where: { memberId: testMember.id, loanNumber: 'M2-WRITEOFF' } })
+  if (!eventLoan) {
+    const created = await prisma.loan.create({ data: { memberId: testMember.id, loanType: 'MICRO', loanNumber: 'M2-WRITEOFF', loanAmount: 12000, weeklyRental: 1000, numberOfWeeks: 12, totalReceivable: 12000, outstanding: 12000, status: 'DEFAULTED', grantedDate: now } })
+    const writeOff = await prisma.loanWriteOff.create({ data: { organizationId: org.id, loanId: created.id, writtenOffPrincipal: 12000, writtenOffInterest: 0, reason: 'Seed demonstration write-off', approvedById: adminUser.id } })
+    await prisma.writeOffRecovery.create({ data: { writeOffId: writeOff.id, amount: 500, recoveredAt: now, note: 'Seed recovery', collectedById: adminUser.id } })
+  }
 }
 
 main()

@@ -11,7 +11,7 @@ export async function GET(
     
     const centre = await dal.prisma.centre.findUnique({
       where: { id },
-      include: { branch: true }
+      include: { branch: true, officer: true }
     })
     
     if (!centre) return NextResponse.json({ error: "Not found" }, { status: 404 })
@@ -39,6 +39,13 @@ export async function PUT(
       }
     }
     
+    if (json.officerId) {
+       const officer = await dal.prisma.user.findFirst({
+         where: { id: json.officerId, organizationId: dal.organizationId }
+       })
+       if (!officer) return NextResponse.json({ error: "Invalid officer" }, { status: 400 })
+    }
+    
     const centre = await dal.prisma.centre.update({
       where: { id },
       data: {
@@ -47,6 +54,7 @@ export async function PUT(
         name: json.name,
         isMicro: json.isMicro,
         branchId: json.branchId,
+        officerId: json.officerId || null,
       }
     })
     

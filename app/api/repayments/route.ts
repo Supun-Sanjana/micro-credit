@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { Prisma } from "@prisma/client"
 import { logAudit } from "@/lib/audit"
+import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
+import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
 
 export async function GET(request: Request) {
   try {
@@ -90,6 +92,8 @@ export async function POST(request: Request) {
 
         const amount = new Prisma.Decimal(p.amount)
         if (amount.lte(0)) continue // Ignore zero payments
+        if (amount.gt(loan.outstanding)) throw new Error("Payment exceeds the outstanding balance")
+        const allocations = allocatePayment(amount, balancesFromLoan(loan))
 
         // Create Repayment record
         const repayment = await tx.loanRepayment.create({
@@ -99,7 +103,9 @@ export async function POST(request: Request) {
             scheduledDate: schedule?.scheduledDate || null,
             paidDate,
             amount: amount,
-            note: p.note
+            note: p.note,
+            allocationMethod: "DEFAULT_WATERFALL",
+            allocations: { create: allocations }
           }
         })
 
@@ -143,6 +149,49 @@ export async function POST(request: Request) {
         }
 
         processed.push(repayment)
+        
+        // --- ACCOUNTING ---
+        try {
+          const cashAcc = await getAccountByCode(dal.organizationId, '1000')
+          const principalAcc = await getAccountByCode(dal.organizationId, '1100')
+          const interestAcc = await getAccountByCode(dal.organizationId, '4000')
+          const feeAcc = await getAccountByCode(dal.organizationId, '4010')
+          const penaltyAcc = await getAccountByCode(dal.organizationId, '4020')
+
+          const jLines: { accountId: string; debit: Prisma.Decimal; credit: Prisma.Decimal }[] = []
+          
+          // Debit Cash for the total amount
+          jLines.push({ accountId: cashAcc.id, debit: amount, credit: new Prisma.Decimal(0) })
+
+          // Credit the respective income/receivable accounts based on allocation
+          for (const alloc of allocations) {
+            let accId = ''
+            if (alloc.component === 'PRINCIPAL') accId = principalAcc.id
+            if (alloc.component === 'INTEREST') accId = interestAcc.id
+            if (alloc.component === 'FEE') accId = feeAcc.id
+            if (alloc.component === 'PENALTY') accId = penaltyAcc.id
+            
+            if (accId) {
+              jLines.push({ accountId: accId, debit: new Prisma.Decimal(0), credit: alloc.amount })
+            }
+          }
+
+          await postJournalEntry({
+            organizationId: dal.organizationId,
+            branchId: loan.member.centre.branch.id,
+            entryDate: paidDate,
+            reference: `REP-${repayment.id.slice(-6)}`,
+            description: `Repayment from Member ${loan.member.name}`,
+            sourceType: 'REPAYMENT',
+            sourceId: repayment.id,
+            tx,
+            lines: jLines
+          })
+        } catch (e: any) {
+          console.error("Accounting error:", e)
+          throw new Error("Failed to post accounting journal: " + e.message)
+        }
+        // ------------------
         
         await logAudit({
           dal,

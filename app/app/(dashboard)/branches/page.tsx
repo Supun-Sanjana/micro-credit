@@ -1,26 +1,51 @@
 "use client"
 
-import { useState } from "react"
-import { mockBranches } from "@/lib/mock-data"
+import { useState, useEffect } from "react"
 import { Branch } from "@/lib/types"
 
 export default function BranchesPage() {
-  const [branches, setBranches] = useState<Branch[]>(mockBranches)
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [formData, setFormData] = useState({ code: "", name: "", address: "" })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const newBranch: Branch = {
-      id: `br_${Date.now()}`,
-      code: formData.code,
-      name: formData.name,
-      address: formData.address,
-      organizationId: "org_1",
-      createdAt: new Date(),
-      updatedAt: new Date()
+  const fetchBranches = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/branches')
+      if (res.ok) {
+        const data = await res.json()
+        setBranches(data)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsLoading(false)
     }
-    setBranches([...branches, newBranch])
-    setFormData({ code: "", name: "", address: "" })
+  }
+
+  useEffect(() => {
+    fetchBranches()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      setIsSubmitting(true)
+      const res = await fetch('/api/branches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      if (res.ok) {
+        setFormData({ code: "", name: "", address: "" })
+        fetchBranches()
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -84,9 +109,10 @@ export default function BranchesPage() {
               <div className="pt-4">
                 <button 
                   type="submit"
-                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90"
+                  disabled={isSubmitting}
+                  className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  Create Branch
+                  {isSubmitting ? "Creating..." : "Create Branch"}
                 </button>
               </div>
             </form>
@@ -106,25 +132,32 @@ export default function BranchesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {branches.map((b) => (
-                    <tr key={b.id} className="border-b border-border/40 last:border-0">
-                      <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
-                        {b.code}
-                      </td>
-                      <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
-                        {b.name}
-                      </td>
-                      <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
-                        {b.address || '—'}
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={3} className="text-center py-12 text-[15px] text-slate-gray">
+                        <div className="inline-block animate-spin w-5 h-5 border-2 border-ink-black border-t-transparent rounded-full"></div>
                       </td>
                     </tr>
-                  ))}
-                  {branches.length === 0 && (
+                  ) : branches.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="text-center py-12 text-[15px] text-slate-gray">
                         No branches registered.
                       </td>
                     </tr>
+                  ) : (
+                    branches.map((b) => (
+                      <tr key={b.id} className="border-b border-border/40 last:border-0">
+                        <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
+                          {b.code}
+                        </td>
+                        <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
+                          {b.name}
+                        </td>
+                        <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+                          {b.address || '—'}
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
