@@ -8,7 +8,8 @@ export async function POST(req: Request) {
     const session = await auth()
     const organizationId = (session?.user as any)?.organizationId
 
-    if (!session || !organizationId || (session.user as any).role !== "ADMIN") {
+    const userRole = (session.user as any).role
+    if (!session || !organizationId || (userRole !== "SYSTEM_ADMIN" && userRole !== "HEAD_OFFICE")) {
       return NextResponse.json(
         { error: "Unauthorized. Only organization admins can add team members." },
         { status: 401 }
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        role: "USER",
+        role: "FIELD_OFFICER",
         organizationId,
         branchId: branchId || null,
       },

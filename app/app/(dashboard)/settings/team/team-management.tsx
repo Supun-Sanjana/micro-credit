@@ -175,12 +175,12 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
                 <td className="px-6 py-4 text-[15px] text-ink-black font-medium">{user.name || "Unassigned"}</td>
                 <td className="px-6 py-4 text-[15px] text-slate-gray">{user.email}</td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium ${user.role === 'ADMIN' ? 'bg-[#e6f4ea] text-[#137333]' : 'bg-mist-gray text-slate-gray'}`}>
-                    {user.role === 'ADMIN' ? "Tenant Admin" : "Field Officer"}
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium ${user.role === 'SYSTEM_ADMIN' ? 'bg-[#e6f4ea] text-[#137333]' : 'bg-mist-gray text-slate-gray'}`}>
+                    {user.role.replace('_', ' ')}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-[15px] text-slate-gray">
-                  {user.branch?.name || (user.role === 'ADMIN' ? "All Branches" : "Unassigned")}
+                  {user.branch?.name || (user.role === 'SYSTEM_ADMIN' ? "All Branches" : "Unassigned")}
                 </td>
                 <td className="px-6 py-4 text-[15px] text-slate-gray">
                   {new Date(user.createdAt).toLocaleDateString("en-US", {

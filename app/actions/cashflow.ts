@@ -11,7 +11,7 @@ export async function getCashFlows(dateStr: string) {
   const flows = await dal.prisma.cashFlow.findMany({
     where: {
       date: new Date(dateStr),
-      ...(dal.role === "USER" ? { branchId: (dal as any).branchId } : {})
+      ...(dal.role === "FIELD_OFFICER" || dal.role === "BRANCH_MANAGER" ? { branchId: (dal as any).branchId } : {})
     },
     include: {
       branch: true
@@ -35,6 +35,8 @@ export async function upsertCashFlow(data: {
   note?: string
 }) {
   const dal = await getScopedDal()
+  const { requireRole } = await import("@/lib/auth-utils")
+  await requireRole(["SYSTEM_ADMIN", "HEAD_OFFICE", "BRANCH_MANAGER", "ACCOUNTANT"])
   
   // Verify branch belongs to org
   const branch = await dal.prisma.branch.findFirst({

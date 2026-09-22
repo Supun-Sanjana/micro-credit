@@ -7,7 +7,7 @@ import { FinancialChart } from "@/components/financial-chart"
 export default async function DashboardPage() {
   const session = await auth()
   
-  if (session?.user?.role === "USER") {
+  if (session?.user?.role === "FIELD_OFFICER") {
     const officerId = session.user.id
     
     // Fetch assigned centres

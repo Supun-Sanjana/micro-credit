@@ -4,7 +4,7 @@ import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
 import { logAudit } from "@/lib/audit"
 
-const adminOnly = (role: string) => { if (role !== "ADMIN") throw new Error("Administrator approval is required") }
+const adminOnly = (role: string) => { if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") throw new Error("Manager approval is required") }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

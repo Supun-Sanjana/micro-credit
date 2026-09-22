@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     }
 
     // Restrict Field Officers to only see their assigned centres
-    if (dal.role === "USER") {
+    if (dal.role === "FIELD_OFFICER") {
       const centre = await dal.prisma.centre.findFirst({
         where: { id: centreId, officerId: dal.userId }
       })
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    if (dal.role === "USER") {
+    if (dal.role === "FIELD_OFFICER") {
       const centre = await dal.prisma.centre.findFirst({
         where: { id: centreId, officerId: dal.userId }
       })

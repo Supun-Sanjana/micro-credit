@@ -22,7 +22,16 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const pathname = usePathname()
-  const isAdmin = user?.role === "ADMIN"
+  const role = user?.role
+  const isSystemAdmin = role === "SYSTEM_ADMIN"
+  const isHeadOffice = role === "HEAD_OFFICE"
+  const isAccountant = role === "ACCOUNTANT"
+  const isBranchManager = role === "BRANCH_MANAGER"
+  const isFieldOfficer = role === "FIELD_OFFICER"
+
+  const canViewFinance = isSystemAdmin || isHeadOffice || isAccountant || isBranchManager
+  const canViewSettings = isSystemAdmin || isHeadOffice
+  
   const profileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -52,27 +61,30 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         { href: "/app/collection", label: "Collection", icon: Briefcase },
       ],
     },
-    ...(isAdmin ? [
+    ...(canViewFinance ? [
       {
         name: "Finance",
         items: [
-          { href: "/app/accounting", label: "Accounting", icon: FileText },
+          ...(isSystemAdmin || isHeadOffice || isAccountant ? [{ href: "/app/accounting", label: "Accounting", icon: FileText }] : []),
           { href: "/app/cashflow", label: "Cash Flow", icon: DollarSign },
           { href: "/app/loans/reversals", label: "Reversals", icon: RotateCcw },
         ],
-      },
+      }
+    ] : []),
+    ...(canViewSettings ? [
       {
-      name: "Settings",
-      items: [
-        { href: "/app/branches", label: "Branches", icon: Building },
-        { href: "/app/centres", label: "Centres", icon: MapPin },
-        { href: "/app/loan-products", label: "Loan Products", icon: Grid },
-        { href: "/app/savings-products", label: "Savings Products", icon: DollarSign },
-        { href: "/app/settings/team", label: "Team", icon: Users },
-        { href: "/app/settings/billing", label: "Billing", icon: Settings },
-        { href: "/app/settings/audit-log", label: "Audit Log", icon: FileText },
-      ],
-    }] : [])
+        name: "Settings",
+        items: [
+          { href: "/app/branches", label: "Branches", icon: Building },
+          { href: "/app/centres", label: "Centres", icon: MapPin },
+          { href: "/app/loan-products", label: "Loan Products", icon: Grid },
+          { href: "/app/savings-products", label: "Savings Products", icon: DollarSign },
+          { href: "/app/settings/team", label: "Team", icon: Users },
+          { href: "/app/settings/billing", label: "Billing", icon: Settings },
+          { href: "/app/settings/audit-log", label: "Audit Log", icon: FileText },
+        ],
+      }
+    ] : [])
   ]
 
   const NavContent = () => (

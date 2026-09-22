@@ -75,7 +75,7 @@ export async function POST(req: Request) {
           name: adminName.trim(),
           email: normalizedEmail,
           password: hashedPassword,
-          role: "ADMIN",
+          role: "SYSTEM_ADMIN",
           organizationId: organization.id,
         },
       })

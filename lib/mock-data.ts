@@ -25,25 +25,25 @@ export const mockOrganization: Organization = {
 export const mockUsers: User[] = [
   {
     id: "usr_1",
-    email: "admin@sgp.com",
-    password: "hashedpassword",
-    name: "Admin User",
-    role: "ADMIN",
+    email: "admin@solida.com",
+    name: "Solida Admin",
+    role: "SYSTEM_ADMIN",
     organizationId: "org_1",
-    branchId: null,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: new Date("2026-09-01"),
+    updatedAt: new Date("2026-09-01"),
+    password: "hashed_password",
+    branchId: null
   },
   {
     id: "usr_2",
-    email: "manager.galle@sgp.com",
-    password: "hashedpassword",
-    name: "Galle Manager",
-    role: "USER",
+    email: "officer@solida.com",
+    name: "Field Officer Nimal",
+    role: "FIELD_OFFICER",
     organizationId: "org_1",
-    branchId: null,
-    createdAt: now,
-    updatedAt: now,
+    createdAt: new Date("2026-09-01"),
+    updatedAt: new Date("2026-09-01"),
+    password: "hashed_password",
+    branchId: "brn_1"
   },
 ];
 

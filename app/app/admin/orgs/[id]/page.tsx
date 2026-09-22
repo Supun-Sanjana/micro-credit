@@ -356,7 +356,7 @@ export default async function OrgDetailPage({ params }: PageProps) {
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium ${
-                            u.role === "ADMIN"
+                            u.role === "SYSTEM_ADMIN"
                               ? "bg-ink-black text-paper-white"
                               : "bg-mist-gray text-slate-gray"
                           }`}

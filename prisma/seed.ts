@@ -45,14 +45,14 @@ async function main() {
     where: { email: 'admin@micro.local' },
     update: {
       password: adminPassword,
-      role: 'ADMIN',
+      role: 'SYSTEM_ADMIN',
       organizationId: org.id
     },
     create: {
       email: 'admin@micro.local',
       name: 'System Admin',
       password: adminPassword,
-      role: 'ADMIN',
+      role: 'SYSTEM_ADMIN',
       organizationId: org.id
     }
   })

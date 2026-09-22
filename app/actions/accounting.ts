@@ -29,6 +29,8 @@ export async function getChartOfAccounts() {
   return grouped;
 }
 
+import { requireRole } from "@/lib/auth-utils";
+
 export async function createAccount(data: {
   code: string;
   name: string;
@@ -38,6 +40,8 @@ export async function createAccount(data: {
   if (!session?.user?.organizationId) {
     throw new Error("Unauthorized");
   }
+  
+  await requireRole(["SYSTEM_ADMIN", "HEAD_OFFICE", "ACCOUNTANT"]);
 
   const account = await prisma.chartOfAccount.create({
     data: {

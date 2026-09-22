@@ -43,6 +43,13 @@ export async function PUT(
     
     const loan = await dal.prisma.loan.findUnique({ where: { id }, include: { loanProduct: true } })
     if (!loan) return NextResponse.json({ error: "Not found" }, { status: 404 })
+    
+    // RBAC: Verify and Disburse require Branch Manager or higher
+    if (json.action === "VERIFY" || json.action === "DISBURSE" || json.action === "TRANSITION") {
+      if (dal.role !== "BRANCH_MANAGER" && dal.role !== "SYSTEM_ADMIN" && dal.role !== "HEAD_OFFICE") {
+        return NextResponse.json({ error: "Forbidden: role required" }, { status: 403 })
+      }
+    }
 
     if (json.action === "TRANSITION") {
       assertLoanTransition(loan.status, json.status)

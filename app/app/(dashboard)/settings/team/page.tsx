@@ -12,7 +12,7 @@ export default async function TeamSettingsPage() {
   }
 
   // Check if admin
-  if ((session.user as any).role !== "ADMIN") {
+  if ((session.user as any).role !== "SYSTEM_ADMIN" && (session.user as any).role !== "HEAD_OFFICE") {
     redirect("/app/dashboard")
   }
 

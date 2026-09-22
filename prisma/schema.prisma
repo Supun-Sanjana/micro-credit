@@ -11,8 +11,11 @@ datasource db {
 }
 
 enum Role {
-  ADMIN
-  USER
+  SYSTEM_ADMIN
+  HEAD_OFFICE
+  ACCOUNTANT
+  BRANCH_MANAGER
+  FIELD_OFFICER
 }
 
 enum AuditAction {
@@ -45,7 +48,7 @@ model User {
   email          String       @unique
   password       String?
   name           String?
-  role           Role         @default(USER)
+  role           Role         @default(FIELD_OFFICER)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   branchId       String?

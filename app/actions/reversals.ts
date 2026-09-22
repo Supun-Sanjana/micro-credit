@@ -8,7 +8,8 @@ import { logAudit } from "@/lib/audit";
 
 export async function getReversalRequests() {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN" || !session.user.organizationId) {
+  const role = session?.user?.role as string;
+  if (!session?.user?.id || (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") || !session.user.organizationId) {
     throw new Error("Unauthorized");
   }
 
@@ -34,7 +35,8 @@ export async function getReversalRequests() {
 
 export async function approveReversal(reversalId: string) {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN" || !session.user.organizationId) {
+  const role = session?.user?.role as string;
+  if (!session?.user?.id || (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") || !session.user.organizationId) {
     return { error: "Unauthorized" };
   }
 
@@ -167,7 +169,8 @@ export async function approveReversal(reversalId: string) {
 
 export async function rejectReversal(reversalId: string, note: string) {
   const session = await auth();
-  if (!session?.user?.id || session.user.role !== "ADMIN" || !session.user.organizationId) {
+  const role = session?.user?.role as string;
+  if (!session?.user?.id || (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") || !session.user.organizationId) {
     return { error: "Unauthorized" };
   }
 

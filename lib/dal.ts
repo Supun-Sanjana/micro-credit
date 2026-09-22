@@ -29,7 +29,7 @@ export async function getScopedDal() {
 
   const scopedPrisma = prisma.$extends(withOrgScope(
     organizationId, 
-    role === "USER" ? branchId : null
+    (role === "FIELD_OFFICER" || role === "BRANCH_MANAGER") ? branchId : null
   ))
 
   return {
