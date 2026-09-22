@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client"
 import { addDays, subDays } from "date-fns"
 import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
 import { logAudit } from "@/lib/audit"
+import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
 
 export async function GET(request: Request) {
   try {
@@ -167,7 +168,8 @@ export async function POST(request: Request) {
                type: 'DEPOSIT',
                amount: depositAmount,
                date: paidDate,
-               notes: 'Collection sheet deposit'
+               notes: 'Collection sheet deposit',
+               organizationId: dal.organizationId
              }
            })
            await tx.savingsAccount.update({
@@ -176,7 +178,6 @@ export async function POST(request: Request) {
            })
            
            // Accounting
-           const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
            const cashAcc = await getAccountByCode(dal.organizationId, '1000')
            const compSavAcc = await getAccountByCode(dal.organizationId, '2000')
            await postJournalEntry({
@@ -205,7 +206,8 @@ export async function POST(request: Request) {
                type: 'DEPOSIT',
                amount: depositAmount,
                date: paidDate,
-               notes: 'Collection sheet deposit'
+               notes: 'Collection sheet deposit',
+               organizationId: dal.organizationId
              }
            })
            await tx.savingsAccount.update({
@@ -214,7 +216,6 @@ export async function POST(request: Request) {
            })
            
            // Accounting
-           const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
            const cashAcc = await getAccountByCode(dal.organizationId, '1000')
            const volSavAcc = await getAccountByCode(dal.organizationId, '2010')
            await postJournalEntry({
@@ -382,7 +383,7 @@ export async function POST(request: Request) {
       }
 
       return { savedCount, totalCollected }
-    })
+    }, { maxWait: 20000, timeout: 30000 })
 
     return NextResponse.json(result)
   } catch (error: any) {
