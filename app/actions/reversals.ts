@@ -146,6 +146,38 @@ export async function approveReversal(reversalId: string) {
         }
       }
 
+      // POST REVERSAL JOURNAL ENTRY
+      const originalJournal = await tx.journalEntry.findFirst({
+        where: {
+          organizationId,
+          sourceType: "REPAYMENT",
+          sourceId: originalRepayment.id
+        },
+        include: { lines: true }
+      });
+
+      if (originalJournal) {
+        await tx.journalEntry.create({
+          data: {
+            organizationId,
+            branchId: originalJournal.branchId,
+            periodId: originalJournal.periodId,
+            entryDate: new Date(),
+            reference: `REV-${newRepayment.id.slice(-6)}`,
+            description: `Reversal of Repayment ${originalRepayment.id}`,
+            sourceType: 'REVERSAL',
+            sourceId: newRepayment.id,
+            lines: {
+              create: originalJournal.lines.map(l => ({
+                accountId: l.accountId,
+                debit: l.credit,
+                credit: l.debit
+              }))
+            }
+          }
+        });
+      }
+
       // Update PaymentReversal
       await tx.paymentReversal.update({
         where: { id: reversal.id },

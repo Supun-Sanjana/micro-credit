@@ -21,6 +21,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         await tx.loanRepayment.create({ data: { organizationId: dal.organizationId, loanId: loan.id, paidDate: new Date(), amount: loan.outstanding, method: "ACCOUNT_TRANSFER", note: `Settled by top-up ${newLoan.id}`, transactionType: "PAYMENT", allocationMethod: "TOP_UP_SETTLEMENT" } })
         await tx.loan.update({ where: { id }, data: { totalPaid: loan.totalPaid.add(loan.outstanding), outstanding: 0, status: "SETTLED" } })
         
+        // --- ACCOUNTING ---
+        const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
+        const receivableAcc = await getAccountByCode(dal.organizationId, '1100')
+        const loanMember = await tx.member.findUnique({ where: { id: loan.memberId }, include: { centre: true }})
+        const branchId = loanMember?.centre.branchId
+
+        await postJournalEntry({
+          organizationId: dal.organizationId,
+          branchId,
+          entryDate: new Date(),
+          reference: `TOPUP-${loan.id.slice(-6)}`,
+          description: `Loan Top-up settlement for Member ${loan.member.name}`,
+          sourceType: 'TOP_UP',
+          sourceId: newLoan.id,
+          tx,
+          lines: [
+            { accountId: receivableAcc.id, debit: loan.outstanding, credit: 0 },
+            { accountId: receivableAcc.id, debit: 0, credit: loan.outstanding }
+          ]
+        })
+
         // --- NOTIFICATION ---
         const { dispatchNotification } = await import("@/lib/services/notification-service")
         void dispatchNotification({
