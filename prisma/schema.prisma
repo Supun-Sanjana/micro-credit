@@ -228,6 +228,8 @@ model Member {
   guarantorFor     Guarantor[]
   documents        MemberDocument[]
   groupMemberships GroupMembership[]
+  financialProfiles  FinancialProfile[]
+  creditAssessments  CreditAssessment[]
 
   @@unique([memberNumber, organizationId])
   @@index([centreId])
@@ -903,6 +905,123 @@ model NotificationLog {
   createdAt      DateTime              @default(now())
 
   @@index([organizationId, eventType])
+  @@index([organizationId, createdAt])
+}
+
+
+
+enum RiskGrade {
+  A
+  B
+  C
+  D
+}
+
+enum RiskAlertType {
+  DUPLICATE_NIC
+  DUPLICATE_PHONE
+  DUPLICATE_PAYMENT
+  REPEATED_REVERSALS
+  HIGH_PAR
+  EXCESSIVE_EXPOSURE
+  DEBT_TO_INCOME
+  REPEAT_DEFAULT
+  SUSPICIOUS_ACTIVITY
+}
+
+enum RiskAlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskAlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum IncomeSource {
+  EMPLOYMENT
+  SELF_EMPLOYED
+  AGRICULTURE
+  BUSINESS
+  OTHER
+}
+
+model FinancialProfile {
+  id                  String        @id @default(cuid())
+  organizationId      String
+  memberId            String
+  assessmentDate      DateTime      @db.Date
+  monthlyIncome       Decimal       @db.Decimal(14, 2)
+  householdIncome     Decimal?      @db.Decimal(14, 2)
+  existingObligations Decimal       @default(0) @db.Decimal(14, 2)
+  incomeSource        IncomeSource  @default(EMPLOYMENT)
+  verificationStatus  VerificationStatus @default(PENDING)
+  verifiedById        String?
+  verifiedAt          DateTime?
+  notes               String?
+  createdById         String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  member            Member          @relation(fields: [memberId], references: [id])
+  creditAssessments CreditAssessment[]
+
+  @@index([organizationId, memberId])
+  @@index([memberId, assessmentDate])
+}
+
+model CreditAssessment {
+  id                  String      @id @default(cuid())
+  organizationId      String
+  memberId            String
+  financialProfileId  String?
+  loanId              String?
+  score               Int         // 0-100
+  grade               RiskGrade
+  factors             Json
+  inputs              Json
+  totalLoans          Int         @default(0)
+  activeLoans         Int         @default(0)
+  settledLoans        Int         @default(0)
+  defaultedLoans      Int         @default(0)
+  repaymentRate       Decimal?    @db.Decimal(5, 2)
+  averageDaysLate     Decimal?    @db.Decimal(5, 2)
+  currentOutstanding  Decimal?    @db.Decimal(14, 2)
+  debtToIncomeRatio   Decimal?    @db.Decimal(5, 2)
+  createdById         String
+  createdAt           DateTime    @default(now())
+
+  member          Member           @relation(fields: [memberId], references: [id])
+  financialProfile FinancialProfile? @relation(fields: [financialProfileId], references: [id])
+
+  @@index([organizationId, memberId])
+  @@index([memberId, createdAt])
+}
+
+model RiskAlert {
+  id             String            @id @default(cuid())
+  organizationId String
+  type           RiskAlertType
+  severity       RiskAlertSeverity
+  entityType     String            // "Member" | "Loan" | "LoanRepayment"
+  entityId       String
+  description    String
+  status         RiskAlertStatus   @default(OPEN)
+  assignedToId   String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([organizationId, entityId, type, status])
+  @@index([organizationId, status])
+  @@index([organizationId, severity])
   @@index([organizationId, createdAt])
 }
 

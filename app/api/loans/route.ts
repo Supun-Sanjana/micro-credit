@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
 import { logAudit } from "@/lib/audit"
+import { runCreditAssessment } from "@/lib/intelligence/credit-assessment-service"
 
 function getOrdinal(n: number) {
   const s = ["th", "st", "nd", "rd"]
@@ -94,6 +95,11 @@ export async function POST(request: Request) {
       entityType: "Loan",
       entityId: loan.id,
       after: loan
+    })
+
+    // Trigger credit assessment (void)
+    void runCreditAssessment(member.id, dal.organizationId, loan.id, dal.userId).catch((e) => {
+      console.error("[Loans] Failed to trigger credit assessment:", e)
     })
 
     return NextResponse.json(loan, { status: 201 })

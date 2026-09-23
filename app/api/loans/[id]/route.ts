@@ -17,7 +17,11 @@ export async function GET(
     const loan = await dal.prisma.loan.findUnique({
       where: { id },
       include: { 
-        member: true, 
+        member: {
+          include: {
+            creditAssessments: { orderBy: { createdAt: 'desc' }, take: 1 }
+          }
+        },
         loanProduct: true, 
         guarantors: true,
         repaymentSchedule: { orderBy: { instalmentNumber: 'asc' } },

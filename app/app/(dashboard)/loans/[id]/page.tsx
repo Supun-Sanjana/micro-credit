@@ -79,6 +79,32 @@ export default function LoanDetailPage() {
         ))}
       </div>
 
+      {loan.member?.creditAssessments?.[0] && (
+        <section className="rounded-2xl border p-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-medium">Credit Assessment</h2>
+            <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+              loan.member.creditAssessments[0].grade === 'A' ? 'bg-green-100 text-green-800' :
+              loan.member.creditAssessments[0].grade === 'B' ? 'bg-blue-100 text-blue-800' :
+              loan.member.creditAssessments[0].grade === 'C' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              Grade {loan.member.creditAssessments[0].grade} · {loan.member.creditAssessments[0].score}/100
+            </span>
+          </div>
+          <ul className="space-y-2 text-sm text-slate-gray">
+            {loan.member.creditAssessments[0].factors.map((f: string, i: number) => (
+              <li key={i} className="flex gap-2">
+                <span className={f.startsWith('+') ? 'text-green-600' : 'text-red-600'}>
+                  {f.startsWith('+') ? '+' : '-'}
+                </span>
+                <span>{f.substring(1).trim()}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="rounded-2xl bg-mist-gray p-5">
         <h2 className="font-medium">Financial events</h2>
         <p className="mb-4 mt-1 text-sm text-slate-gray">These preserve the original loan and payment history.</p>

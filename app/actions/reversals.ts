@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { logAudit } from "@/lib/audit";
+import { checkSuspiciousActivity } from "@/lib/intelligence/anomaly-detector";
 
 export async function getReversalRequests() {
   const session = await auth();
@@ -43,6 +44,8 @@ export async function approveReversal(reversalId: string) {
   const { organizationId, id: userId } = session.user as { organizationId: string, id: string };
   
   try {
+    let loanIdForAlert: string | undefined;
+
     await prisma.$transaction(async (tx) => {
       const reversal = await tx.paymentReversal.findUnique({
         where: { id: reversalId, organizationId },
@@ -64,6 +67,8 @@ export async function approveReversal(reversalId: string) {
       if (!originalRepayment) {
         throw new Error("Original repayment not found");
       }
+      
+      loanIdForAlert = originalRepayment.loanId;
 
       // Lock loan for update
       await tx.$executeRaw`SELECT id FROM "Loan" WHERE id = ${originalRepayment.loanId} FOR UPDATE`;
@@ -159,7 +164,11 @@ export async function approveReversal(reversalId: string) {
         note: `Approved payment reversal for repayment ${originalRepayment.id}`,
       });
     });
-
+    
+    if (loanIdForAlert) {
+      checkSuspiciousActivity(loanIdForAlert, organizationId);
+    }
+    
     revalidatePath("/app/loans/reversals");
     return { success: true };
   } catch (error: any) {

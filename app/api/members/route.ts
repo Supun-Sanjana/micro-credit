@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
+import { checkDuplicateNIC, checkDuplicatePhone } from "@/lib/intelligence/anomaly-detector"
 
 export async function GET(request: Request) {
   try {
@@ -69,6 +70,13 @@ export async function POST(request: Request) {
         organizationId: dal.organizationId
       }
     })
+    
+    // Risk anomaly detection
+    checkDuplicateNIC(member.nic, dal.organizationId, member.id)
+    checkDuplicatePhone(member.contact1, dal.organizationId, member.id)
+    if (member.contact2) {
+      checkDuplicatePhone(member.contact2, dal.organizationId, member.id)
+    }
     
     return NextResponse.json(member, { status: 201 })
   } catch (error: any) {

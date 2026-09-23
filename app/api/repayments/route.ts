@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client"
 import { logAudit } from "@/lib/audit"
 import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
 import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
+import { checkDuplicatePayment } from "@/lib/intelligence/anomaly-detector"
 
 export async function GET(request: Request) {
   try {
@@ -236,6 +237,14 @@ export async function POST(request: Request) {
           }
         })
       }
+      
+      // Risk anomaly detection
+      void checkDuplicatePayment(
+        item.repayment.loanId,
+        parseFloat(item.amount),
+        new Date(item.paidDate),
+        dal.organizationId
+      )
     }
 
     return NextResponse.json({ success: true, count: results.length })
