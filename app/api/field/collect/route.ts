@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getScopedDal } from "@/lib/dal";
+import { recordPayment } from "@/lib/services/payment-service";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
@@ -45,30 +47,22 @@ export async function POST(request: Request) {
 
       if (!assignment) throw new Error("Not assigned to this centre");
 
-      const repayment = await tx.loanRepayment.create({
-        data: {
-          organizationId: dal.organizationId,
-          loanId,
-          amount,
-          method,
-          note: notes,
-          collectedBy: dal.userId,
-          clientTransactionId,
-          paidDate: new Date(),
-        }
+      const decimalAmount = new Prisma.Decimal(amount || 0);
+      const repayment = await recordPayment(tx, {
+        organizationId: dal.organizationId,
+        loanId,
+        amount: decimalAmount,
+        paidDate: new Date(),
+        method,
+        scheduleId,
+        note: notes,
+        collectedBy: dal.userId,
+        clientTransactionId,
+        source: 'FIELD_MOBILE'
       });
 
-      // Update schedule
+      // Update schedule attempt history
       if (scheduleId) {
-        await tx.repaymentSchedule.update({
-          where: { id: scheduleId },
-          data: {
-            isPaid: true,
-            status: 'PAID',
-            paidAmount: amount,
-          }
-        });
-        
         await tx.collectionAttempt.create({
           data: {
             organizationId: dal.organizationId,

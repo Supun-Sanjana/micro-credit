@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
+import { recordPayment } from "@/lib/services/payment-service"
 import { Prisma } from "@prisma/client"
 import { addDays, subDays } from "date-fns"
 import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
@@ -252,114 +253,19 @@ export async function POST(request: Request) {
         }
 
         if (status !== 'NP' && amount > 0) {
-          // Fetch loan for balance computation before payment
+          const repayment = await recordPayment(tx as any, {
+            organizationId: dal.organizationId,
+            loanId,
+            amount: decimalAmount,
+            paidDate,
+            method: 'CASH',
+            scheduleId,
+            note,
+            collectedBy: dal.userId,
+            source: 'COLLECTION_SHEET'
+          })
+
           const loanForAlloc = await tx.loan.findUniqueOrThrow({ where: { id: loanId } })
-
-          const repayment = await tx.loanRepayment.create({
-            data: {
-              organizationId: dal.organizationId,
-              loanId,
-              instalmentNumber,
-              scheduledDate: paidDate,
-              paidDate,
-              amount: decimalAmount,
-              method: 'CASH',
-              note,
-              allocationMethod: 'COLLECTION'
-            }
-          })
-
-          // Waterfall payment allocation (same as /api/repayments)
-          const balances = balancesFromLoan(loanForAlloc)
-          try {
-            const allocs = allocatePayment(decimalAmount, balances)
-            for (const alloc of allocs) {
-              await tx.paymentAllocation.create({
-                data: {
-                  paymentId: repayment.id,
-                  component: alloc.component,
-                  amount: alloc.amount,
-                }
-              })
-            }
-
-            // --- ACCOUNTING ---
-            const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
-            const cashAcc = await getAccountByCode(dal.organizationId, '1000')
-            const principalAcc = await getAccountByCode(dal.organizationId, '1100')
-            const interestAcc = await getAccountByCode(dal.organizationId, '4000')
-            const feeAcc = await getAccountByCode(dal.organizationId, '4010')
-            const penaltyAcc = await getAccountByCode(dal.organizationId, '4020')
-
-            const jLines = [{ accountId: cashAcc.id, debit: decimalAmount, credit: new Prisma.Decimal(0) }]
-            for (const alloc of allocs) {
-              let accId = ''
-              if (alloc.component === 'PRINCIPAL') accId = principalAcc.id
-              if (alloc.component === 'INTEREST') accId = interestAcc.id
-              if (alloc.component === 'FEE') accId = feeAcc.id
-              if (alloc.component === 'PENALTY') accId = penaltyAcc.id
-              if (accId) jLines.push({ accountId: accId, debit: new Prisma.Decimal(0), credit: alloc.amount })
-            }
-
-            // We need branchId from the loan member.
-            // The collection endpoint currently has `centreId` via query param. Wait, we can get branchId from loanForAlloc if we included it, or fetch it.
-            // Let's fetch branchId
-            const loanMember = await tx.member.findUnique({ where: { id: loanForAlloc.memberId }, include: { centre: true }})
-            const branchId = loanMember?.centre.branchId
-
-            await postJournalEntry({
-              organizationId: dal.organizationId,
-              branchId: branchId,
-              entryDate: paidDate,
-              reference: `COL-${repayment.id.slice(-6)}`,
-              description: `Bulk Collection Repayment`,
-              sourceType: 'REPAYMENT',
-              sourceId: repayment.id,
-              tx,
-              lines: jLines
-            })
-            // ------------------
-          } catch (e: any) {
-            console.error("Allocation/Accounting failed:", e)
-            await tx.loanRepayment.update({
-              where: { id: repayment.id },
-              data: { allocationMethod: 'COLLECTION_UNALLOCATED' }
-            })
-          }
-
-          // Atomic balance update
-          const updatedLoan = await tx.loan.update({
-            where: { id: loanId },
-            data: {
-              totalPaid: { increment: decimalAmount },
-              outstanding: { decrement: decimalAmount }
-            }
-          })
-
-          // Check if loan is now settled
-          if (updatedLoan.outstanding.lte(0) && updatedLoan.status !== 'SETTLED') {
-            await tx.loan.update({
-              where: { id: loanId },
-              data: { status: 'SETTLED' }
-            })
-          }
-
-          if (scheduleId) {
-            const updatedSchedule = await tx.repaymentSchedule.update({
-              where: { id: scheduleId },
-              data: {
-                paidAmount: { increment: decimalAmount }
-              }
-            })
-            
-            const newScheduleStatus = updatedSchedule.paidAmount.gte(updatedSchedule.scheduledAmount) ? 'PAID' : 'PARTIALLY_PAID'
-            if (updatedSchedule.status !== newScheduleStatus) {
-              await tx.repaymentSchedule.update({
-                where: { id: scheduleId },
-                data: { status: newScheduleStatus }
-              })
-            }
-          }
 
           notifications.push({
             type: 'PAYMENT_RECEIVED',
@@ -372,7 +278,7 @@ export async function POST(request: Request) {
             }
           })
           
-          if (updatedLoan.outstanding.lte(0)) {
+          if (loanForAlloc.status === 'SETTLED') {
             notifications.push({
               type: 'LOAN_SETTLED',
               payload: {
@@ -404,6 +310,8 @@ export async function POST(request: Request) {
               note: note || 'NP'
             }
           })
+          savedCount++
+        }
           savedCount++
         }
       }

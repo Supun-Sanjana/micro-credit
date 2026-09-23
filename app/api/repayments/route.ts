@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { Prisma } from "@prisma/client"
 import { logAudit } from "@/lib/audit"
-import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
+import { recordPayment } from "@/lib/services/payment-service"
 import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
 import { checkDuplicatePayment } from "@/lib/intelligence/anomaly-detector"
 
@@ -68,146 +68,32 @@ export async function POST(request: Request) {
 
         if (!loanId) continue
 
-        // Acquire row-level lock to prevent lost updates in concurrent scenarios
-        await tx.$executeRaw`SELECT id FROM "Loan" WHERE id = ${loanId} FOR UPDATE`
-
-        const loan = await tx.loan.findUnique({
-          where: { id: loanId },
-          include: {
-            member: { include: { centre: { include: { branch: true } } } },
-            repaymentSchedule: {
-              where: { isPaid: false },
-              orderBy: { instalmentNumber: 'asc' }
-            }
-          }
-        })
-
-        if (!loan || loan.member.centre.branch.organizationId !== dal.organizationId) {
-          throw new Error(`Unauthorized or missing loan ${loanId}`)
-        }
-
-        // Idempotency: if specific schedule is targeted, ensure we haven't already paid it
-        if (schedule && schedule.isPaid) {
-          continue // Duplicate retry, silently skip
-        }
+        if (schedule && schedule.isPaid) continue // Idempotency
 
         const amount = new Prisma.Decimal(p.amount)
         if (amount.lte(0)) continue // Ignore zero payments
-        if (amount.gt(loan.outstanding)) throw new Error("Payment exceeds the outstanding balance")
-        const allocations = allocatePayment(amount, balancesFromLoan(loan))
-
-        // Create Repayment record
-        const repayment = await tx.loanRepayment.create({
-          data: {
-            organizationId: dal.organizationId,
-            loanId: loan.id,
-            instalmentNumber: schedule?.instalmentNumber || null,
-            scheduledDate: schedule?.scheduledDate || null,
-            paidDate,
-            amount: amount,
-            note: p.note,
-            allocationMethod: "DEFAULT_WATERFALL",
-            allocations: { create: allocations }
-          }
-        })
-
-        // Update Loan Totals
-        const newTotalPaid = loan.totalPaid.add(amount)
-        const newOutstanding = loan.totalReceivable.minus(newTotalPaid)
         
-        let newStatus = loan.status
-        if (newOutstanding.lte(0)) {
-          newStatus = 'SETTLED'
-        }
-
-        await tx.loan.update({
-          where: { id: loan.id },
-          data: {
-            totalPaid: newTotalPaid,
-            outstanding: newOutstanding,
-            status: newStatus
-          }
+        const repayment = await recordPayment(tx as any, {
+          organizationId: dal.organizationId,
+          loanId,
+          amount,
+          paidDate,
+          method: 'CASH',
+          scheduleId: p.scheduleId,
+          note: p.note,
+          collectedBy: dal.userId,
+          source: 'OFFICE'
         })
 
-        // Waterfall allocation to schedules
-        let remainingToAllocate = amount
-        for (const s of loan.repaymentSchedule) {
-          if (remainingToAllocate.lte(0)) break
-
-          // Assuming we simply mark as paid if the total allocation covers it
-          // Wait, if it's a partial payment, it doesn't get marked as paid?
-          // The simple Microfinance rule is: if outstanding <= sum of remaining unpaid schedules after this one
-          // Let's just mark it as paid if remainingToAllocate >= s.scheduledAmount
-          if (remainingToAllocate.gte(s.scheduledAmount)) {
-            await tx.repaymentSchedule.update({
-              where: { id: s.id },
-              data: { isPaid: true }
-            })
-            remainingToAllocate = remainingToAllocate.minus(s.scheduledAmount)
-          } else {
-            // Partial payment for this schedule. In some systems, it remains false until fully paid.
-            break
-          }
-        }
+        const updatedLoan = await tx.loan.findUnique({ where: { id: loanId } })
 
         processed.push({
           repayment,
-          memberId: loan.memberId,
+          memberId: updatedLoan?.memberId,
           amount: amount.toString(),
           paidDate: paidDate.toISOString(),
-          loanNumber: loan.loanNumber,
-          isSettled: newStatus === 'SETTLED'
-        })
-        
-        // --- ACCOUNTING ---
-        try {
-          const cashAcc = await getAccountByCode(dal.organizationId, '1000')
-          const principalAcc = await getAccountByCode(dal.organizationId, '1100')
-          const interestAcc = await getAccountByCode(dal.organizationId, '4000')
-          const feeAcc = await getAccountByCode(dal.organizationId, '4010')
-          const penaltyAcc = await getAccountByCode(dal.organizationId, '4020')
-
-          const jLines: { accountId: string; debit: Prisma.Decimal; credit: Prisma.Decimal }[] = []
-          
-          // Debit Cash for the total amount
-          jLines.push({ accountId: cashAcc.id, debit: amount, credit: new Prisma.Decimal(0) })
-
-          // Credit the respective income/receivable accounts based on allocation
-          for (const alloc of allocations) {
-            let accId = ''
-            if (alloc.component === 'PRINCIPAL') accId = principalAcc.id
-            if (alloc.component === 'INTEREST') accId = interestAcc.id
-            if (alloc.component === 'FEE') accId = feeAcc.id
-            if (alloc.component === 'PENALTY') accId = penaltyAcc.id
-            
-            if (accId) {
-              jLines.push({ accountId: accId, debit: new Prisma.Decimal(0), credit: alloc.amount })
-            }
-          }
-
-          await postJournalEntry({
-            organizationId: dal.organizationId,
-            branchId: loan.member.centre.branch.id,
-            entryDate: paidDate,
-            reference: `REP-${repayment.id.slice(-6)}`,
-            description: `Repayment from Member ${loan.member.name}`,
-            sourceType: 'REPAYMENT',
-            sourceId: repayment.id,
-            tx,
-            lines: jLines
-          })
-        } catch (e: any) {
-          console.error("Accounting error:", e)
-          throw new Error("Failed to post accounting journal: " + e.message)
-        }
-        // ------------------
-        
-        await logAudit({
-          dal,
-          action: "CREATE",
-          entityType: "LoanRepayment",
-          entityId: repayment.id,
-          after: repayment
+          loanNumber: updatedLoan?.loanNumber,
+          isSettled: updatedLoan?.status === 'SETTLED'
         })
       }
 
