@@ -89,10 +89,10 @@ export async function POST(request: Request) {
 
         processed.push({
           repayment,
-          memberId: updatedLoan?.memberId,
+          memberId: updatedLoan?.memberId || '',
           amount: amount.toString(),
           paidDate: paidDate.toISOString(),
-          loanNumber: updatedLoan?.loanNumber,
+          loanNumber: updatedLoan?.loanNumber || '',
           isSettled: updatedLoan?.status === 'SETTLED'
         })
       }

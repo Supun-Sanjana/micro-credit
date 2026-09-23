@@ -312,8 +312,6 @@ export async function POST(request: Request) {
           })
           savedCount++
         }
-          savedCount++
-        }
       }
 
       return { savedCount, totalCollected, notifications }

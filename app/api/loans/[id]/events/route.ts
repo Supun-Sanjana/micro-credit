@@ -49,7 +49,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           payload: { loanId: id, memberId: loan.memberId, organizationId: dal.organizationId, loanNumber: loan.loanNumber }
         })
 
-        return await tx.loanRefinance.create({ data: { organizationId: dal.organizationId, sourceLoanId: id, newLoanId: newLoan.id, settlementAmount: loan.outstanding, additionalDisbursement: amount.minus(loan.outstanding), createdById: dal.userId! } })
+        const ref = await tx.loanRefinance.create({ data: { organizationId: dal.organizationId, sourceLoanId: id, newLoanId: newLoan.id, settlementAmount: loan.outstanding, additionalDisbursement: amount.minus(loan.outstanding), createdById: dal.userId! } })
+        await tx.auditLog.create({ data: { organizationId: dal.organizationId, userId: dal.userId!, action: 'CREATE', entityType: 'LoanTOP_UP', entityId: ref.id, after: JSON.stringify(ref) } })
+        return ref
       }
       if (body.action === "RESTRUCTURE") {
         adminOnly(dal.role); if (!body.reason?.trim() || !Array.isArray(body.schedule) || body.schedule.length === 0) throw new Error("Reason and replacement schedule are required")
@@ -57,7 +59,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         const scheduleVersion = await tx.loanScheduleVersion.create({ data: { loanId: id, version, reason: body.reason.trim(), effectiveDate, schedule: body.schedule, createdById: dal.userId!, approvedById: dal.userId!, approvedAt: new Date() } })
         await tx.repaymentSchedule.updateMany({ where: { loanId: id, supersededAt: null }, data: { supersededAt: new Date() } })
         await tx.repaymentSchedule.createMany({ data: body.schedule.map((s: any, index: number) => ({ loanId: id, scheduleVersionId: scheduleVersion.id, instalmentNumber: index + 1, scheduledDate: new Date(s.scheduledDate), scheduledAmount: new Prisma.Decimal(s.scheduledAmount) })) })
-        return await tx.loanRestructure.create({ data: { organizationId: dal.organizationId, loanId: id, scheduleVersionId: scheduleVersion.id, reason: body.reason.trim(), effectiveDate, createdById: dal.userId!, approvedById: dal.userId!, approvedAt: new Date() } })
+        const res = await tx.loanRestructure.create({ data: { organizationId: dal.organizationId, loanId: id, scheduleVersionId: scheduleVersion.id, reason: body.reason.trim(), effectiveDate, createdById: dal.userId!, approvedById: dal.userId!, approvedAt: new Date() } })
+        await tx.auditLog.create({ data: { organizationId: dal.organizationId, userId: dal.userId!, action: 'CREATE', entityType: 'LoanRESTRUCTURE', entityId: res.id, after: JSON.stringify(res) } })
+        return res
       }
       if (body.action === "WRITE_OFF") {
         adminOnly(dal.role); if (!body.reason?.trim()) throw new Error("A write-off reason is required")
@@ -88,6 +92,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             { accountId: receivableAcc.id, debit: 0, credit: loan.outstanding }
           ]
         })
+        await tx.auditLog.create({ data: { organizationId: dal.organizationId, userId: dal.userId!, action: 'CREATE', entityType: 'LoanWRITE_OFF', entityId: writeOff.id, after: JSON.stringify(writeOff) } })
         return writeOff
       }
       if (body.action === "RECOVERY") {
@@ -117,11 +122,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             { accountId: expenseAcc.id, debit: 0, credit: amount }
           ]
         })
+        await tx.auditLog.create({ data: { organizationId: dal.organizationId, userId: dal.userId!, action: 'CREATE', entityType: 'LoanRECOVERY', entityId: recovery.id, after: JSON.stringify(recovery) } })
         return recovery
       }
       throw new Error("Unsupported loan event")
     })
-    await logAudit({ dal, action: "CREATE", entityType: `Loan${body.action}`, entityId: result.id, after: result })
+    
     return NextResponse.json(result, { status: 201 })
   } catch (error: any) { return NextResponse.json({ error: error.message }, { status: 400 }) }
 }

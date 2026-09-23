@@ -29,6 +29,19 @@ export async function createSavingsProduct(data: {
   minimumBalance: number
 }) {
   const session = await getSession()
+  const role = session.user.role as string
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE") throw new Error("Forbidden: requires admin or head office")
+  // @ts-ignore
+  return _createSavingsProduct(data)
+}
+async function _createSavingsProduct(data: {
+  name: string
+  code: string
+  type: SavingsType
+  interestRate: number
+  minimumBalance: number
+}) {
+  const session = await getSession()
   const orgId = session.user.organizationId!
 
   const existing = await prisma.savingsProduct.findFirst({
@@ -78,6 +91,17 @@ export async function openSavingsAccount(data: {
   accountNumber: string
 }) {
   const session = await getSession()
+  const role = session.user.role as string
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") throw new Error("Forbidden: requires branch manager or higher")
+  // @ts-ignore
+  return _openSavingsAccount(data)
+}
+async function _openSavingsAccount(data: {
+  memberId: string
+  savingsProductId: string
+  accountNumber: string
+}) {
+  const session = await getSession()
   const orgId = session.user.organizationId!
 
   const existing = await prisma.savingsAccount.findFirst({
@@ -109,52 +133,82 @@ export async function postSavingsTransaction(data: {
   notes?: string
 }) {
   const session = await getSession()
+  const role = session.user.role as string
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") throw new Error("Forbidden: requires branch manager or higher")
+  // @ts-ignore
+  return _postSavingsTransaction(data)
+}
+async function _postSavingsTransaction(data: {
+  accountId: string
+  type: SavingsTransactionType
+  amount: number
+  notes?: string
+}) {
+  const session = await getSession()
   const orgId = session.user.organizationId!
 
-  const account = await prisma.savingsAccount.findFirst({
-    where: { id: data.accountId, organizationId: orgId },
-    include: { member: { include: { centre: true } } },
-  })
-
-  if (!account) return { error: "Account not found" }
-
-  const newBalance = data.type === "DEPOSIT" || data.type === "INTEREST_POSTING"
-    ? Number(account.balance) + data.amount
-    : Number(account.balance) - data.amount
-
-  if (data.type === "WITHDRAWAL" && newBalance < 0) {
-    return { error: "Insufficient funds" }
+  if (data.amount <= 0) {
+    return { error: "Amount must be positive" }
   }
 
-  // Ensure accounts exist (1000 for Cash, 2010 for Savings)
-  // According to standard chart of accounts: 1000 is Cash, 2010 is Savings Deposit
-  const cashAccount = await prisma.chartOfAccount.findUnique({
-    where: { organizationId_code: { organizationId: orgId, code: "1000" } }
-  })
-  const savingsAccount = await prisma.chartOfAccount.findUnique({
-    where: { organizationId_code: { organizationId: orgId, code: "2010" } }
-  })
-
-  const transaction = await prisma.$transaction(async (tx) => {
-    const trx = await tx.savingsTransaction.create({
-      data: {
-        organizationId: orgId,
-        savingsAccountId: data.accountId,
-        type: data.type,
-        amount: data.amount,
-        date: new Date(),
-        notes: data.notes,
-      },
-    })
-
-    await tx.savingsAccount.update({
-      where: { id: data.accountId },
-      data: { balance: newBalance },
-    })
-
-    if (cashAccount && savingsAccount) {
-      const isDeposit = data.type === "DEPOSIT" || data.type === "INTEREST_POSTING"
+  try {
+    const transaction = await prisma.$transaction(async (tx) => {
+      // 1. Lock the account
+      await tx.$executeRaw`SELECT id FROM "SavingsAccount" WHERE id = ${data.accountId} FOR UPDATE`
       
+      const account = await tx.savingsAccount.findFirst({
+        where: { id: data.accountId, organizationId: orgId },
+        include: { 
+          member: { include: { centre: true } },
+          product: true
+        },
+      })
+      
+      if (!account) throw new Error("Account not found")
+
+      // 2. Do the math
+      const currentBalance = Number(account.balance)
+      const newBalance = data.type === "DEPOSIT" || data.type === "INTEREST_POSTING"
+        ? currentBalance + data.amount
+        : currentBalance - data.amount
+
+      if (data.type === "WITHDRAWAL" && newBalance < 0) {
+        throw new Error("Insufficient funds")
+      }
+
+      // 3. Get accounting codes
+      const cashAccount = await tx.chartOfAccount.findUnique({
+        where: { organizationId_code: { organizationId: orgId, code: "1000" } }
+      })
+      const savingsCode = account.product.type === "COMPULSORY" ? "2000" : "2010"
+      const savingsAccount = await tx.chartOfAccount.findUnique({
+        where: { organizationId_code: { organizationId: orgId, code: savingsCode } }
+      })
+
+      if (!cashAccount || !savingsAccount) {
+        throw new Error(`Missing accounting codes (1000 or ${savingsCode})`)
+      }
+
+      // 4. Update the account
+      await tx.savingsAccount.update({
+        where: { id: data.accountId },
+        data: { balance: newBalance },
+      })
+
+      // 5. Create transaction record
+      const trx = await tx.savingsTransaction.create({
+        data: {
+          organizationId: orgId,
+          savingsAccountId: data.accountId,
+          type: data.type,
+          amount: data.amount,
+          date: new Date(),
+          notes: data.notes,
+        },
+      })
+
+      // 6. Post Journal
+      const isDeposit = data.type === "DEPOSIT" || data.type === "INTEREST_POSTING"
       const debitAccount = isDeposit ? cashAccount.id : savingsAccount.id
       const creditAccount = isDeposit ? savingsAccount.id : cashAccount.id
       
@@ -172,11 +226,13 @@ export async function postSavingsTransaction(data: {
           { accountId: creditAccount, debit: 0, credit: data.amount }
         ]
       })
-    }
-    
-    return trx
-  })
+      
+      return { trx, memberId: account.memberId }
+    })
 
-  revalidatePath(`/app/members/${account.memberId}`)
-  return { success: true, transaction }
+    revalidatePath(`/app/members/${transaction.memberId}`)
+    return { success: true, transaction: transaction.trx }
+  } catch (error: any) {
+    return { error: error.message || "Transaction failed" }
+  }
 }

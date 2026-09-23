@@ -300,7 +300,7 @@ model Group {
   @@index([centreId, status])
 }
 
-model GroupMembership {
+  model GroupMembership {
   id       String                @id @default(cuid())
   groupId  String
   memberId String
@@ -311,6 +311,7 @@ model GroupMembership {
   group    Group                 @relation(fields: [groupId], references: [id])
   member   Member                @relation(fields: [memberId], references: [id])
 
+  @@unique([groupId, memberId])
   @@index([memberId, status])
   @@index([groupId, status])
 }

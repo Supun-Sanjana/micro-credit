@@ -52,31 +52,53 @@ export async function runRiskBatch(organizationId: string): Promise<{
   }
 
   // 1. checkHighPAR (PAR30+)
-  const parDate = new Date()
-  parDate.setDate(parDate.getDate() - 30)
+    const now = new Date();
+    const parDate = new Date();
+    parDate.setDate(parDate.getDate() - 30);
 
-  const parLoans = await prisma.loan.findMany({
-    where: {
-      member: { organizationId },
-      status: 'ACTIVE',
-      repaymentSchedule: {
-        some: {
-          status: { in: ['DUE', 'PARTIALLY_PAID', 'MISSED'] },
-          scheduledDate: { lt: parDate }
+    const activeLoans = await prisma.loan.findMany({
+      where: {
+        member: { organizationId },
+        status: 'ACTIVE',
+      },
+      include: {
+        repaymentSchedule: {
+          where: {
+            isPaid: false,
+            scheduledDate: { lt: now }
+          },
+          orderBy: { scheduledDate: 'asc' }
         }
       }
-    },
-    select: { id: true, memberId: true, loanNumber: true }
-  })
-  for (const loan of parLoans) {
-    await createAlert(
-      'HIGH_PAR',
-      'MEDIUM',
-      'Member',
-      loan.memberId,
-      `Member has a loan (${loan.loanNumber || loan.id}) with PAR > 30 days.`
-    )
-  }
+    });
+
+    for (const loan of activeLoans) {
+      if (loan.repaymentSchedule.length === 0) continue;
+      
+      const oldestSchedule = loan.repaymentSchedule[0];
+      if (oldestSchedule.scheduledDate >= parDate) continue; // Oldest unpaid is not >30 days late
+
+      let totalOverdue = new Prisma.Decimal(0);
+      for (const s of loan.repaymentSchedule) {
+        const schedAmount = new Prisma.Decimal(s.scheduledAmount || 0);
+        const paidAmount = new Prisma.Decimal(s.paidAmount || 0);
+        totalOverdue = totalOverdue.add(schedAmount.minus(paidAmount));
+      }
+
+      const outstanding = new Prisma.Decimal(loan.outstanding || 0);
+      if (outstanding.lte(0)) continue;
+
+      const parRatio = totalOverdue.dividedBy(outstanding);
+      if (parRatio.toNumber() > 0.1) {
+        await createAlert(
+          'HIGH_PAR',
+          'MEDIUM',
+          'Member',
+          loan.memberId,
+          `Member has a loan (${loan.loanNumber || loan.id}) with PAR > 30 days and overdue ratio > 10%.`
+        );
+      }
+    }
 
   // 2. checkExcessiveExposure (>3 active loans)
   const exposureMembers = await prisma.member.findMany({

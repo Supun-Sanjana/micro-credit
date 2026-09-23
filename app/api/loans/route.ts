@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
 import { logAudit } from "@/lib/audit"
@@ -49,6 +50,15 @@ export async function POST(request: Request) {
       where: { id: json.loanProductId }
     })
     if (!product) return NextResponse.json({ error: "Invalid product" }, { status: 400 })
+
+    // Validate boundaries
+    const amt = new Prisma.Decimal(json.loanAmount)
+    if (product.minimumAmount && amt.lt(product.minimumAmount)) {
+      return NextResponse.json({ error: `Amount cannot be less than ${product.minimumAmount}` }, { status: 400 })
+    }
+    if (product.maximumAmount && amt.gt(product.maximumAmount)) {
+      return NextResponse.json({ error: `Amount cannot be greater than ${product.maximumAmount}` }, { status: 400 })
+    }
 
     // Calculate loan terms
     const terms = calculateLoanTerms(json.loanAmount, product)
