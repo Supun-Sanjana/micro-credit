@@ -20,6 +20,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         const newLoan = await tx.loan.create({ data: { memberId: loan.memberId, loanProductId: loan.loanProductId, loanType: loan.loanType, loanNumber: `TOPUP-${Date.now()}`, loanAmount: terms.loanAmount, weeklyRental: terms.weeklyRental, numberOfWeeks: terms.numberOfWeeks, totalReceivable: terms.totalReceivable, outstanding: terms.totalReceivable, status: "PENDING", verificationStatus: "PENDING" } })
         await tx.loanRepayment.create({ data: { loanId: loan.id, paidDate: new Date(), amount: loan.outstanding, method: "ACCOUNT_TRANSFER", note: `Settled by top-up ${newLoan.id}`, transactionType: "PAYMENT", allocationMethod: "TOP_UP_SETTLEMENT" } })
         await tx.loan.update({ where: { id }, data: { totalPaid: loan.totalPaid.add(loan.outstanding), outstanding: 0, status: "SETTLED" } })
+        
+        // --- NOTIFICATION ---
+        const { dispatchNotification } = await import("@/lib/services/notification-service")
+        void dispatchNotification({
+          type: 'LOAN_SETTLED',
+          payload: { loanId: id, memberId: loan.memberId, organizationId: dal.organizationId, loanNumber: loan.loanNumber }
+        })
+
         return await tx.loanRefinance.create({ data: { organizationId: dal.organizationId, sourceLoanId: id, newLoanId: newLoan.id, settlementAmount: loan.outstanding, additionalDisbursement: amount.minus(loan.outstanding), createdById: dal.userId! } })
       }
       if (body.action === "RESTRUCTURE") {

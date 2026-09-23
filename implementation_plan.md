@@ -1,51 +1,69 @@
-# UI Redesign: Steep Design System Integration
+# Milestone 7: Automation (Notifications)
 
-This plan details the implementation of the new Steep Design System (as specified in `design.md`) across the MicroCredit application, converting it from a basic admin dashboard into an editorial, magazine-like interface.
+This plan covers the implementation of Phase 16 (Notifications) to introduce an event-driven notification layer for the Solida MFI platform.
+
+## Goal Description
+Introduce a decoupled, event-driven notification layer to handle automated alerts for loan and payment lifecycles. We will implement channels for In-App and Email (using Resend, which is already installed). SMS and WhatsApp will be structured as providers in the service layer, ready for integration when API keys are available.
 
 ## User Review Required
-
-> [!WARNING]
-> This represents a major layout change. The traditional sidebar navigation will be replaced with a centered, transparent top-navigation bar, and the color palette will shift to an achromatic (black/white/gray) scheme with peach accents.
+> [!IMPORTANT]
+> **Messaging Providers**: The plan assumes we will use Resend for emails. For SMS and WhatsApp, we will build the provider interfaces but leave them as mock/logger implementations until you provide the specific vendor details (e.g., Twilio, messagebird). Is this acceptable for now?
 
 ## Proposed Changes
 
-### Global Configuration
+### 1. Database Schema (`prisma/schema.prisma`)
+We will introduce models to store notifications, domain events, and notification preferences.
 
-#### [MODIFY] `app/globals.css`
-- Replace existing Shadcn HSL variables with the precise HEX tokens and shadows from `design.md`.
-- Integrate the `--font-signifier` and `--font-sohne` variables to point to appropriate serif/sans fallbacks.
+#### [MODIFY] [schema.prisma](file:///f:/Personal/micro-credit/prisma/schema.prisma)
+- **Add Enums**: `NotificationChannel` (IN_APP, EMAIL, SMS, WHATSAPP), `NotificationStatus` (PENDING, SENT, FAILED, READ), `DomainEventType` (LOAN_APPROVED, LOAN_DISBURSED, PAYMENT_RECEIVED, PAYMENT_DUE, PAYMENT_OVERDUE, DOCUMENT_REJECTED, LOAN_SETTLED).
+- **Add Model `Notification`**: Stores the notification instance, channel, status, recipient (`memberId` or `userId`), and content.
+- **Add Model `NotificationPreference`**: Stores JSON configuration for which events should trigger which channels, configurable per organization and overrideable per user/member.
 
-#### [MODIFY] `tailwind.config.ts`
-- Map the new CSS variables (e.g., `ink-black`, `paper-white`, `blush-peach`) to the Tailwind theme colors object so we can use classes like `bg-paper-white` and `text-ink-black`.
-- Map the typography scales and spacing units exactly to the spec.
+### 2. Domain Events Layer
 
----
+#### [NEW] [lib/events/bus.ts](file:///f:/Personal/micro-credit/lib/events/bus.ts)
+- A simple event dispatcher that intercepts domain events and routes them to the `NotificationService`.
 
-### Layout Redesign
+#### [NEW] [lib/events/types.ts](file:///f:/Personal/micro-credit/lib/events/types.ts)
+- Type definitions for all domain events and their payloads (e.g., `LoanApprovedEvent`, `PaymentReceivedEvent`).
 
-#### [MODIFY] `app/(dashboard)/layout.tsx`
-- **Current:** Left-aligned sidebar navigation with a `bg-gray-50` content area.
-- **New:** A transparent top navigation bar (Logo on the left, Nav Links center, Sign Out text link on the right).
-- Content will sit in a max-width `1200px` centered container with a `bg-paper-white` or `bg-fog-white` canvas.
-- Remove all borders and shadows from the navigation as per the "whisper-quiet" specification.
+### 3. Notification Service & Providers
 
----
+#### [NEW] [lib/services/notification-service.ts](file:///f:/Personal/micro-credit/lib/services/notification-service.ts)
+- Listens to domain events.
+- Checks `NotificationPreference` to determine if a channel is enabled.
+- Creates `Notification` records in the database with `PENDING` status.
+- Dispatches to the appropriate provider (Email, SMS, etc.).
+- Updates the `Notification` record to `SENT` or `FAILED`.
 
-### Page Migrations (Phase 1)
+#### [NEW] [lib/services/providers/email-provider.ts](file:///f:/Personal/micro-credit/lib/services/providers/email-provider.ts)
+- Implements email sending using the `resend` package.
 
-#### [MODIFY] `app/(dashboard)/dashboard/page.tsx`
-- Convert the dashboard metrics into **Stat Cards with Charts** (bold metric in Sohne 20px `#17191c`, minimal aesthetic).
-- Use **Floating Product Artifact** styling for tables (border-radius 20px, subtle shadow, `padding 16px 20px 12px 12px`).
-- Use the **Signifier** serif for the main page headline.
+#### [NEW] [lib/services/providers/sms-provider.ts](file:///f:/Personal/micro-credit/lib/services/providers/sms-provider.ts)
+- Placeholder implementation for SMS (logs to console until vendor is selected).
 
-#### [MODIFY] `app/(dashboard)/loans/page.tsx`
-- Update the data table container to the **Neutral Card** spec (`#f2f2f3`, 24px radius, no shadow).
-- Apply the **Tag / Category Label** spec for loan statuses (ghost-like, Sohne 14px, `#979799`).
+### 4. Integration into Existing Workflows
+
+#### [MODIFY] [lib/loan-lifecycle.ts](file:///f:/Personal/micro-credit/lib/loan-lifecycle.ts)
+- Dispatch `LOAN_APPROVED`, `LOAN_DISBURSED`, `LOAN_SETTLED` events during state transitions instead of tight-coupling the notification logic.
+
+#### [MODIFY] [app/actions/repayments.ts](file:///f:/Personal/micro-credit/app/actions/repayments.ts)
+- Dispatch `PAYMENT_RECEIVED` event upon successful transaction commit.
+
+### 5. User Interface
+
+#### [NEW] [app/app/settings/notifications/page.tsx](file:///f:/Personal/micro-credit/app/app/settings/notifications/page.tsx)
+- A settings page for Org Admins to configure global notification preferences (which events go to which channels).
+
+#### [NEW] [components/notifications/notification-bell.tsx](file:///f:/Personal/micro-credit/components/notifications/notification-bell.tsx)
+- A UI component for the dashboard header to display `IN_APP` notifications to users (officers, managers).
 
 ## Verification Plan
 
+### Automated Tests
+- Unit tests for `NotificationService` to ensure preferences are respected (e.g., if SMS is disabled, no SMS is sent).
+- Integration tests ensuring `loan-lifecycle.ts` successfully dispatches domain events without failing the main transaction.
+
 ### Manual Verification
-- Start the dev server and navigate to `/dashboard`.
-- Verify the navigation is now a top-bar.
-- Ensure the cards and buttons have extreme radii (24px and fully-rounded pills).
-- Verify the serif font applies cleanly to main headings.
+- Trigger a loan approval and verify an email is sent (if configured) and an In-App notification appears.
+- Adjust preferences in the UI and verify the changes take effect for the next event.

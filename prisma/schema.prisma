@@ -62,6 +62,7 @@ model User {
   requestedPaymentReversals PaymentReversal[] @relation("ReversalRequestedBy")
   approvedPaymentReversals  PaymentReversal[] @relation("ReversalApprovedBy")
   centres                   Centre[]
+  notificationPreferences   UserNotificationPreference[]
 
   @@index([organizationId])
 }
@@ -850,3 +851,58 @@ model SavingsTransaction {
   @@index([savingsAccountId])
   @@index([date])
 }
+
+enum NotificationEventType {
+  LOAN_APPROVED
+  LOAN_DISBURSED
+  LOAN_SETTLED
+  PAYMENT_RECEIVED
+  PAYMENT_OVERDUE
+  DOCUMENT_REJECTED
+}
+
+enum NotificationChannel {
+  EMAIL
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// Per-user, per-event preferences. notificationEmail defaults to user.email.
+model UserNotificationPreference {
+  id                String                @id @default(cuid())
+  userId            String
+  organizationId    String
+  eventType         NotificationEventType
+  emailEnabled      Boolean               @default(true)
+  notificationEmail String?               // overrides user.email if set
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventType])
+  @@index([organizationId])
+}
+
+// Audit trail of every notification attempt
+model NotificationLog {
+  id             String                @id @default(cuid())
+  organizationId String
+  userId         String?
+  memberId       String?
+  eventType      NotificationEventType
+  channel        NotificationChannel
+  recipientEmail String?
+  subject        String
+  status         NotificationStatus    @default(PENDING)
+  errorMessage   String?
+  sentAt         DateTime?
+  createdAt      DateTime              @default(now())
+
+  @@index([organizationId, eventType])
+  @@index([organizationId, createdAt])
+}
+

@@ -6,10 +6,13 @@ import bcrypt from "bcrypt"
 export async function POST(req: Request) {
   try {
     const session = await auth()
-    const organizationId = (session?.user as any)?.organizationId
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const organizationId = (session.user as any)?.organizationId
 
     const userRole = (session.user as any).role
-    if (!session || !organizationId || (userRole !== "SYSTEM_ADMIN" && userRole !== "HEAD_OFFICE")) {
+    if (!organizationId || (userRole !== "SYSTEM_ADMIN" && userRole !== "HEAD_OFFICE")) {
       return NextResponse.json(
         { error: "Unauthorized. Only organization admins can add team members." },
         { status: 401 }

@@ -148,7 +148,14 @@ export async function POST(request: Request) {
           }
         }
 
-        processed.push(repayment)
+        processed.push({
+          repayment,
+          memberId: loan.memberId,
+          amount: amount.toString(),
+          paidDate: paidDate.toISOString(),
+          loanNumber: loan.loanNumber,
+          isSettled: newStatus === 'SETTLED'
+        })
         
         // --- ACCOUNTING ---
         try {
@@ -204,6 +211,32 @@ export async function POST(request: Request) {
 
       return processed
     })
+
+    // Dispatch notifications after successful transaction
+    const { dispatchNotification } = await import('@/lib/services/notification-service')
+    for (const item of results) {
+      void dispatchNotification({
+        type: 'PAYMENT_RECEIVED',
+        payload: {
+          loanId: item.repayment.loanId,
+          memberId: item.memberId,
+          organizationId: dal.organizationId,
+          amount: item.amount,
+          paidDate: item.paidDate
+        }
+      })
+      if (item.isSettled) {
+        void dispatchNotification({
+          type: 'LOAN_SETTLED',
+          payload: {
+            loanId: item.repayment.loanId,
+            memberId: item.memberId,
+            organizationId: dal.organizationId,
+            loanNumber: item.loanNumber
+          }
+        })
+      }
+    }
 
     return NextResponse.json({ success: true, count: results.length })
   } catch (error: any) {

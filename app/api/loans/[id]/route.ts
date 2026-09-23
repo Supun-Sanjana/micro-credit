@@ -4,6 +4,7 @@ import { calculateLoanTerms } from "@/lib/calc-engine"
 import { Prisma } from "@prisma/client"
 import { logAudit } from "@/lib/audit"
 import { assertLoanTransition } from "@/lib/loan-lifecycle"
+import { dispatchNotification } from "@/lib/services/notification-service"
 
 export async function GET(
   request: Request,
@@ -76,6 +77,12 @@ export async function PUT(
         after: updated,
         note: `Verification: ${json.status}`
       })
+      if (json.status === 'VERIFIED') {
+        void dispatchNotification({
+          type: 'LOAN_APPROVED',
+          payload: { loanId: updated.id, memberId: updated.memberId, organizationId: dal.organizationId, loanNumber: updated.loanNumber, amount: updated.loanAmount.toString() }
+        })
+      }
       return NextResponse.json(updated)
     }
 
@@ -160,6 +167,11 @@ export async function PUT(
         before: loan,
         after: updated,
         note: `Disbursed`
+      })
+
+      void dispatchNotification({
+        type: 'LOAN_DISBURSED',
+        payload: { loanId: updated.id, memberId: updated.memberId, organizationId: dal.organizationId, loanNumber: updated.loanNumber, amount: updated.loanAmount.toString() }
       })
 
       return NextResponse.json(updated)

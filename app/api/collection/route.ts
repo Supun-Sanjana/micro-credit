@@ -153,6 +153,7 @@ export async function POST(request: Request) {
     const result = await dal.prisma.$transaction(async (tx: any) => {
       let savedCount = 0
       let totalCollected = 0
+      const notifications: any[] = []
 
       for (const entry of entries) {
         const { loanId, scheduleId, instalmentNumber, amount, status, note, compulsorySavingsId, compulsorySavingsDeposit, voluntarySavingsId, voluntarySavingsDeposit } = entry
@@ -358,6 +359,29 @@ export async function POST(request: Request) {
               })
             }
           }
+
+          notifications.push({
+            type: 'PAYMENT_RECEIVED',
+            payload: {
+              loanId: loanId,
+              memberId: loanForAlloc.memberId,
+              organizationId: dal.organizationId,
+              amount: decimalAmount.toString(),
+              paidDate: paidDate.toISOString()
+            }
+          })
+          
+          if (updatedLoan.outstanding.lte(0)) {
+            notifications.push({
+              type: 'LOAN_SETTLED',
+              payload: {
+                loanId: loanId,
+                memberId: loanForAlloc.memberId,
+                organizationId: dal.organizationId,
+                loanNumber: loanForAlloc.loanNumber
+              }
+            })
+          }
           savedCount++
           totalCollected += amount
         } else if (status === 'NP') {
@@ -382,10 +406,18 @@ export async function POST(request: Request) {
         }
       }
 
-      return { savedCount, totalCollected }
+      return { savedCount, totalCollected, notifications }
     }, { maxWait: 20000, timeout: 30000 })
 
-    return NextResponse.json(result)
+    // Dispatch notifications after successful transaction
+    const { dispatchNotification } = await import('@/lib/services/notification-service')
+    if (result.notifications && result.notifications.length > 0) {
+      for (const notif of result.notifications) {
+        void dispatchNotification(notif)
+      }
+    }
+
+    return NextResponse.json({ savedCount: result.savedCount, totalCollected: result.totalCollected })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }

@@ -7,7 +7,7 @@ import {
   Menu, X, LogOut, LayoutDashboard, FileText, 
   Users, DollarSign, Settings, Building, MapPin, 
   Grid, Briefcase, ChevronDown, User as UserIcon,
-  RotateCcw
+  RotateCcw, Bell
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -82,6 +82,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
           { href: "/app/settings/team", label: "Team", icon: Users },
           { href: "/app/settings/billing", label: "Billing", icon: Settings },
           { href: "/app/settings/audit-log", label: "Audit Log", icon: FileText },
+          { href: "/app/settings/notifications", label: "Notifications", icon: Bell },
         ],
       }
     ] : [])
