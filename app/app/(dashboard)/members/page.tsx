@@ -220,7 +220,7 @@ export default function MembersPage() {
                       return (
                         <tr key={m.id} className="border-b border-border/40 last:border-0">
                           <td className="py-5 pr-4">
-                            <Link href={`/members/${m.id}`} className="text-[16px] font-sans text-ink-black hover:text-slate-gray transition-colors">
+                            <Link href={`/app/members/${m.id}`} className="text-[16px] font-sans text-ink-black hover:text-slate-gray transition-colors">
                               {m.memberNumber}
                             </Link>
                           </td>

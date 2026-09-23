@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Member E2E Flow', () => {
   test('should login, create a member, and upload a document', async ({ page }) => {
     // 1. Log in
-    await page.goto('http://localhost:3001/login');
+    await page.goto('http://localhost:3001/app/login');
     
     await page.locator('input[name="email"]').fill('admin@micro.local');
     await page.locator('input[name="password"]').fill('admin123');
@@ -23,7 +23,7 @@ test.describe('Member E2E Flow', () => {
     });
 
     // 2. Navigate to Members page
-    await page.goto('http://localhost:3001/members');
+    await page.goto('http://localhost:3001/app/members');
 
     // Generate random name to ensure unique test data
     const uniqueName = `Test Member ${Date.now()}`;
