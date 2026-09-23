@@ -112,7 +112,7 @@ export default async function OrgDetailPage({ params }: PageProps) {
     prisma.memberDocument.aggregate({
       where: { organizationId: id },
       _sum: {
-        sizeBytes: true,
+        fileSize: true,
       },
     }),
   ])
@@ -126,7 +126,7 @@ export default async function OrgDetailPage({ params }: PageProps) {
   const paymentClaims = subscription?.paymentClaims || []
 
   // Storage calculations
-  const totalBytes = storageAggregate._sum.sizeBytes ?? 0
+  const totalBytes = storageAggregate._sum.fileSize ?? 0
   const totalMb = parseFloat((totalBytes / (1024 * 1024)).toFixed(2))
   const storageQuotaMb = plan?.storageQuotaMb ?? 0
   const storagePercent =

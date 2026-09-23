@@ -59,10 +59,12 @@ model User {
   accounts                  Account[]
   sessions                  Session[]
   auditLogs                 AuditLog[]
-  requestedPaymentReversals PaymentReversal[] @relation("ReversalRequestedBy")
-  approvedPaymentReversals  PaymentReversal[] @relation("ReversalApprovedBy")
+  requestedPaymentReversals PaymentReversal[]            @relation("ReversalRequestedBy")
+  approvedPaymentReversals  PaymentReversal[]            @relation("ReversalApprovedBy")
   centres                   Centre[]
   notificationPreferences   UserNotificationPreference[]
+  MemberDocument            MemberDocument[]
+  DocumentVerification      DocumentVerification[]
 
   @@index([organizationId])
 }
@@ -221,15 +223,15 @@ model Member {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  centre           Centre            @relation(fields: [centreId], references: [id])
-  organization     Organization      @relation(fields: [organizationId], references: [id])
-  loans            Loan[]
-  savingsAccounts  SavingsAccount[]
-  guarantorFor     Guarantor[]
-  documents        MemberDocument[]
-  groupMemberships GroupMembership[]
-  financialProfiles  FinancialProfile[]
-  creditAssessments  CreditAssessment[]
+  centre            Centre             @relation(fields: [centreId], references: [id])
+  organization      Organization       @relation(fields: [organizationId], references: [id])
+  loans             Loan[]
+  savingsAccounts   SavingsAccount[]
+  guarantorFor      Guarantor[]
+  documents         MemberDocument[]
+  groupMemberships  GroupMembership[]
+  financialProfiles FinancialProfile[]
+  creditAssessments CreditAssessment[]
 
   @@unique([memberNumber, organizationId])
   @@index([centreId])
@@ -333,6 +335,7 @@ model Loan {
   restructures      LoanRestructure[]
   scheduleVersions  LoanScheduleVersion[]
   writeOffs         LoanWriteOff[]
+  MemberDocument    MemberDocument[]
 
   @@index([memberId])
   @@index([loanType])
@@ -669,23 +672,57 @@ enum MemberDocumentType {
   NIC_PHOTO
   PAYSLIP
   BANK_BOOK
+  LOAN_APPLICATION
   OTHER
 }
 
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  ARCHIVED
+}
+
 model MemberDocument {
-  id             String             @id @default(cuid())
+  id             String  @id @default(cuid())
   organizationId String
   memberId       String
-  type           MemberDocumentType
-  url            String
-  sizeBytes      Int
-  uploadedAt     DateTime           @default(now())
+  loanId         String? // Future-proofing for LOAN_APPLICATION
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  member       Member       @relation(fields: [memberId], references: [id])
+  type   MemberDocumentType
+  status DocumentStatus     @default(PENDING)
 
-  @@index([organizationId])
+  fileName    String
+  storagePath String
+  mimeType    String
+  fileSize    Int
+
+  uploadedById String
+  uploadedAt   DateTime @default(now())
+
+  organization  Organization           @relation(fields: [organizationId], references: [id])
+  member        Member                 @relation(fields: [memberId], references: [id])
+  loan          Loan?                  @relation(fields: [loanId], references: [id])
+  uploadedBy    User                   @relation(fields: [uploadedById], references: [id])
+  verifications DocumentVerification[]
+
+  @@index([organizationId, status])
   @@index([memberId])
+  @@index([loanId])
+}
+
+model DocumentVerification {
+  id           String         @id @default(cuid())
+  documentId   String
+  status       DocumentStatus // VERIFIED or REJECTED
+  reason       String?
+  verifiedById String
+  createdAt    DateTime       @default(now())
+
+  document   MemberDocument @relation(fields: [documentId], references: [id])
+  verifiedBy User           @relation(fields: [verifiedById], references: [id])
+
+  @@index([documentId])
 }
 
 model PlatformAdmin {
@@ -880,7 +917,7 @@ model UserNotificationPreference {
   organizationId    String
   eventType         NotificationEventType
   emailEnabled      Boolean               @default(true)
-  notificationEmail String?               // overrides user.email if set
+  notificationEmail String? // overrides user.email if set
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
   user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -907,8 +944,6 @@ model NotificationLog {
   @@index([organizationId, eventType])
   @@index([organizationId, createdAt])
 }
-
-
 
 enum RiskGrade {
   A
@@ -952,23 +987,23 @@ enum IncomeSource {
 }
 
 model FinancialProfile {
-  id                  String        @id @default(cuid())
+  id                  String             @id @default(cuid())
   organizationId      String
   memberId            String
-  assessmentDate      DateTime      @db.Date
-  monthlyIncome       Decimal       @db.Decimal(14, 2)
-  householdIncome     Decimal?      @db.Decimal(14, 2)
-  existingObligations Decimal       @default(0) @db.Decimal(14, 2)
-  incomeSource        IncomeSource  @default(EMPLOYMENT)
+  assessmentDate      DateTime           @db.Date
+  monthlyIncome       Decimal            @db.Decimal(14, 2)
+  householdIncome     Decimal?           @db.Decimal(14, 2)
+  existingObligations Decimal            @default(0) @db.Decimal(14, 2)
+  incomeSource        IncomeSource       @default(EMPLOYMENT)
   verificationStatus  VerificationStatus @default(PENDING)
   verifiedById        String?
   verifiedAt          DateTime?
   notes               String?
   createdById         String
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
-  member            Member          @relation(fields: [memberId], references: [id])
+  member            Member             @relation(fields: [memberId], references: [id])
   creditAssessments CreditAssessment[]
 
   @@index([organizationId, memberId])
@@ -976,27 +1011,27 @@ model FinancialProfile {
 }
 
 model CreditAssessment {
-  id                  String      @id @default(cuid())
-  organizationId      String
-  memberId            String
-  financialProfileId  String?
-  loanId              String?
-  score               Int         // 0-100
-  grade               RiskGrade
-  factors             Json
-  inputs              Json
-  totalLoans          Int         @default(0)
-  activeLoans         Int         @default(0)
-  settledLoans        Int         @default(0)
-  defaultedLoans      Int         @default(0)
-  repaymentRate       Decimal?    @db.Decimal(5, 2)
-  averageDaysLate     Decimal?    @db.Decimal(5, 2)
-  currentOutstanding  Decimal?    @db.Decimal(14, 2)
-  debtToIncomeRatio   Decimal?    @db.Decimal(5, 2)
-  createdById         String
-  createdAt           DateTime    @default(now())
+  id                 String    @id @default(cuid())
+  organizationId     String
+  memberId           String
+  financialProfileId String?
+  loanId             String?
+  score              Int // 0-100
+  grade              RiskGrade
+  factors            Json
+  inputs             Json
+  totalLoans         Int       @default(0)
+  activeLoans        Int       @default(0)
+  settledLoans       Int       @default(0)
+  defaultedLoans     Int       @default(0)
+  repaymentRate      Decimal?  @db.Decimal(5, 2)
+  averageDaysLate    Decimal?  @db.Decimal(5, 2)
+  currentOutstanding Decimal?  @db.Decimal(14, 2)
+  debtToIncomeRatio  Decimal?  @db.Decimal(5, 2)
+  createdById        String
+  createdAt          DateTime  @default(now())
 
-  member          Member           @relation(fields: [memberId], references: [id])
+  member           Member            @relation(fields: [memberId], references: [id])
   financialProfile FinancialProfile? @relation(fields: [financialProfileId], references: [id])
 
   @@index([organizationId, memberId])
@@ -1008,7 +1043,7 @@ model RiskAlert {
   organizationId String
   type           RiskAlertType
   severity       RiskAlertSeverity
-  entityType     String            // "Member" | "Loan" | "LoanRepayment"
+  entityType     String // "Member" | "Loan" | "LoanRepayment"
   entityId       String
   description    String
   status         RiskAlertStatus   @default(OPEN)
@@ -1024,4 +1059,3 @@ model RiskAlert {
   @@index([organizationId, severity])
   @@index([organizationId, createdAt])
 }
-

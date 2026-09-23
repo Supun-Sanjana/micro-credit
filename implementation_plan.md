@@ -1,304 +1,159 @@
-# Milestone 8: Intelligence — Underwriting + Risk Engine
+# Milestone 9: Document Handling (KYC & Financial Documents)
 
-## Goal
+## Goal Description
 
-Build a genuine underwriting and risk engine for Solida. This is not a simple PAR flag. It is a structured, auditable, extensible system that:
+Enable secure uploading, private storage, and structured verification of sensitive member documents (NIC photos, payslips, loan applications, etc.). 
 
-1. Collects income/obligation data via a `FinancialProfile` model (time-stamped, not on Member)
-2. Scores a member using repayment history + exposure + income + obligations
-3. Outputs human-readable factors alongside the numeric score
-4. Runs a nightly risk batch via a dedicated `/api/cron/risk` endpoint
-5. Surfaces all anomalies as idempotent `RiskAlert` records
-6. Notifies relevant users of new HIGH/CRITICAL alerts
+This system uses a **Private** Supabase bucket, enforces strict tenant isolation, guarantees document immutability, and maintains a full verification history and audit trail.
 
 ---
 
-## Architecture
+## Proposed Changes
 
-```
-Loan Application
-       │
-       ▼
-FinancialProfile (income, obligations, household, source)
-       │
-       ├── RepaymentHistory (from existing LoanRepayment)
-       ├── CurrentExposure  (from outstanding Loans)
-       ├── PreviousLoans    (settled/defaulted)
-       └── Income + Obligations
-       │
-       ▼
-CreditScoringEngine (pure function, deterministic)
-       │
-       ▼
-CreditScore { score, grade, factors[], inputs{} }
-       │
-       ▼
-CreditAssessment (persisted, immutable snapshot)
+### 1. Database Schema
 
-─────────────────────────────────────
+#### [MODIFY] [schema.prisma](file:///f:/Personal/micro-credit/prisma/schema.prisma)
 
-Nightly Cron (/api/cron/risk)
-       │
-       ▼
-RiskBatchService
-       ├── checkHighPAR()
-       ├── checkExcessiveExposure()
-       ├── checkRepeatDefault()
-       ├── checkDebtToIncome()
-       └── checkSuspiciousActivity()
-       │
-       ▼
-RiskAlert (idempotent, one open alert per entity+type)
-       │
-       ▼
-dispatchNotification (PAYMENT_OVERDUE reused)
-```
+**New Enums:**
+- `DocumentStatus { PENDING VERIFIED REJECTED ARCHIVED }`
+- Modify `MemberDocumentType`: add `LOAN_APPLICATION`
 
----
-
-## Schema Changes (prisma/schema.prisma)
-
-### New Enums
+**Modify Model `MemberDocument`:**
+Replace existing `url` and `sizeBytes` with strict metadata and status tracking.
 ```prisma
-enum RiskGrade { A B C D }
+model MemberDocument {
+  id              String             @id @default(cuid())
+  organizationId  String
+  memberId        String
+  loanId          String?            // Future-proofing for LOAN_APPLICATION
+  
+  type            MemberDocumentType
+  status          DocumentStatus     @default(PENDING)
 
-enum RiskAlertType {
-  DUPLICATE_NIC
-  DUPLICATE_PHONE
-  DUPLICATE_PAYMENT
-  REPEATED_REVERSALS
-  HIGH_PAR
-  EXCESSIVE_EXPOSURE
-  DEBT_TO_INCOME
-  REPEAT_DEFAULT
-  SUSPICIOUS_ACTIVITY
-}
+  fileName        String
+  storagePath     String
+  mimeType        String
+  fileSize        Int
 
-enum RiskAlertSeverity { LOW MEDIUM HIGH CRITICAL }
-enum RiskAlertStatus   { OPEN ACKNOWLEDGED RESOLVED DISMISSED }
-enum IncomeSource      { EMPLOYMENT SELF_EMPLOYED AGRICULTURE BUSINESS OTHER }
-```
+  uploadedById    String
+  uploadedAt      DateTime           @default(now())
 
-### New Models
+  organization    Organization       @relation(fields: [organizationId], references: [id])
+  member          Member             @relation(fields: [memberId], references: [id])
+  loan            Loan?              @relation(fields: [loanId], references: [id])
+  uploadedBy      User               @relation(fields: [uploadedById], references: [id])
+  verifications   DocumentVerification[]
 
-```prisma
-// Time-stamped financial profile — NOT on Member directly.
-// A new assessment is created each time a loan application is reviewed.
-model FinancialProfile {
-  id                  String        @id @default(cuid())
-  organizationId      String
-  memberId            String
-  assessmentDate      DateTime      @db.Date
-  monthlyIncome       Decimal       @db.Decimal(14, 2)
-  householdIncome     Decimal?      @db.Decimal(14, 2)
-  existingObligations Decimal       @default(0) @db.Decimal(14, 2)
-  incomeSource        IncomeSource  @default(EMPLOYMENT)
-  verificationStatus  VerificationStatus @default(PENDING)
-  verifiedById        String?
-  verifiedAt          DateTime?
-  notes               String?
-  createdById         String
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-
-  member            Member          @relation(fields: [memberId], references: [id])
-  creditAssessments CreditAssessment[]
-
-  @@index([organizationId, memberId])
-  @@index([memberId, assessmentDate])
-}
-
-// Immutable snapshot of a credit assessment.
-// New record each time scoring is run. Never mutated.
-model CreditAssessment {
-  id                  String      @id @default(cuid())
-  organizationId      String
-  memberId            String
-  financialProfileId  String?
-  loanId              String?
-  score               Int         // 0-100
-  grade               RiskGrade
-  // Human-readable factor list stored as JSON array of strings
-  factors             Json
-  // Full inputs snapshot for full auditability
-  inputs              Json
-  // Key computed inputs for quick queries
-  totalLoans          Int         @default(0)
-  activeLoans         Int         @default(0)
-  settledLoans        Int         @default(0)
-  defaultedLoans      Int         @default(0)
-  repaymentRate       Decimal?    @db.Decimal(5, 2)
-  averageDaysLate     Decimal?    @db.Decimal(5, 2)
-  currentOutstanding  Decimal?    @db.Decimal(14, 2)
-  debtToIncomeRatio   Decimal?    @db.Decimal(5, 2)
-  createdById         String
-  createdAt           DateTime    @default(now())
-
-  member          Member           @relation(fields: [memberId], references: [id])
-  financialProfile FinancialProfile? @relation(fields: [financialProfileId], references: [id])
-
-  @@index([organizationId, memberId])
-  @@index([memberId, createdAt])
-}
-
-// Idempotent risk alert — only one OPEN alert per (organizationId, entityId, type).
-model RiskAlert {
-  id             String            @id @default(cuid())
-  organizationId String
-  type           RiskAlertType
-  severity       RiskAlertSeverity
-  entityType     String            // "Member" | "Loan" | "LoanRepayment"
-  entityId       String
-  description    String
-  status         RiskAlertStatus   @default(OPEN)
-  assignedToId   String?
-  resolvedById   String?
-  resolvedAt     DateTime?
-  resolutionNote String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  @@unique([organizationId, entityId, type, status])  // idempotency
   @@index([organizationId, status])
-  @@index([organizationId, severity])
-  @@index([organizationId, createdAt])
+  @@index([memberId])
+  @@index([loanId])
 }
 ```
 
-Also add to `Member`:
+**New Model `DocumentVerification`:**
+Maintains the history of verification actions (Upload → Reject → Re-upload → Verify).
 ```prisma
-  financialProfiles  FinancialProfile[]
-  creditAssessments  CreditAssessment[]
+model DocumentVerification {
+  id             String         @id @default(cuid())
+  documentId     String
+  status         DocumentStatus // VERIFIED or REJECTED
+  reason         String?
+  verifiedById   String
+  createdAt      DateTime       @default(now())
+
+  document       MemberDocument @relation(fields: [documentId], references: [id])
+  verifiedBy     User           @relation(fields: [verifiedById], references: [id])
+
+  @@index([documentId])
+}
 ```
 
 ---
 
-## Service Layer
+### 2. Event Types & Notifications
 
-### `lib/intelligence/credit-engine.ts`
-Pure function. No DB calls. Receives pre-fetched data, returns score.
-
-**Scoring rubric:**
-
-| Factor | Max pts | Rule |
-|--------|---------|------|
-| Repayment rate | 35 | `settled paid / settled receivable` |
-| PAR status | 25 | -25 if any active loan is overdue >30 days |
-| Loan history | 15 | +5 per settled loan, capped at 3 |
-| Default penalty | -30 | -10 per defaulted/written-off loan |
-| Debt-to-income | 15 | 0 DTI=100%, scales down to 0 at DTI=80%+ |
-| On-time streak | 10 | Last 5 payments on/before schedule |
-
-Grade bands: A=75-100, B=50-74, C=25-49, D=0-24
-
-**Factors output example:**
-```json
-[
-  "+ Strong repayment history (94% on-time)",
-  "+ 3 successfully settled loans",
-  "- Current loan exposure is relatively high (DTI 62%)",
-  "- Existing obligations reduce available income"
-]
-```
-
-### `lib/intelligence/risk-batch-service.ts`
-Runs all risk checks for an org. Each check is idempotent.
-
+#### [MODIFY] `lib/events/types.ts`
+Update `DOCUMENT_REJECTED` payload to include `documentId`:
 ```ts
-export async function runRiskBatch(organizationId: string): Promise<{
-  alertsCreated: number
-  alertsSkipped: number  // already open
-  checks: string[]
-}>
+| { type: 'DOCUMENT_REJECTED'; payload: { memberId: string; organizationId: string; documentId: string; documentType: string; reason?: string } }
 ```
 
-Checks:
-- `checkHighPAR(org)` — PAR30+ loans → MEDIUM alert on Member
-- `checkExcessiveExposure(org)` — member with >3 active loans → HIGH
-- `checkRepeatDefault(org)` — 2+ defaults → HIGH alert on Member
-- `checkDebtToIncome(org)` — DTI >80% on latest FinancialProfile → MEDIUM
-- `checkSuspiciousActivity(org)` — >2 reversals in 30 days on same loan → HIGH
+---
 
-### `lib/intelligence/anomaly-detector.ts`
-Point-in-time checks triggered during normal workflows:
-- `checkDuplicateNIC(nic, orgId, excludeMemberId?)` → CRITICAL alert
-- `checkDuplicatePhone(phone, orgId, excludeMemberId?)` → HIGH alert
-- `checkDuplicatePayment(loanId, amount, date, orgId)` → CRITICAL alert
+### 3. Storage Layer
 
-All functions are fire-and-forget safe (wrap in try/catch, never throw).
+#### [NEW] [lib/storage.ts](file:///f:/Personal/micro-credit/lib/storage.ts)
+Wrapper around the existing `lib/supabase.ts`.
+- **Bucket**: `member-documents` (Must be **PRIVATE**)
+- **Path**: `${organizationId}/${memberId}/${crypto.randomUUID()}`
+- **Security**: 
+  - Restrict MIME types (`image/jpeg`, `image/png`, `application/pdf`)
+  - Size limits: Images 5MB, PDF 10MB
+- **Functions**:
+  - `uploadDocument(file: File, orgId, memberId)`: returns `storagePath` and metadata.
+  - `generateSignedUrl(storagePath: string)`: returns a short-lived (5-minute) signed URL using `supabase.storage.from('member-documents').createSignedUrl(path, 300)`.
 
 ---
 
-## API Routes
+### 4. API Routes
 
-| Route | Method | Auth | Purpose |
-|-------|--------|------|---------|
-| `/api/intelligence/credit-score` | POST | BRANCH_MANAGER+ | Run + store credit assessment for a member |
-| `/api/intelligence/risk-alerts` | GET | BRANCH_MANAGER+ | List org risk alerts (filter by status/type/severity) |
-| `/api/intelligence/risk-alerts/[id]` | PATCH | BRANCH_MANAGER+ | Acknowledge / resolve / dismiss alert |
-| `/api/intelligence/financial-profile` | POST | BRANCH_MANAGER+ | Create a new financial profile for a member |
-| `/api/intelligence/financial-profile/[memberId]` | GET | BRANCH_MANAGER+ | Get latest profile for a member |
-| `/api/cron/risk` | POST | Bearer cron token | Nightly risk batch |
-| `/api/risk/run-checks` | POST | SYSTEM_ADMIN | Manual trigger (same service as cron) |
+**Tenant Safety Rule:** Always resolve `organizationId` from `getScopedDal()`. Never trust the client's `organizationId`.
 
----
+#### [NEW] `app/api/members/[id]/documents/route.ts`
+- **POST**: 
+  - Validate file extension/MIME/size.
+  - Upload via `lib/storage.ts`.
+  - Create `MemberDocument` (status `PENDING`).
+  - Log `DOCUMENT_UPLOADED` in `AuditLog`.
+- **GET**: 
+  - Returns document metadata only (no signed URLs).
 
-## Integrations into Existing Code
+#### [NEW] `app/api/documents/[id]/view/route.ts`
+- **GET**:
+  - Checks if user has permission to view.
+  - Generates signed URL via `lib/storage.ts`.
+  - Logs `DOCUMENT_VIEWED` in `AuditLog`.
+  - Redirects to or returns the signed URL.
 
-| File | Change |
-|------|--------|
-| `app/api/members/route.ts` | After member create → `checkDuplicateNIC`, `checkDuplicatePhone` (void) |
-| `app/api/members/[id]/route.ts` | After NIC/phone update → same checks |
-| `app/api/repayments/route.ts` | After payment → `checkDuplicatePayment` (void) |
-| `app/actions/reversals.ts` | After reversal approved → `checkSuspiciousActivity` (void) |
-| `app/api/loans/route.ts` | After loan create → trigger credit assessment (void) |
+#### [NEW] `app/api/documents/[id]/verify/route.ts`
+- **PATCH**: 
+  - Restricts to `BRANCH_MANAGER+`.
+  - State machine check: Cannot change if already `VERIFIED`.
+  - **Prisma Transaction**:
+    1. Update `MemberDocument.status`.
+    2. Create `DocumentVerification` record.
+    3. Log `DOCUMENT_VERIFIED` or `DOCUMENT_REJECTED` in `AuditLog`.
+  - Post-Transaction: Dispatch `DOCUMENT_REJECTED` notification if applicable.
 
----
-
-## UI
-
-### [NEW] `/app/risk` — Risk Alerts Dashboard
-- Table of RiskAlerts with severity color badges (CRITICAL=red, HIGH=orange, MEDIUM=yellow, LOW=grey)
-- Filter by type, severity, status
-- Acknowledge / Resolve / Dismiss inline
-- Visible to BRANCH_MANAGER, HEAD_OFFICE, SYSTEM_ADMIN
-
-### [MODIFY] `/app/loans/[id]` — Loan Detail Page
-- New sidebar card: "Credit Assessment"
-- Shows score (0-100), grade badge (A/B/C/D with color), and factor list
-
-### [MODIFY] `components/dashboard-shell.tsx`
-- Add "Risk" link under Operations (BRANCH_MANAGER+)
+#### [NEW] `app/api/documents/route.ts`
+- **GET**:
+  - Returns paginated documents for the Verification Dashboard.
+  - Supports filters: `branchId`, `type`, `status`, `date`.
 
 ---
 
-## Verification Plan
+### 5. UI Components & Pages
 
-### Unit Tests (`lib/__tests__/credit-engine.test.ts`)
-- Perfect member → grade A
-- Member with 2 defaults → grade D
-- Member with high DTI → factors include DTI warning
-- Zero-history member → grade C (neutral)
+#### [MODIFY] `app/app/(dashboard)/members/[id]/page.tsx`
+- Add a "Documents" tab.
+- Show existing documents (metadata + status badge).
+- "View" button calls `/api/documents/[id]/view` (opens in new tab/modal).
+- File upload zone: creates *new* document records (immutable history).
 
-### Unit Tests (`lib/__tests__/anomaly-detector.test.ts`)
-- Duplicate NIC detected correctly
-- Idempotency: second call with same entity does NOT create a second OPEN alert
+#### [NEW] `app/app/(dashboard)/documents/page.tsx`
+- **Verification Dashboard**: For `BRANCH_MANAGER+`.
+- Filter bar (Branch, Document Type, Status, Date).
+- Table columns: Member, Document Type, Branch, Uploaded Date, Status, Actions.
+- Review Modal:
+  - Fetches the signed URL to preview.
+  - Action buttons: "Verify", "Reject" (prompts for reason).
 
-### E2E Tests (Playwright)
-- Risk alerts page loads
-- FIELD_OFFICER cannot access /app/risk (redirect)
-- Acknowledge alert → status changes in UI
+#### [MODIFY] `components/dashboard-shell.tsx`
+- Add "Document Verification" link under Operations.
 
 ---
 
-## Idempotency Rule
-
-`RiskAlert` has a `@@unique([organizationId, entityId, type, status])` constraint with `status = OPEN`.
-
-Before creating a new alert, always check:
-```ts
-const existing = await prisma.riskAlert.findFirst({
-  where: { organizationId, entityId, type, status: 'OPEN' }
-})
-if (existing) return  // skip, already flagged
-```
+## Security & Architectural Constraints
+1. **Private Bucket**: Public storage is NOT supported. All access passes through authenticated API with short-lived signed URLs.
+2. **Immutability**: Rejected documents are NOT overwritten. A new upload creates a new `MemberDocument` record.
+3. **Transactions**: The verification API must wrap state updates and audit logs in a single Prisma transaction. Notification dispatch happens *after* successful commit.

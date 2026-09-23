@@ -59,6 +59,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         { href: "/app/groups", label: "Groups", icon: Users },
         { href: "/app/loans", label: "Loans", icon: DollarSign },
         { href: "/app/collection", label: "Collection", icon: Briefcase },
+        { href: "/app/documents", label: "Document Verification", icon: FileText },
         ...(canViewFinance ? [{ href: "/app/risk", label: "Risk", icon: Bell }] : []),
       ],
     },
