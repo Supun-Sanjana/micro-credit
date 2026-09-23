@@ -81,10 +81,24 @@ export async function POST(request: Request) {
           }
         });
       }
-      
       return repayment;
+    }).catch(async (error: any) => {
+      if (error.code === 'P2002') {
+        const existingAgain = await dal.prisma.loanRepayment.findUnique({
+          where: {
+            organizationId_clientTransactionId: {
+              organizationId: dal.organizationId,
+              clientTransactionId,
+            }
+          }
+        });
+        if (existingAgain) return existingAgain;
+      }
+      throw error;
     });
 
+    // If it's an existing record from the catch block, return 200 instead of 201
+    // We can just return 201 for both or 200 for existing, but 201 is fine, wait, idempotency expects same result
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: error.message === "Not assigned to this centre" ? 403 : 400 });
