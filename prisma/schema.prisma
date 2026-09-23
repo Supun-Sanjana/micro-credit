@@ -41,6 +41,10 @@ model Organization {
   chartOfAccounts   ChartOfAccount[]
   journalEntries    JournalEntry[]
   accountingPeriods AccountingPeriod[]
+  loanRepayments          LoanRepayment[]
+  collectionAttempts      CollectionAttempt[]
+  fieldOfficerAssignments FieldOfficerAssignment[]
+  reconciliations         FieldOfficerReconciliation[]
 }
 
 model User {
@@ -66,6 +70,9 @@ model User {
   MemberDocument            MemberDocument[]
   DocumentVerification      DocumentVerification[]
 
+  collectionAttempts      CollectionAttempt[]
+  fieldOfficerAssignments FieldOfficerAssignment[]
+  reconciliations         FieldOfficerReconciliation[]
   @@index([organizationId])
 }
 
@@ -187,6 +194,8 @@ model Branch {
   groups         Group[]
   ChartOfAccount ChartOfAccount[]
   JournalEntry   JournalEntry[]
+  fieldOfficerAssignments FieldOfficerAssignment[]
+  reconciliations         FieldOfficerReconciliation[]
 }
 
 model Centre {
@@ -205,6 +214,7 @@ model Centre {
   members Member[]
   groups  Group[]
 
+  fieldOfficerAssignments FieldOfficerAssignment[]
   @@index([branchId])
   @@index([officerId])
 }
@@ -353,28 +363,32 @@ enum ScheduleStatus {
 }
 
 model LoanRepayment {
-  id               String                   @id @default(cuid())
-  loanId           String
-  instalmentNumber Int?
-  scheduledDate    DateTime?                @db.Date
-  paidDate         DateTime                 @db.Date
-  amount           Decimal                  @db.Decimal(10, 2)
-  method           RepaymentMethod          @default(CASH)
-  note             String?
-  collectedBy      String?
-  transactionType  RepaymentTransactionType @default(PAYMENT)
-  reversalOfId     String?                  @unique
-  allocationMethod String?
-  allocations      PaymentAllocation[]
-  reversalOf       LoanRepayment?           @relation("RepaymentReversal", fields: [reversalOfId], references: [id])
-  reversal         LoanRepayment?           @relation("RepaymentReversal")
-  paymentReversal  PaymentReversal?         @relation("OriginalPaymentReversal")
-  reversalRecord   PaymentReversal?         @relation("ReversalPaymentRecord")
-  createdAt        DateTime                 @default(now())
+  id                  String                   @id @default(cuid())
+  organizationId      String
+  loanId              String
+  instalmentNumber    Int?
+  scheduledDate       DateTime?                @db.Date
+  paidDate            DateTime                 @db.Date
+  amount              Decimal                  @db.Decimal(10, 2)
+  method              RepaymentMethod          @default(CASH)
+  note                String?
+  collectedBy         String?
+  transactionType     RepaymentTransactionType @default(PAYMENT)
+  reversalOfId        String?                  @unique
+  allocationMethod    String?
+  clientTransactionId String?
+  allocations         PaymentAllocation[]
+  reversalOf          LoanRepayment?           @relation("RepaymentReversal", fields: [reversalOfId], references: [id])
+  reversal            LoanRepayment?           @relation("RepaymentReversal")
+  paymentReversal     PaymentReversal?         @relation("OriginalPaymentReversal")
+  reversalRecord      PaymentReversal?         @relation("ReversalPaymentRecord")
+  createdAt           DateTime                 @default(now())
 
-  loan Loan @relation(fields: [loanId], references: [id])
+  loan         Loan         @relation(fields: [loanId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
 
   @@unique([loanId, instalmentNumber, paidDate])
+  @@unique([organizationId, clientTransactionId])
   @@index([loanId])
   @@index([paidDate])
 }
@@ -443,6 +457,7 @@ model RepaymentSchedule {
   loan            Loan                 @relation(fields: [loanId], references: [id])
   scheduleVersion LoanScheduleVersion? @relation(fields: [scheduleVersionId], references: [id])
 
+  collectionAttempts      CollectionAttempt[]
   @@index([loanId])
   @@index([scheduledDate])
 }
@@ -1058,4 +1073,84 @@ model RiskAlert {
   @@index([organizationId, status])
   @@index([organizationId, severity])
   @@index([organizationId, createdAt])
+}
+
+
+enum CollectionOutcome {
+  PAID
+  PARTIAL
+  MISSED
+}
+
+enum MissedReason {
+  NO_CASH
+  MEMBER_UNAVAILABLE
+  REFUSED
+  BUSINESS_CLOSED
+  TRAVELING
+  OTHER
+}
+
+model CollectionAttempt {
+  id              String            @id @default(cuid())
+  organizationId  String
+  scheduleId      String
+  officerId       String
+  attemptedAt     DateTime          @default(now())
+  outcome         CollectionOutcome
+  reason          MissedReason?
+  notes           String?
+  amountCollected Decimal?          @db.Decimal(10, 2)
+  clientTxId      String?
+
+  organization    Organization      @relation(fields: [organizationId], references: [id])
+  schedule        RepaymentSchedule @relation(fields: [scheduleId], references: [id])
+  officer         User              @relation(fields: [officerId], references: [id])
+
+  @@index([organizationId, officerId, attemptedAt])
+  @@index([scheduleId])
+}
+
+model FieldOfficerAssignment {
+  id             String       @id @default(cuid())
+  organizationId String
+  branchId       String
+  officerId      String
+  centreId       String
+  startDate      DateTime     @db.Date
+  endDate        DateTime?    @db.Date
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  branch         Branch       @relation(fields: [branchId], references: [id])
+  officer        User         @relation(fields: [officerId], references: [id])
+  centre         Centre       @relation(fields: [centreId], references: [id])
+
+  @@unique([officerId, centreId, isActive])
+  @@index([organizationId])
+}
+
+model FieldOfficerReconciliation {
+  id               String   @id @default(cuid())
+  organizationId   String
+  branchId         String
+  officerId        String
+  date             DateTime @db.Date
+  
+  expectedCash     Decimal  @db.Decimal(14,2)
+  declaredCash     Decimal  @db.Decimal(14,2)
+  expectedBank     Decimal  @db.Decimal(14,2)
+  declaredBank     Decimal  @db.Decimal(14,2)
+  difference       Decimal  @db.Decimal(14,2)
+  
+  status           String   @default("SUBMITTED") // SUBMITTED, VERIFIED, DISPUTED
+  createdAt        DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  officer      User         @relation(fields: [officerId], references: [id])
+  branch       Branch       @relation(fields: [branchId], references: [id])
+
+  @@unique([officerId, date])
+  @@index([organizationId, date])
 }

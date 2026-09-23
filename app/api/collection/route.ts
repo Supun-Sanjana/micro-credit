@@ -257,6 +257,7 @@ export async function POST(request: Request) {
 
           const repayment = await tx.loanRepayment.create({
             data: {
+              organizationId: dal.organizationId,
               loanId,
               instalmentNumber,
               scheduledDate: paidDate,
@@ -393,6 +394,7 @@ export async function POST(request: Request) {
           }
           await tx.loanRepayment.create({
             data: {
+              organizationId: dal.organizationId,
               loanId,
               instalmentNumber,
               scheduledDate: paidDate,

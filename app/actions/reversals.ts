@@ -86,6 +86,7 @@ export async function approveReversal(reversalId: string) {
       
       const newRepayment = await tx.loanRepayment.create({
         data: {
+          organizationId: organizationId,
           loanId: originalRepayment.loanId,
           instalmentNumber: originalRepayment.instalmentNumber,
           scheduledDate: originalRepayment.scheduledDate,

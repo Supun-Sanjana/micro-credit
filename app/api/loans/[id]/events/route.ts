@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         if (!loan.loanProduct || amount.lte(loan.outstanding)) throw new Error("New loan amount must exceed the outstanding balance")
         const terms = calculateLoanTerms(amount, loan.loanProduct)
         const newLoan = await tx.loan.create({ data: { memberId: loan.memberId, loanProductId: loan.loanProductId, loanType: loan.loanType, loanNumber: `TOPUP-${Date.now()}`, loanAmount: terms.loanAmount, weeklyRental: terms.weeklyRental, numberOfWeeks: terms.numberOfWeeks, totalReceivable: terms.totalReceivable, outstanding: terms.totalReceivable, status: "PENDING", verificationStatus: "PENDING" } })
-        await tx.loanRepayment.create({ data: { loanId: loan.id, paidDate: new Date(), amount: loan.outstanding, method: "ACCOUNT_TRANSFER", note: `Settled by top-up ${newLoan.id}`, transactionType: "PAYMENT", allocationMethod: "TOP_UP_SETTLEMENT" } })
+        await tx.loanRepayment.create({ data: { organizationId: dal.organizationId, loanId: loan.id, paidDate: new Date(), amount: loan.outstanding, method: "ACCOUNT_TRANSFER", note: `Settled by top-up ${newLoan.id}`, transactionType: "PAYMENT", allocationMethod: "TOP_UP_SETTLEMENT" } })
         await tx.loan.update({ where: { id }, data: { totalPaid: loan.totalPaid.add(loan.outstanding), outstanding: 0, status: "SETTLED" } })
         
         // --- NOTIFICATION ---

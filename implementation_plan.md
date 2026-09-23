@@ -1,10 +1,10 @@
-# Milestone 9: Document Handling (KYC & Financial Documents)
+# Milestone 10: Field Officer Portal
 
 ## Goal Description
 
-Enable secure uploading, private storage, and structured verification of sensitive member documents (NIC photos, payslips, loan applications, etc.). 
+Provide a purpose-built, mobile-first web workflow for Field Officers at `/app/field`. The portal enables rapid one-tap cash collection, offline-ready transaction idempotency, missed payment tracking via collection attempts, and strict end-of-day cash reconciliation.
 
-This system uses a **Private** Supabase bucket, enforces strict tenant isolation, guarantees document immutability, and maintains a full verification history and audit trail.
+The architecture ensures the field portal acts strictly as a UI/workflow layer that interfaces with the core financial domain.
 
 ---
 
@@ -14,146 +14,159 @@ This system uses a **Private** Supabase bucket, enforces strict tenant isolation
 
 #### [MODIFY] [schema.prisma](file:///f:/Personal/micro-credit/prisma/schema.prisma)
 
-**New Enums:**
-- `DocumentStatus { PENDING VERIFIED REJECTED ARCHIVED }`
-- Modify `MemberDocumentType`: add `LOAN_APPLICATION`
+**Modify Model `LoanRepayment`:**
+- Add `organizationId String` (for strict multi-tenant queries and constraint).
+- Add `clientTransactionId String?`
+- Add constraint: `@@unique([organizationId, clientTransactionId])`
+- *(Run a data migration or set a default for existing rows if necessary, though this is a greenfield-ish state).*
 
-**Modify Model `MemberDocument`:**
-Replace existing `url` and `sizeBytes` with strict metadata and status tracking.
+**New Enum `CollectionOutcome` and `MissedReason`:**
 ```prisma
-model MemberDocument {
-  id              String             @id @default(cuid())
+enum CollectionOutcome { PAID PARTIAL MISSED }
+enum MissedReason { NO_CASH MEMBER_UNAVAILABLE REFUSED BUSINESS_CLOSED TRAVELING OTHER }
+```
+
+**New Model `CollectionAttempt`:**
+Tracks the reality of the field visit without prematurely failing the financial schedule.
+```prisma
+model CollectionAttempt {
+  id              String            @id @default(cuid())
   organizationId  String
-  memberId        String
-  loanId          String?            // Future-proofing for LOAN_APPLICATION
-  
-  type            MemberDocumentType
-  status          DocumentStatus     @default(PENDING)
+  scheduleId      String
+  officerId       String
+  attemptedAt     DateTime          @default(now())
+  outcome         CollectionOutcome
+  reason          MissedReason?
+  notes           String?
+  amountCollected Decimal?          @db.Decimal(10, 2)
+  clientTxId      String?           // For idempotency of the attempt itself
 
-  fileName        String
-  storagePath     String
-  mimeType        String
-  fileSize        Int
+  organization    Organization      @relation(fields: [organizationId], references: [id])
+  schedule        RepaymentSchedule @relation(fields: [scheduleId], references: [id])
+  officer         User              @relation(fields: [officerId], references: [id])
 
-  uploadedById    String
-  uploadedAt      DateTime           @default(now())
-
-  organization    Organization       @relation(fields: [organizationId], references: [id])
-  member          Member             @relation(fields: [memberId], references: [id])
-  loan            Loan?              @relation(fields: [loanId], references: [id])
-  uploadedBy      User               @relation(fields: [uploadedById], references: [id])
-  verifications   DocumentVerification[]
-
-  @@index([organizationId, status])
-  @@index([memberId])
-  @@index([loanId])
+  @@index([organizationId, officerId, attemptedAt])
+  @@index([scheduleId])
 }
 ```
 
-**New Model `DocumentVerification`:**
-Maintains the history of verification actions (Upload → Reject → Re-upload → Verify).
+**New Model `FieldOfficerAssignment`:**
+Explicitly models who collects where, enabling historical tracking and strict auth.
 ```prisma
-model DocumentVerification {
-  id             String         @id @default(cuid())
-  documentId     String
-  status         DocumentStatus // VERIFIED or REJECTED
-  reason         String?
-  verifiedById   String
-  createdAt      DateTime       @default(now())
+model FieldOfficerAssignment {
+  id             String       @id @default(cuid())
+  organizationId String
+  branchId       String
+  officerId      String
+  centreId       String
+  startDate      DateTime     @db.Date
+  endDate        DateTime?    @db.Date
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
 
-  document       MemberDocument @relation(fields: [documentId], references: [id])
-  verifiedBy     User           @relation(fields: [verifiedById], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  branch         Branch       @relation(fields: [branchId], references: [id])
+  officer        User         @relation(fields: [officerId], references: [id])
+  centre         Centre       @relation(fields: [centreId], references: [id])
 
-  @@index([documentId])
+  @@unique([officerId, centreId, isActive])
+  @@index([organizationId])
+}
+```
+
+**New Model `FieldOfficerReconciliation`:**
+```prisma
+model FieldOfficerReconciliation {
+  id               String   @id @default(cuid())
+  organizationId   String
+  branchId         String
+  officerId        String
+  date             DateTime @db.Date
+  
+  expectedCash     Decimal  @db.Decimal(14,2)
+  declaredCash     Decimal  @db.Decimal(14,2)
+  expectedBank     Decimal  @db.Decimal(14,2)
+  declaredBank     Decimal  @db.Decimal(14,2)
+  difference       Decimal  @db.Decimal(14,2)
+  
+  status           String   @default("SUBMITTED") // SUBMITTED, VERIFIED, DISPUTED
+  createdAt        DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  officer      User         @relation(fields: [officerId], references: [id])
+  branch       Branch       @relation(fields: [branchId], references: [id])
+
+  @@unique([officerId, date])
+  @@index([organizationId, date])
 }
 ```
 
 ---
 
-### 2. Event Types & Notifications
-
-#### [MODIFY] `lib/events/types.ts`
-Update `DOCUMENT_REJECTED` payload to include `documentId`:
-```ts
-| { type: 'DOCUMENT_REJECTED'; payload: { memberId: string; organizationId: string; documentId: string; documentType: string; reason?: string } }
-```
+### 2. Timezone & Authorization Strategy
+- **Timezone**: All `date` boundaries (e.g., "today") will be calculated using `Asia/Colombo` (or the configured org timezone). 
+- **Authorization**: API endpoints must resolve: `Session -> Organization -> FieldOfficerAssignment -> Centre -> Member -> Loan -> Schedule`. No blind acceptance of arbitrary `loanId`s.
 
 ---
 
-### 3. Storage Layer
+### 3. API Routes
 
-#### [NEW] [lib/storage.ts](file:///f:/Personal/micro-credit/lib/storage.ts)
-Wrapper around the existing `lib/supabase.ts`.
-- **Bucket**: `member-documents` (Must be **PRIVATE**)
-- **Path**: `${organizationId}/${memberId}/${crypto.randomUUID()}`
-- **Security**: 
-  - Restrict MIME types (`image/jpeg`, `image/png`, `application/pdf`)
-  - Size limits: Images 5MB, PDF 10MB
-- **Functions**:
-  - `uploadDocument(file: File, orgId, memberId)`: returns `storagePath` and metadata.
-  - `generateSignedUrl(storagePath: string)`: returns a short-lived (5-minute) signed URL using `supabase.storage.from('member-documents').createSignedUrl(path, 300)`.
+#### [NEW] `/api/field/dashboard` (GET)
+- Uses DB `aggregate`/`groupBy` to efficiently sum today's expected and collected amounts for the assigned centres.
 
----
+#### [NEW] `/api/field/centres` (GET)
+- Returns centres from `FieldOfficerAssignment` where `isActive == true`.
 
-### 4. API Routes
+#### [NEW] `/api/field/centres/[id]/collection-sheet` (GET)
+- Returns members + loans + schedules due today.
 
-**Tenant Safety Rule:** Always resolve `organizationId` from `getScopedDal()`. Never trust the client's `organizationId`.
+#### [NEW] `/api/field/collect` (POST)
+- Body: `{ loanId, scheduleId, amount, method, clientTransactionId, notes? }`
+- **Idempotency & Transaction Boundary**:
+  ```ts
+  BEGIN TRANSACTION
+    1. Check unique `[organizationId, clientTransactionId]` on LoanRepayment (returns existing if found).
+    2. Validate Officer Assignment -> Centre -> Member -> Loan.
+    3. create LoanRepayment.
+    4. call core allocatePayment() logic.
+    5. create CollectionAttempt (outcome: PAID/PARTIAL).
+  COMMIT
+  ```
 
-#### [NEW] `app/api/members/[id]/documents/route.ts`
-- **POST**: 
-  - Validate file extension/MIME/size.
-  - Upload via `lib/storage.ts`.
-  - Create `MemberDocument` (status `PENDING`).
-  - Log `DOCUMENT_UPLOADED` in `AuditLog`.
-- **GET**: 
-  - Returns document metadata only (no signed URLs).
+#### [NEW] `/api/field/missed` (POST)
+- Body: `{ scheduleId, reason, notes, clientTransactionId? }`
+- Creates a `CollectionAttempt` (outcome: `MISSED`). Leaves `RepaymentSchedule` as `PENDING`.
 
-#### [NEW] `app/api/documents/[id]/view/route.ts`
-- **GET**:
-  - Checks if user has permission to view.
-  - Generates signed URL via `lib/storage.ts`.
-  - Logs `DOCUMENT_VIEWED` in `AuditLog`.
-  - Redirects to or returns the signed URL.
+#### [NEW] `/api/field/reconcile` (POST)
+- Body: `{ declaredCash, declaredBank, date }`
+- **Server Calculation**: The server queries all `LoanRepayment`s for that officer + date to compute `expectedCash` and `expectedBank`.
+- Creates `FieldOfficerReconciliation`.
 
-#### [NEW] `app/api/documents/[id]/verify/route.ts`
-- **PATCH**: 
-  - Restricts to `BRANCH_MANAGER+`.
-  - State machine check: Cannot change if already `VERIFIED`.
-  - **Prisma Transaction**:
-    1. Update `MemberDocument.status`.
-    2. Create `DocumentVerification` record.
-    3. Log `DOCUMENT_VERIFIED` or `DOCUMENT_REJECTED` in `AuditLog`.
-  - Post-Transaction: Dispatch `DOCUMENT_REJECTED` notification if applicable.
-
-#### [NEW] `app/api/documents/route.ts`
-- **GET**:
-  - Returns paginated documents for the Verification Dashboard.
-  - Supports filters: `branchId`, `type`, `status`, `date`.
+#### [NEW] `/api/field/history` (GET)
+- Returns paginated `CollectionAttempt` and `LoanRepayment` records for the officer's assigned scopes.
 
 ---
 
-### 5. UI Components & Pages
+### 4. UI: Mobile-First Layout
 
-#### [MODIFY] `app/app/(dashboard)/members/[id]/page.tsx`
-- Add a "Documents" tab.
-- Show existing documents (metadata + status badge).
-- "View" button calls `/api/documents/[id]/view` (opens in new tab/modal).
-- File upload zone: creates *new* document records (immutable history).
+#### [NEW] `app/app/field/layout.tsx`
+- Bypasses desktop shell. Max-width container, bottom nav (Home, Centres, History).
+- Includes an **Online/Offline Status Indicator** (🟢 Online / 🔴 Offline - "Payments will be available when connection returns").
 
-#### [NEW] `app/app/(dashboard)/documents/page.tsx`
-- **Verification Dashboard**: For `BRANCH_MANAGER+`.
-- Filter bar (Branch, Document Type, Status, Date).
-- Table columns: Member, Document Type, Branch, Uploaded Date, Status, Actions.
-- Review Modal:
-  - Fetches the signed URL to preview.
-  - Action buttons: "Verify", "Reject" (prompts for reason).
+#### [NEW] `app/app/field/page.tsx` (Dashboard)
+- Progress bar, collected vs expected, reconciliation entry point.
 
-#### [MODIFY] `components/dashboard-shell.tsx`
-- Add "Document Verification" link under Operations.
+#### [NEW] `app/app/field/centres/[id]/page.tsx` (Daily Collection Sheet)
+- Bottom drawer pattern for rapid 2-tap collections (Default exact amount -> Confirm). 
+- Options for Partial and Missed (with structured reason select).
+
+#### [NEW] `app/app/field/receipt/[repaymentId]/page.tsx`
+- Professional receipt display: Receipt No (server ID), Member, Loan, Instalment, Amount, Method, DateTime, Officer, Remaining Balance.
 
 ---
 
-## Security & Architectural Constraints
-1. **Private Bucket**: Public storage is NOT supported. All access passes through authenticated API with short-lived signed URLs.
-2. **Immutability**: Rejected documents are NOT overwritten. A new upload creates a new `MemberDocument` record.
-3. **Transactions**: The verification API must wrap state updates and audit logs in a single Prisma transaction. Notification dispatch happens *after* successful commit.
+## Verification Plan
+1. **Idempotency & Concurrency**: Send the exact same `collect` POST request *concurrently* (using `Promise.all`). Ensure the DB unique constraint safely processes one and returns the existing record for the other, preventing double allocation.
+2. **Authorization**: Attempt to POST a collection for a `loanId` outside the officer's active `FieldOfficerAssignment`. Expect 403 Forbidden.
+3. **Missed Payment**: Verify marking as missed creates a `CollectionAttempt` but leaves the financial schedule outstanding.
+4. **Reconciliation**: Submit reconciliation with malicious `expectedCash` payload; verify the server ignores it and strictly calculates expected cash from DB records.

@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+import { getScopedDal } from "@/lib/dal";
+
+export async function POST(request: Request) {
+  try {
+    const dal = await getScopedDal();
+    const json = await request.json();
+    const { loanId, scheduleId, amount, method, clientTransactionId, notes } = json;
+
+    if (!clientTransactionId) {
+      return NextResponse.json({ error: "clientTransactionId required" }, { status: 400 });
+    }
+
+    // Idempotency check
+    const existing = await dal.prisma.loanRepayment.findUnique({
+      where: {
+        organizationId_clientTransactionId: {
+          organizationId: dal.organizationId,
+          clientTransactionId,
+        }
+      }
+    });
+
+    if (existing) {
+      return NextResponse.json(existing);
+    }
+
+    const result = await dal.prisma.$transaction(async (tx: any) => {
+      // Validate Assignment
+      const loan = await tx.loan.findFirst({
+        where: { id: loanId, member: { organizationId: dal.organizationId } },
+        include: { member: true }
+      });
+
+      if (!loan) throw new Error("Loan not found");
+
+      const assignment = await tx.fieldOfficerAssignment.findFirst({
+        where: {
+          organizationId: dal.organizationId,
+          officerId: dal.userId,
+          centreId: loan.member.centreId,
+          isActive: true
+        }
+      });
+
+      if (!assignment) throw new Error("Not assigned to this centre");
+
+      const repayment = await tx.loanRepayment.create({
+        data: {
+          organizationId: dal.organizationId,
+          loanId,
+          amount,
+          method,
+          note: notes,
+          collectedBy: dal.userId,
+          clientTransactionId,
+          paidDate: new Date(),
+        }
+      });
+
+      // Update schedule
+      if (scheduleId) {
+        await tx.repaymentSchedule.update({
+          where: { id: scheduleId },
+          data: {
+            isPaid: true,
+            status: 'PAID',
+            paidAmount: amount,
+          }
+        });
+        
+        await tx.collectionAttempt.create({
+          data: {
+            organizationId: dal.organizationId,
+            scheduleId,
+            officerId: dal.userId,
+            outcome: 'PAID',
+            amountCollected: amount,
+            notes,
+            clientTxId: clientTransactionId
+          }
+        });
+      }
+      
+      return repayment;
+    });
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: error.message === "Not assigned to this centre" ? 403 : 400 });
+  }
+}

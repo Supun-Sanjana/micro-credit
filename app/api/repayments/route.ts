@@ -99,6 +99,7 @@ export async function POST(request: Request) {
         // Create Repayment record
         const repayment = await tx.loanRepayment.create({
           data: {
+            organizationId: dal.organizationId,
             loanId: loan.id,
             instalmentNumber: schedule?.instalmentNumber || null,
             scheduledDate: schedule?.scheduledDate || null,

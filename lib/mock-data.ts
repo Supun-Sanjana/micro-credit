@@ -251,6 +251,8 @@ export const mockGuarantors: Guarantor[] = [
 export const mockRepayments: Repayment[] = [
   {
     id: "rep_1",
+    organizationId: "org_1",
+    clientTransactionId: "tx_1",
     loanId: "loan_1",
     instalmentNumber: 1,
     scheduledDate: now,
@@ -264,6 +266,8 @@ export const mockRepayments: Repayment[] = [
   },
   {
     id: "rep_2",
+    organizationId: "org_1",
+    clientTransactionId: "tx_2",
     loanId: "loan_2",
     instalmentNumber: 2,
     scheduledDate: subDays(now, 7),
