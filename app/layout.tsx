@@ -16,7 +16,18 @@ export const metadata: Metadata = {
     default: "Solida | Core Banking for Microfinance",
   },
   description: "Enterprise-grade core banking and operations platform for modern microfinance institutions.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Solida MFI",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
+
+import { OfflineSyncManager } from "@/components/OfflineSyncManager";
 
 export default function RootLayout({
   children,
@@ -27,6 +38,7 @@ export default function RootLayout({
     <html lang="en" className={cn("h-full antialiased scroll-smooth", inter.variable, outfit.variable, instrumentSerif.variable, geistFallback.variable, geistMonoFallback.variable)}>
       <body className="min-h-full flex flex-col">
         {children}
+        <OfflineSyncManager />
       </body>
     </html>
   );

@@ -1,0 +1,16 @@
+{
+  "name": "Solida MFI",
+  "short_name": "Solida",
+  "description": "Microfinance Operations & Offline Field App",
+  "start_url": "/app/dashboard",
+  "display": "standalone",
+  "background_color": "#F2F2EE",
+  "theme_color": "#17191c",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
