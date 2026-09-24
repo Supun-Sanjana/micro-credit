@@ -7,7 +7,7 @@ import {
   Menu, X, LogOut, LayoutDashboard, FileText, 
   Users, DollarSign, Settings, Building, MapPin, 
   Grid, Briefcase, ChevronDown, User as UserIcon,
-  RotateCcw, Bell
+  RotateCcw, Bell, Database, ShieldCheck
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -23,11 +23,11 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const pathname = usePathname()
   const role = user?.role
-  const isSystemAdmin = role === "SYSTEM_ADMIN"
+  const isSystemAdmin = role === "SYSTEM_ADMIN" || role === "ADMIN"
   const isHeadOffice = role === "HEAD_OFFICE"
   const isAccountant = role === "ACCOUNTANT"
   const isBranchManager = role === "BRANCH_MANAGER"
-  const isFieldOfficer = role === "FIELD_OFFICER"
+  const isFieldOfficer = role === "FIELD_OFFICER" || role === "USER"
 
   const canViewFinance = isSystemAdmin || isHeadOffice || isAccountant || isBranchManager
   const canViewSettings = isSystemAdmin || isHeadOffice
@@ -59,7 +59,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         { href: "/app/groups", label: "Groups", icon: Users },
         { href: "/app/loans", label: "Loans", icon: DollarSign },
         { href: "/app/collection", label: "Collection", icon: Briefcase },
-        { href: "/app/documents", label: "Document Verification", icon: FileText },
+        ...(!isFieldOfficer ? [{ href: "/app/documents", label: "Document Verification", icon: FileText }] : []),
         ...(canViewFinance ? [{ href: "/app/risk", label: "Risk", icon: Bell }] : []),
       ],
     },
@@ -85,6 +85,10 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
           { href: "/app/settings/billing", label: "Billing", icon: Settings },
           { href: "/app/settings/audit-log", label: "Audit Log", icon: FileText },
           { href: "/app/settings/notifications", label: "Notifications", icon: Bell },
+          ...(isSystemAdmin || isHeadOffice ? [
+            { href: "/app/settings/migrations", label: "Data Migrations", icon: Database },
+            { href: "/app/settings/approvals", label: "Approval Workflow", icon: ShieldCheck }
+          ] : []),
         ],
       }
     ] : [])

@@ -15,7 +15,7 @@ export async function requireRole(allowedRoles: Role[]) {
   const userRole = (session.user as any).role as Role
 
   // SYSTEM_ADMIN generally has access to everything
-  if (userRole === 'SYSTEM_ADMIN') {
+  if (userRole === 'SYSTEM_ADMIN' || userRole === 'ADMIN' as any) {
     return
   }
 
@@ -29,7 +29,7 @@ export async function requireRole(allowedRoles: Role[]) {
  */
 export function hasRole(user: any, allowedRoles: Role[]) {
   if (!user || !user.role) return false
-  if (user.role === 'SYSTEM_ADMIN') return true
+  if (user.role === 'SYSTEM_ADMIN' || user.role === 'ADMIN') return true
   return allowedRoles.includes(user.role as Role)
 }
 
@@ -37,6 +37,6 @@ export function hasRole(user: any, allowedRoles: Role[]) {
  * Checks if the user is allowed to perform branch-level actions.
  */
 export function canAccessBranch(user: any, branchId: string) {
-  if (user.role === 'SYSTEM_ADMIN' || user.role === 'HEAD_OFFICE' || user.role === 'ACCOUNTANT') return true
+  if (user.role === 'SYSTEM_ADMIN' || user.role === 'ADMIN' || user.role === 'HEAD_OFFICE' || user.role === 'ACCOUNTANT') return true
   return user.branchId === branchId
 }

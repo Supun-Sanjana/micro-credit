@@ -6,12 +6,12 @@ import { verifyAdminSession } from "@/lib/admin-session"
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
-  searchParams?: {
+  }>
+  searchParams?: Promise<{
     action?: string
-  }
+  }>
 }
 
 function getStatusBadge(status: string) {
@@ -76,8 +76,10 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
     redirect("/app/admin/login")
   }
 
-  const { id } = params
-  const initialAction = searchParams?.action?.toUpperCase() === "REJECT" ? "REJECT" : "APPROVE"
+  const resolvedParams = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const { id } = resolvedParams
+  const initialAction = resolvedSearchParams?.action?.toUpperCase() === "REJECT" ? "REJECT" : "APPROVE"
 
   const claim = await prisma.paymentClaim.findUnique({
     where: { id },

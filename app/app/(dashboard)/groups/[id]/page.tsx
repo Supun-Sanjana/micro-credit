@@ -4,9 +4,10 @@ import { GroupMemberRow } from "./GroupMemberRow"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-export default async function GroupDetailPage({ params }: { params: { id: string } }) {
+export default async function GroupDetailPage({ params }: { params: Promise<any> }) {
+  const { id, repaymentId } = await params;
   try {
-    const group = await getGroup(params.id)
+    const group = await getGroup(id)
     const availableMembers = await getAvailableMembers(group.centreId, group.id)
 
     return (
@@ -98,3 +99,6 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     notFound()
   }
 }
+
+
+

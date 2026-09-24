@@ -12,7 +12,7 @@ export async function createAdminSession(adminId: string, email: string) {
     .setExpirationTime("10h")
     .sign(key)
 
-  cookies().set("admin_session", session, {
+  ;(await cookies()).set("admin_session", session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -22,7 +22,7 @@ export async function createAdminSession(adminId: string, email: string) {
 }
 
 export async function verifyAdminSession() {
-  const cookie = cookies().get("admin_session")?.value
+  const cookie = (await cookies()).get("admin_session")?.value
   if (!cookie) return null
 
   try {
@@ -35,8 +35,8 @@ export async function verifyAdminSession() {
   }
 }
 
-export function clearAdminSession() {
-  cookies().set("admin_session", "", {
+export async function clearAdminSession() {
+  ;(await cookies()).set("admin_session", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -44,3 +44,5 @@ export function clearAdminSession() {
     path: "/",
   })
 }
+
+

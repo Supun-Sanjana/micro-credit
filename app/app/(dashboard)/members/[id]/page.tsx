@@ -8,8 +8,9 @@ import { MemberDocuments } from "@/components/member-documents"
 import { MemberSavings } from "./MemberSavings"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default async function MemberDetailPage({ params }: { params: { id: string } }) {
-  const memberId = params.id
+export default async function MemberDetailPage({ params }: { params: Promise<any> }) {
+  const { id, repaymentId } = await params;
+  const memberId = id
   const dal = await getScopedDal()
 
   const member = await dal.prisma.member.findUnique({
@@ -187,3 +188,6 @@ export default async function MemberDetailPage({ params }: { params: { id: strin
     </div>
   )
 }
+
+
+

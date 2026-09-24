@@ -13,15 +13,16 @@ import { revalidatePath } from "next/cache";
 export default async function AccountingPage({
   searchParams,
 }: {
-  searchParams: { asOfDate?: string; startDate?: string; endDate?: string };
+  searchParams: Promise<{ asOfDate?: string; startDate?: string; endDate?: string }>;
 }) {
+  const params = await searchParams;
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const asOfDate = searchParams?.asOfDate ? new Date(searchParams.asOfDate) : today;
-  const startDate = searchParams?.startDate ? new Date(searchParams.startDate) : startOfMonth;
-  const endDate = searchParams?.endDate ? new Date(searchParams.endDate) : endOfMonth;
+  const asOfDate = params?.asOfDate ? new Date(params.asOfDate) : today;
+  const startDate = params?.startDate ? new Date(params.startDate) : startOfMonth;
+  const endDate = params?.endDate ? new Date(params.endDate) : endOfMonth;
 
   const chartOfAccounts = await getChartOfAccounts();
   const journalEntries = await getJournalEntries(startDate, endDate);

@@ -6,9 +6,7 @@ import { verifyAdminSession } from "@/lib/admin-session"
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-  params: {
-    id: string
-  }
+  params: Promise<{ id: string }>
 }
 
 function getStatusBadge(status?: string | null) {
@@ -77,13 +75,12 @@ function getClaimStatusBadge(status: string) {
   }
 }
 
-export default async function OrgDetailPage({ params }: PageProps) {
+export default async function OrgDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await verifyAdminSession()
   if (!session) {
     redirect("/app/admin/login")
   }
-
-  const { id } = params
 
   const [org, storageAggregate] = await Promise.all([
     prisma.organization.findUnique({
@@ -503,3 +500,7 @@ export default async function OrgDetailPage({ params }: PageProps) {
     </div>
   )
 }
+
+
+
+

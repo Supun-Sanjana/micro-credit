@@ -5,7 +5,7 @@ import { logAdminAction } from "@/lib/admin-audit"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // verifyAdminSession() must be the very first thing called
   const session = await verifyAdminSession()
@@ -13,7 +13,7 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { id } = params
+  const { id } = await params
 
   let action: unknown
   let note: string | undefined

@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { getScopedDal } from "@/lib/dal";
 import { startOfDay, endOfDay } from "date-fns";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const dal = await getScopedDal();
+    const { id } = await params;
     const today = new Date();
     const formatter = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Colombo", year: "numeric", month: "2-digit", day: "2-digit" });
     const parts = formatter.formatToParts(today);
@@ -19,7 +20,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       where: {
         organizationId: dal.organizationId,
         officerId: dal.userId,
-        centreId: params.id,
+        centreId: id,
         isActive: true,
       }
     });
@@ -30,7 +31,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
     const members = await dal.prisma.member.findMany({
       where: {
-        centreId: params.id,
+        centreId: id,
         organizationId: dal.organizationId,
         loans: {
           some: {

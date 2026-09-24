@@ -6,14 +6,14 @@ import { SubscriptionStatus } from "@prisma/client"
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await verifyAdminSession()
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { id } = params
+  const { id } = await params
 
   let status: unknown
   let note: string | undefined

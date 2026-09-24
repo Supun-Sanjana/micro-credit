@@ -16,7 +16,7 @@ export default async function AdminDashboard() {
 
   const handleLogout = async () => {
     "use server"
-    cookies().set("admin_session", "", { expires: new Date(0) })
+    ;(await cookies()).set("admin_session", "", { expires: new Date(0) })
     redirect("/app/admin/login")
   }
 
@@ -179,3 +179,5 @@ export default async function AdminDashboard() {
     </div>
   )
 }
+
+

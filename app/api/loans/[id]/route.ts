@@ -49,10 +49,18 @@ export async function PUT(
     const loan = await dal.prisma.loan.findUnique({ where: { id }, include: { loanProduct: true } })
     if (!loan) return NextResponse.json({ error: "Not found" }, { status: 404 })
     
-    // RBAC: Verify and Disburse require Branch Manager or higher
-    if (json.action === "VERIFY" || json.action === "DISBURSE" || json.action === "TRANSITION") {
-      if (dal.role !== "BRANCH_MANAGER" && dal.role !== "SYSTEM_ADMIN" && dal.role !== "HEAD_OFFICE") {
+    // RBAC: Disburse and Transition require Branch Manager or higher
+    if (json.action === "DISBURSE" || json.action === "TRANSITION") {
+      if (dal.role !== "BRANCH_MANAGER" && dal.role !== "SYSTEM_ADMIN" && dal.role !== "HEAD_OFFICE" && dal.role !== "ACCOUNTANT") {
         return NextResponse.json({ error: "Forbidden: role required" }, { status: 403 })
+      }
+    }
+
+    if (json.action === "VERIFY" && json.status === "VERIFIED") {
+      const { canApproveLoanAmount } = await import("@/app/actions/approvals")
+      const canApprove = await canApproveLoanAmount(loan.loanAmount, dal.role, dal)
+      if (!canApprove) {
+        return NextResponse.json({ error: "Forbidden: Loan amount exceeds your configured approval limit." }, { status: 403 })
       }
     }
 
