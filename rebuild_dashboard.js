@@ -1,4 +1,7 @@
-import { auth } from "@/auth"
+const fs = require('fs');
+const file = 'app/app/(dashboard)/dashboard/page.tsx';
+
+const fullCode = `import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import { ArrowRight, TrendingUp, Users, DollarSign, Wallet, FileText, Activity } from "lucide-react"
@@ -68,8 +71,8 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <StatCard title="Today's Target (Incl. Overdue)" value={`LKR ${totalTarget.toLocaleString()}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />${totalOverdue > 0 ? `LKR ${totalOverdue.toLocaleString()} Overdue` : 'On track'}</>} />
-          <StatCard title="Assigned Centres" value={`${assignedCentres.length}`} delta={<><ArrowRight className="w-3 h-3 mr-1 inline" />View Itinerary below</>} />
+          <StatCard title="Today's Target (Incl. Overdue)" value={\`LKR \${totalTarget.toLocaleString()}\`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />\${totalOverdue > 0 ? \`LKR \${totalOverdue.toLocaleString()} Overdue\` : 'On track'}</>} />
+          <StatCard title="Assigned Centres" value={\`\${assignedCentres.length}\`} delta={<><ArrowRight className="w-3 h-3 mr-1 inline" />View Itinerary below</>} />
         </div>
         
         <div className="mt-8">
@@ -86,7 +89,7 @@ export default async function DashboardPage() {
                     LKR {c.target.toLocaleString()}
                   </span>
                 </div>
-                <Link href={`/app/collection?centreId=${c.id}`} className="mt-2 flex items-center justify-center gap-2 bg-ink-black text-paper-white py-2 rounded-full text-[14px] font-medium hover:bg-ink-black/90 transition-colors">
+                <Link href={\`/app/collection?centreId=\${c.id}\`} className="mt-2 flex items-center justify-center gap-2 bg-ink-black text-paper-white py-2 rounded-full text-[14px] font-medium hover:bg-ink-black/90 transition-colors">
                   Open Collection Sheet <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -146,9 +149,9 @@ export default async function DashboardPage() {
 
       {/* Top Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Active Capital" value={`LKR ${activeCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Live Portfolio</>} />
-        <StatCard title="Today's Collections" value={`LKR ${todayCollections.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Real-time Sync</>} />
-        <StatCard title="Total Savings" value={`LKR ${totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><Wallet className="w-3 h-3 mr-1 inline" />Pooled Capital</>} />
+        <StatCard title="Active Capital" value={\`LKR \${activeCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}\`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Live Portfolio</>} />
+        <StatCard title="Today's Collections" value={\`LKR \${todayCollections.toLocaleString(undefined, { maximumFractionDigits: 0 })}\`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Real-time Sync</>} />
+        <StatCard title="Total Savings" value={\`LKR \${totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}\`} delta={<><Wallet className="w-3 h-3 mr-1 inline" />Pooled Capital</>} />
         <StatCard title="Registered Members" value={membersCount.toString()} delta={<><Users className="w-3 h-3 mr-1 inline" />Active Community</>} />
       </div>
 
@@ -245,4 +248,7 @@ function StatCard({ title, value, delta }: { title: string, value: string, delta
       <span className="text-[13px] font-medium text-[#137333] mt-2 flex items-center">{delta}</span>
     </div>
   )
-}
+}`;
+
+fs.writeFileSync(file, fullCode);
+console.log('done');
