@@ -69,21 +69,18 @@ function AddBranchDrawer({ open, onClose, onSuccess }: any) {
 }
 
 export default function BranchesPage() {
-  const [branches, setBranches] = useState<Branch[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [search, setSearch] = useState("")
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true)
-      const res = await fetch('/api/branches')
-      if (res.ok) setBranches(await res.json())
-    } finally { setIsLoading(false) }
-  }
-  useEffect(() => { fetchData() }, [])
+  const queryClient = useQueryClient()
+  const { data: branchesRes, isLoading } = useQuery({
+    queryKey: ['branches'],
+    queryFn: async () => (await fetch('/api/branches')).json(),
+    staleTime: 600000
+  })
+  const branches: Branch[] = branchesRes?.data || branchesRes || []
 
-  const filtered = branches.filter(b => {
+  const filtered = branches.filter((b: any) => {
     const q = search.toLowerCase()
     return !q || (b.name || "").toLowerCase().includes(q) || (b.code || "").toLowerCase().includes(q)
   })
@@ -122,7 +119,7 @@ export default function BranchesPage() {
                 <tr><td colSpan={3} className="py-20 text-center text-slate-400">Loading branches...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={3} className="py-20 text-center text-slate-400">No branches found</td></tr>
-              ) : filtered.map(b => (
+              ) : filtered.map((b: any) => (
                 <tr key={b.id} className="hover:bg-gray-50/70 transition-colors group">
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-3">
@@ -146,7 +143,7 @@ export default function BranchesPage() {
           </table>
         </div>
       </div>
-      <AddBranchDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSuccess={() => {}} />
+      <AddBranchDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['branches'] })} />
     </div>
   )
 }

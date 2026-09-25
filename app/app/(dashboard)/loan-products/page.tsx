@@ -171,7 +171,7 @@ export default function LoanProductsPage() {
                 <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading products...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={5} className="py-20 text-center text-slate-400">No products found</td></tr>
-              ) : filtered.map(p => (
+              ) : filtered.map((p: any) => (
                 <tr key={p.id} className="hover:bg-gray-50/70 transition-colors group">
                   <td className="py-3.5 px-5">
                     <div className="flex items-center gap-3">

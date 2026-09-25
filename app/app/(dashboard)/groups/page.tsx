@@ -133,7 +133,7 @@ export default function GroupsPage() {
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <select value={centreFilter} onChange={e => setCentreFilter(e.target.value)} className="pl-9 pr-8 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 appearance-none outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all">
             <option value="">All Centres</option>
-            {centres.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {centres.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
         </div>
@@ -155,7 +155,7 @@ export default function GroupsPage() {
                 <tr><td colSpan={4} className="py-20 text-center text-slate-400">Loading groups...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={4} className="py-20 text-center text-slate-400">No groups found</td></tr>
-              ) : filtered.map(g => (
+              ) : filtered.map((g: any) => (
                 <tr key={g.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-3.5 px-5">
                     <Link href={`/app/groups/${g.id}`} className="text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors">

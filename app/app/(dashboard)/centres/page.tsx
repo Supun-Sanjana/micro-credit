@@ -151,7 +151,7 @@ export default function CentresPage() {
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <select value={branchFilter} onChange={e => setBranchFilter(e.target.value)} className="pl-9 pr-8 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 appearance-none outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all">
             <option value="">All Branches</option>
-            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            {branches.map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select>
           <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
         </div>
@@ -174,7 +174,7 @@ export default function CentresPage() {
                 <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading centres...</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={5} className="py-20 text-center text-slate-400">No centres found</td></tr>
-              ) : filtered.map(c => {
+              ) : filtered.map((c: any) => {
                 const branch = branches.find(b => b.id === c.branchId)
                 return (
                   <tr key={c.id} className="hover:bg-gray-50/70 transition-colors group">
