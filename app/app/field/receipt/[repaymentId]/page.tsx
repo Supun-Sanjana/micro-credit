@@ -50,7 +50,7 @@ export default async function Receipt({ params }: { params: Promise<{ repaymentI
         <div className="space-y-4 text-left border-t border-[#ececec] pt-8">
           <div className="flex justify-between items-center pb-4 border-b border-[#ececec]/60">
             <span className="text-[14px] text-slate-gray">Member</span>
-            <span className="text-[15px] font-medium text-ink-black">{member.firstName} {member.lastName}</span>
+            <span className="text-[15px] font-medium text-ink-black">{member.name}</span>
           </div>
           <div className="flex justify-between items-center pb-4 border-b border-[#ececec]/60">
             <span className="text-[14px] text-slate-gray">Loan ID</span>
