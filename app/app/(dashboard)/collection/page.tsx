@@ -53,9 +53,10 @@ export default function CollectionPage() {
     fetch("/api/centres")
       .then(res => res.json())
       .then(data => {
-        setCentres(data)
-        if (data.length > 0) {
-          setSelectedCentre(data[0].id)
+        const arr = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+        setCentres(arr)
+        if (arr.length > 0) {
+          setSelectedCentre(arr[0].id)
         }
       })
       .finally(() => setIsLoadingCentres(false))
