@@ -134,12 +134,12 @@ export default function LoanProductsPage() {
       {/* Hero Section */}
       <div className="flex flex-col gap-4">
         <h1 
-          className="text-[44px] leading-[1.3] text-ink-black font-serif font-normal"
+          className="text-[44px] leading-[1.3] text-navy-900 font-serif font-normal"
           style={{ letterSpacing: '-0.66px' }}
         >
           Loan Products
         </h1>
-        <p className="text-[17px] text-slate-gray max-w-[600px] leading-[1.35]">
+        <p className="text-[17px] text-slate-500 max-w-[600px] leading-[1.35]">
           Configure lending instruments, term duration, and interest schedules.
         </p>
       </div>
@@ -148,30 +148,30 @@ export default function LoanProductsPage() {
         
         {/* Form (Floating Product Artifact) */}
         <div className="lg:col-span-4 h-fit">
-          <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">
-            <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">
+          <div className="bg-white rounded-[20px] shadow-subtle-3 p-[32px]">
+            <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">
               {isEditing ? "Edit Product" : "New Product"}
             </h2>
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               
               <div className="flex flex-col gap-2">
-                <label className="text-[15px] text-ink-black font-sans ml-1">Product Name</label>
+                <label className="text-[15px] text-navy-900 font-sans ml-1">Product Name</label>
                 <input 
                   required
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Quick 13W"
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-ink-black font-sans ml-1">Category</label>
+                  <label className="text-[15px] text-navy-900 font-sans ml-1">Category</label>
                   <select 
                     value={formData.loanType}
                     onChange={e => setFormData({ ...formData, loanType: e.target.value as any })}
-                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 appearance-none"
                   >
                     <option value="QUICK">QUICK</option>
                     <option value="BUSINESS">BUSINESS</option>
@@ -179,64 +179,64 @@ export default function LoanProductsPage() {
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-ink-black font-sans ml-1">Weeks</label>
+                  <label className="text-[15px] text-navy-900 font-sans ml-1">Weeks</label>
                   <input 
                     required
                     type="number"
                     min="1"
                     value={formData.numberOfWeeks}
                     onChange={e => setFormData({ ...formData, numberOfWeeks: parseInt(e.target.value) || 0 })}
-                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 border-t border-[#ececec] pt-5">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-ink-black font-sans ml-1">Interest Type</label>
+                  <label className="text-[15px] text-navy-900 font-sans ml-1">Interest Type</label>
                   <select 
                     value={formData.interestType}
                     onChange={e => setFormData({ ...formData, interestType: e.target.value as any })}
-                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 appearance-none"
                   >
                     <option value="FLAT">FLAT</option>
                     <option value="REDUCING">REDUCING</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-ink-black font-sans ml-1">Rate (%)</label>
+                  <label className="text-[15px] text-navy-900 font-sans ml-1">Rate (%)</label>
                   <input 
                     required
                     type="number"
                     step="0.1"
                     value={formData.rate}
                     onChange={e => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
-                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
                   />
                 </div>
               </div>
 
               <div className="flex flex-col gap-4 border-t border-[#ececec] pt-5">
-                <label className="text-[14px] font-sans text-ash-gray uppercase tracking-wider ml-1">
+                <label className="text-[14px] font-sans text-slate-400 uppercase tracking-wider ml-1">
                   Fees & Penalties
                 </label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[15px] text-ink-black font-sans ml-1">Doc Fee</label>
+                    <label className="text-[15px] text-navy-900 font-sans ml-1">Doc Fee</label>
                     <input 
                       type="number"
                       value={formData.docFee}
                       onChange={e => setFormData({ ...formData, docFee: parseFloat(e.target.value) || 0 })}
-                      className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                      className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className="text-[15px] text-ink-black font-sans ml-1">Insurance</label>
+                    <label className="text-[15px] text-navy-900 font-sans ml-1">Insurance</label>
                     <input 
                       type="number"
                       value={formData.insuranceFee}
                       onChange={e => setFormData({ ...formData, insuranceFee: parseFloat(e.target.value) || 0 })}
-                      className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                      className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
                     />
                   </div>
                 </div>
@@ -246,7 +246,7 @@ export default function LoanProductsPage() {
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center bg-navy-900 text-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {isSubmitting ? "Saving..." : (isEditing ? "Update" : "Create")}
                 </button>
@@ -254,7 +254,7 @@ export default function LoanProductsPage() {
                   <button 
                     type="button"
                     onClick={resetForm}
-                    className="flex-1 flex items-center justify-center bg-transparent border border-ink-black text-ink-black rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-70"
+                    className="flex-1 flex items-center justify-center bg-transparent border border-navy-900 text-navy-900 rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-70"
                   >
                     Cancel
                   </button>
@@ -266,47 +266,47 @@ export default function LoanProductsPage() {
 
         {/* List (Neutral Card) */}
         <div className="lg:col-span-8">
-          <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+          <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
             <div className="w-full overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-border/40">
-                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Name</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Category</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Terms</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal">Fees</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-gray font-normal text-right">Actions</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Name</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Category</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Terms</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Fees</th>
+                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading ? (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
-                        <div className="inline-block animate-spin w-5 h-5 border-2 border-ink-black border-t-transparent rounded-full"></div>
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-500">
+                        <div className="inline-block animate-spin w-5 h-5 border-2 border-navy-900 border-t-transparent rounded-full"></div>
                       </td>
                     </tr>
                   ) : products.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-gray">
+                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-500">
                         No loan products configured.
                       </td>
                     </tr>
                   ) : (
                     products.map((product) => (
                       <tr key={product.id} className="border-b border-border/40 last:border-0">
-                        <td className="py-5 pr-4 text-[16px] font-sans font-medium text-ink-black">
+                        <td className="py-5 pr-4 text-[16px] font-sans font-medium text-navy-900">
                           {product.name}
                         </td>
                         <td className="py-5 pr-4">
-                           <span className="text-[14px] font-sans text-ash-gray uppercase tracking-wider">
+                           <span className="text-[14px] font-sans text-slate-400 uppercase tracking-wider">
                              {product.loanType}
                            </span>
                         </td>
-                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
-                          <div className="text-ink-black">{product.numberOfWeeks}W</div>
+                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-500">
+                          <div className="text-navy-900">{product.numberOfWeeks}W</div>
                           <div className="text-[14px] mt-1">{product.rate || 0}% {product.interestType || "FLAT"}</div>
                         </td>
-                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-gray">
+                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-500">
                           <div>Doc: {product.docFee || 0}</div>
                           <div className="mt-1">Ins: {product.insuranceFee || 0}</div>
                         </td>
@@ -314,13 +314,13 @@ export default function LoanProductsPage() {
                           <div className="flex items-center justify-end gap-4">
                             <button 
                               onClick={() => handleEdit(product)} 
-                              className="text-[15px] text-ink-black hover:underline underline-offset-4"
+                              className="text-[15px] text-navy-900 hover:underline underline-offset-4"
                             >
                               Edit
                             </button>
                             <button 
                               onClick={() => handleDelete(product.id)} 
-                              className="text-[15px] text-sienna-brown hover:underline underline-offset-4"
+                              className="text-[15px] text-brand-700 hover:underline underline-offset-4"
                             >
                               Delete
                             </button>

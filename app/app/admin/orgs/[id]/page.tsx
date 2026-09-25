@@ -12,7 +12,7 @@ interface PageProps {
 function getStatusBadge(status?: string | null) {
   if (!status) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
         No Plan
       </span>
     )
@@ -39,7 +39,7 @@ function getStatusBadge(status?: string | null) {
       )
     default:
       return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
           {status.replace(/_/g, " ")}
         </span>
       )
@@ -68,7 +68,7 @@ function getClaimStatusBadge(status: string) {
       )
     default:
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
           {status}
         </span>
       )
@@ -142,13 +142,13 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-mist-gray p-6 sm:p-10 font-sans text-ink-black">
+    <div className="min-h-screen bg-slate-50 p-6 sm:p-10 font-sans text-navy-900">
       <div className="max-w-[1200px] mx-auto space-y-8">
         {/* Navigation Breadcrumb */}
         <div>
           <Link
             href="/app/admin/orgs"
-            className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
+            className="text-[15px] text-slate-500 hover:text-navy-900 transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Organizations
           </Link>
@@ -158,12 +158,12 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-[44px] font-serif font-normal text-ink-black tracking-[-0.66px] leading-[1.3]">
+              <h1 className="text-[44px] font-serif font-normal text-navy-900 tracking-[-0.66px] leading-[1.3]">
                 {org.name}
               </h1>
               {getStatusBadge(subscription?.status)}
             </div>
-            <p className="text-[15px] text-slate-gray mt-1">
+            <p className="text-[15px] text-slate-500 mt-1">
               Created on {formatDate(org.createdAt)} • Organization ID:{" "}
               <span className="font-mono text-[13px]">{org.id}</span>
             </p>
@@ -173,23 +173,23 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
         {/* Top Grid: Subscription Details & Storage Quota */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Subscription Card */}
-          <div className="md:col-span-2 bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8 flex flex-col justify-between">
+          <div className="md:col-span-2 bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-[#f2f2f3]">
                 <div>
-                  <h2 className="text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <h2 className="text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Subscription & Tier
                   </h2>
-                  <p className="text-[20px] font-medium text-ink-black mt-1">
+                  <p className="text-[20px] font-medium text-navy-900 mt-1">
                     {plan?.name || "No Plan Assigned"}
                   </p>
                 </div>
                 {plan?.monthlyPrice && (
                   <div className="text-right">
-                    <span className="text-[13px] text-ash-gray uppercase tracking-wider">Price</span>
-                    <p className="text-[18px] font-medium text-ink-black">
+                    <span className="text-[13px] text-slate-400 uppercase tracking-wider">Price</span>
+                    <p className="text-[18px] font-medium text-navy-900">
                       LKR {Number(plan.monthlyPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      <span className="text-[13px] font-normal text-slate-gray"> / mo</span>
+                      <span className="text-[13px] font-normal text-slate-500"> / mo</span>
                     </p>
                   </div>
                 )}
@@ -197,24 +197,24 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
                 <div>
-                  <span className="text-[12px] uppercase tracking-wider text-ash-gray">Status</span>
+                  <span className="text-[12px] uppercase tracking-wider text-slate-400">Status</span>
                   <div className="mt-1.5">{getStatusBadge(subscription?.status)}</div>
                 </div>
                 <div>
-                  <span className="text-[12px] uppercase tracking-wider text-ash-gray">Trial Ends</span>
-                  <p className="text-[15px] text-ink-black mt-1.5 font-medium">
+                  <span className="text-[12px] uppercase tracking-wider text-slate-400">Trial Ends</span>
+                  <p className="text-[15px] text-navy-900 mt-1.5 font-medium">
                     {formatDate(subscription?.trialEndsAt)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[12px] uppercase tracking-wider text-ash-gray">Period End</span>
-                  <p className="text-[15px] text-ink-black mt-1.5 font-medium">
+                  <span className="text-[12px] uppercase tracking-wider text-slate-400">Period End</span>
+                  <p className="text-[15px] text-navy-900 mt-1.5 font-medium">
                     {formatDate(subscription?.currentPeriodEnd)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[12px] uppercase tracking-wider text-ash-gray">Branch Limit</span>
-                  <p className="text-[15px] text-ink-black mt-1.5 font-medium">
+                  <span className="text-[12px] uppercase tracking-wider text-slate-400">Branch Limit</span>
+                  <p className="text-[15px] text-navy-900 mt-1.5 font-medium">
                     {plan?.maxBranches ? `${plan.maxBranches} branches` : "—"}
                   </p>
                 </div>
@@ -224,15 +224,15 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
             {/* Storage Quota Progress Bar */}
             <div className="mt-8 pt-6 border-t border-[#f2f2f3]">
               <div className="flex items-center justify-between text-[14px] mb-2">
-                <span className="text-slate-gray font-medium">Storage Quota</span>
-                <span className="text-ink-black font-medium">
+                <span className="text-slate-500 font-medium">Storage Quota</span>
+                <span className="text-navy-900 font-medium">
                   {totalMb} MB of {storageQuotaMb > 0 ? `${storageQuotaMb} MB` : "No limit"} ({storagePercent}%)
                 </span>
               </div>
-              <div className="w-full bg-mist-gray rounded-full h-3 overflow-hidden">
+              <div className="w-full bg-slate-50 rounded-full h-3 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
-                    storagePercent >= 90 ? "bg-red-600" : "bg-ink-black"
+                    storagePercent >= 90 ? "bg-red-600" : "bg-navy-900"
                   }`}
                   style={{ width: `${storagePercent}%` }}
                 />
@@ -241,12 +241,12 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Override Form Card */}
-          <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8 flex flex-col justify-between">
+          <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8 flex flex-col justify-between">
             <div>
-              <h2 className="text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+              <h2 className="text-[13px] font-medium uppercase tracking-wider text-slate-400">
                 Status Override
               </h2>
-              <p className="text-[14px] text-slate-gray mt-1">
+              <p className="text-[14px] text-slate-500 mt-1">
                 Admin manual status switch. Action is recorded in platform audit logs.
               </p>
 
@@ -257,14 +257,14 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
                 className="mt-6 flex flex-col gap-4"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] uppercase tracking-wider text-ash-gray">
+                  <label className="text-[12px] uppercase tracking-wider text-slate-400">
                     Target Status
                   </label>
                   <select
                     id="override-status-select"
                     name="status"
                     defaultValue={subscription?.status || "TRIAL"}
-                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black outline-none focus:border-ink-black transition-colors"
+                    className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 outline-none focus:border-navy-900 transition-colors"
                   >
                     <option value="TRIAL">TRIAL</option>
                     <option value="ACTIVE">ACTIVE</option>
@@ -276,7 +276,7 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] uppercase tracking-wider text-ash-gray">
+                  <label className="text-[12px] uppercase tracking-wider text-slate-400">
                     Audit Note
                   </label>
                   <textarea
@@ -284,14 +284,14 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
                     name="note"
                     rows={2}
                     placeholder="Reason for override (optional)..."
-                    className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors resize-none"
+                    className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   id="override-submit-btn"
-                  className="mt-2 w-full rounded-full bg-ink-black text-paper-white px-5 py-2.5 text-[14px] font-medium transition hover:opacity-90 disabled:opacity-50"
+                  className="mt-2 w-full rounded-full bg-navy-900 text-white px-5 py-2.5 text-[14px] font-medium transition hover:opacity-90 disabled:opacity-50"
                 >
                   Apply Override
                 </button>
@@ -303,11 +303,11 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Users Section */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           <div className="flex items-center justify-between pb-4 border-b border-[#f2f2f3]">
             <div>
-              <h2 className="text-[20px] font-medium text-ink-black">Organization Users</h2>
-              <p className="text-[14px] text-slate-gray mt-0.5">
+              <h2 className="text-[20px] font-medium text-navy-900">Organization Users</h2>
+              <p className="text-[14px] text-slate-500 mt-0.5">
                 Staff and administrators belonging to this tenant ({org.users.length} total)
               </p>
             </div>
@@ -317,16 +317,16 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#ececec]">
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Name
                   </th>
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Email
                   </th>
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Role
                   </th>
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray text-right">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400 text-right">
                     Joined Date
                   </th>
                 </tr>
@@ -334,7 +334,7 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
               <tbody>
                 {org.users.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-[15px] text-slate-gray">
+                    <td colSpan={4} className="py-8 text-center text-[15px] text-slate-500">
                       No users registered in this organization.
                     </td>
                   </tr>
@@ -342,26 +342,26 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
                   org.users.map((u) => (
                     <tr
                       key={u.id}
-                      className="border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                      className="border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                     >
-                      <td className="py-3.5 px-4 text-[15px] font-medium text-ink-black">
+                      <td className="py-3.5 px-4 text-[15px] font-medium text-navy-900">
                         {u.name || "—"}
                       </td>
-                      <td className="py-3.5 px-4 text-[15px] text-slate-gray">
+                      <td className="py-3.5 px-4 text-[15px] text-slate-500">
                         {u.email}
                       </td>
                       <td className="py-3.5 px-4">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium ${
                             u.role === "SYSTEM_ADMIN"
-                              ? "bg-ink-black text-paper-white"
-                              : "bg-mist-gray text-slate-gray"
+                              ? "bg-navy-900 text-white"
+                              : "bg-slate-50 text-slate-500"
                           }`}
                         >
                           {u.role}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-[15px] text-slate-gray text-right">
+                      <td className="py-3.5 px-4 text-[15px] text-slate-500 text-right">
                         {formatDate(u.createdAt)}
                       </td>
                     </tr>
@@ -373,11 +373,11 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Payment Claims Section */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           <div className="flex items-center justify-between pb-4 border-b border-[#f2f2f3]">
             <div>
-              <h2 className="text-[20px] font-medium text-ink-black">Payment Claims</h2>
-              <p className="text-[14px] text-slate-gray mt-0.5">
+              <h2 className="text-[20px] font-medium text-navy-900">Payment Claims</h2>
+              <p className="text-[14px] text-slate-500 mt-0.5">
                 Bank transfer claims and payment verifications ({paymentClaims.length} total)
               </p>
             </div>
@@ -387,16 +387,16 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#ececec]">
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Amount
                   </th>
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Bank Reference
                   </th>
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Status
                   </th>
-                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray text-right">
+                  <th className="py-3 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400 text-right">
                     Submitted At
                   </th>
                 </tr>
@@ -404,7 +404,7 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
               <tbody>
                 {paymentClaims.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-[15px] text-slate-gray">
+                    <td colSpan={4} className="py-8 text-center text-[15px] text-slate-500">
                       No payment claims recorded for this subscription.
                     </td>
                   </tr>
@@ -412,18 +412,18 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
                   paymentClaims.map((claim) => (
                     <tr
                       key={claim.id}
-                      className="border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                      className="border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                     >
-                      <td className="py-3.5 px-4 text-[15px] font-medium text-ink-black">
+                      <td className="py-3.5 px-4 text-[15px] font-medium text-navy-900">
                         LKR {Number(claim.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="py-3.5 px-4 text-[15px] font-mono text-slate-gray">
+                      <td className="py-3.5 px-4 text-[15px] font-mono text-slate-500">
                         {claim.bankReference}
                       </td>
                       <td className="py-3.5 px-4">
                         {getClaimStatusBadge(claim.status)}
                       </td>
-                      <td className="py-3.5 px-4 text-[15px] text-slate-gray text-right">
+                      <td className="py-3.5 px-4 text-[15px] text-slate-500 text-right">
                         {formatDate(claim.submittedAt)}
                       </td>
                     </tr>
@@ -456,7 +456,7 @@ export default async function OrgDetailPage({ params }: { params: Promise<{ id: 
                   submitBtn.textContent = 'Saving...';
                 }
                 if (feedback) {
-                  feedback.className = 'text-[13px] font-medium text-slate-gray text-center';
+                  feedback.className = 'text-[13px] font-medium text-slate-500 text-center';
                   feedback.textContent = 'Updating status...';
                   feedback.classList.remove('hidden');
                 }

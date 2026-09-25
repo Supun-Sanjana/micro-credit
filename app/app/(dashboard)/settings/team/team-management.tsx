@@ -41,19 +41,19 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-[24px] font-medium text-ink-black">Team Management</h2>
-          <p className="text-[15px] text-slate-gray mt-1">
+          <h2 className="text-[24px] font-medium text-navy-900">Team Management</h2>
+          <p className="text-[15px] text-slate-500 mt-1">
             Manage your company's Field Officers and system users.
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[14px] text-slate-gray">
+          <span className="text-[14px] text-slate-500">
             {quota.current} / {quota.max} Seats Used
           </span>
           {quota.current < quota.max && !showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 bg-ink-black text-paper-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 bg-navy-900 text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:opacity-90 transition-opacity"
             >
               <Plus className="w-4 h-4" />
               Add Member
@@ -63,13 +63,13 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
       </div>
 
       {showForm && (
-        <div className="bg-mist-gray/30 rounded-[24px] p-8 border border-border/40">
+        <div className="bg-slate-50/30 rounded-[24px] p-8 border border-border/40">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-[18px] font-medium text-ink-black flex items-center gap-2">
+            <h3 className="text-[18px] font-medium text-navy-900 flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
               Add New Field Officer
             </h3>
-            <button onClick={() => setShowForm(false)} className="text-[14px] text-slate-gray hover:text-ink-black">
+            <button onClick={() => setShowForm(false)} className="text-[14px] text-slate-500 hover:text-navy-900">
               Cancel
             </button>
           </div>
@@ -83,23 +83,23 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[14px] font-medium text-ink-black ml-1">Full Name</label>
+                <label className="text-[14px] font-medium text-navy-900 ml-1">Full Name</label>
                 <input
                   required
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-3 text-[15px] text-ink-black outline-none focus:border-ink-black"
+                  className="w-full bg-white border border-[#ececec] rounded-[16px] px-4 py-3 text-[15px] text-navy-900 outline-none focus:border-navy-900"
                   placeholder="e.g. Kamal Perera"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[14px] font-medium text-ink-black ml-1">Email Address (Login ID)</label>
+                <label className="text-[14px] font-medium text-navy-900 ml-1">Email Address (Login ID)</label>
                 <input
                   required
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-3 text-[15px] text-ink-black outline-none focus:border-ink-black"
+                  className="w-full bg-white border border-[#ececec] rounded-[16px] px-4 py-3 text-[15px] text-navy-900 outline-none focus:border-navy-900"
                   placeholder="e.g. kamal@micro.local"
                 />
               </div>
@@ -107,20 +107,20 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-[14px] font-medium text-ink-black ml-1">Initial Password</label>
+                <label className="text-[14px] font-medium text-navy-900 ml-1">Initial Password</label>
                 <div className="relative">
                   <input
                     required
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-3 pr-12 text-[15px] text-ink-black outline-none focus:border-ink-black"
+                    className="w-full bg-white border border-[#ececec] rounded-[16px] px-4 py-3 pr-12 text-[15px] text-navy-900 outline-none focus:border-navy-900"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-gray hover:text-ink-black transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-900 transition-colors"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -129,12 +129,12 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
               </div>
               
               <div className="space-y-2">
-                <label className="text-[14px] font-medium text-ink-black ml-1">Assign to Branch</label>
+                <label className="text-[14px] font-medium text-navy-900 ml-1">Assign to Branch</label>
                 <select
                   required
                   value={branchId}
                   onChange={e => setBranchId(e.target.value)}
-                  className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-3 text-[15px] text-ink-black outline-none focus:border-ink-black appearance-none"
+                  className="w-full bg-white border border-[#ececec] rounded-[16px] px-4 py-3 text-[15px] text-navy-900 outline-none focus:border-navy-900 appearance-none"
                 >
                   <option value="" disabled>Select Branch</option>
                   {branches.map((b: any) => (
@@ -148,7 +148,7 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-ink-black text-paper-white px-6 py-3 rounded-full text-[14px] font-medium hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
+                className="bg-navy-900 text-white px-6 py-3 rounded-full text-[14px] font-medium hover:opacity-90 disabled:opacity-50 inline-flex items-center gap-2"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create Account
@@ -158,31 +158,31 @@ export function TeamManagement({ users, branches, quota }: { users: any[], branc
         </div>
       )}
 
-      <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 overflow-hidden">
+      <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 overflow-hidden">
         <table className="w-full">
-          <thead className="bg-mist-gray/50 border-b border-[#ececec]">
+          <thead className="bg-slate-50/50 border-b border-[#ececec]">
             <tr>
-              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-ash-gray">Name</th>
-              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-ash-gray">Email</th>
-              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-ash-gray">Role</th>
-              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-ash-gray">Assigned Branch</th>
-              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-ash-gray">Created</th>
+              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-slate-400">Name</th>
+              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-slate-400">Email</th>
+              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-slate-400">Role</th>
+              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-slate-400">Assigned Branch</th>
+              <th className="px-6 py-4 text-left text-[12px] font-medium uppercase tracking-wider text-slate-400">Created</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#ececec]">
             {users.map((user: any) => (
-              <tr key={user.id} className="hover:bg-fog-white transition-colors">
-                <td className="px-6 py-4 text-[15px] text-ink-black font-medium">{user.name || "Unassigned"}</td>
-                <td className="px-6 py-4 text-[15px] text-slate-gray">{user.email}</td>
+              <tr key={user.id} className="hover:bg-slate-100 transition-colors">
+                <td className="px-6 py-4 text-[15px] text-navy-900 font-medium">{user.name || "Unassigned"}</td>
+                <td className="px-6 py-4 text-[15px] text-slate-500">{user.email}</td>
                 <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium ${user.role === 'SYSTEM_ADMIN' ? 'bg-[#e6f4ea] text-[#137333]' : 'bg-mist-gray text-slate-gray'}`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium ${user.role === 'SYSTEM_ADMIN' ? 'bg-[#e6f4ea] text-[#137333]' : 'bg-slate-50 text-slate-500'}`}>
                     {user.role.replace('_', ' ')}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-[15px] text-slate-gray">
+                <td className="px-6 py-4 text-[15px] text-slate-500">
                   {user.branch?.name || (user.role === 'SYSTEM_ADMIN' ? "All Branches" : "Unassigned")}
                 </td>
-                <td className="px-6 py-4 text-[15px] text-slate-gray">
+                <td className="px-6 py-4 text-[15px] text-slate-500">
                   {new Date(user.createdAt).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "short",

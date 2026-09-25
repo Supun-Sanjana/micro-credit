@@ -36,7 +36,7 @@ function getStatusBadge(status: string) {
       )
     default:
       return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-[13px] font-medium bg-mist-gray text-slate-gray">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-[13px] font-medium bg-slate-50 text-slate-500">
           {status}
         </span>
       )
@@ -118,13 +118,13 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
   const isPending = claim.status === "PENDING"
 
   return (
-    <div className="min-h-screen bg-mist-gray p-6 sm:p-10 font-sans text-ink-black">
+    <div className="min-h-screen bg-slate-50 p-6 sm:p-10 font-sans text-navy-900">
       <div className="max-w-[1000px] mx-auto space-y-8">
         {/* Navigation Breadcrumb */}
         <div>
           <Link
             href="/app/admin/claims"
-            className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
+            className="text-[15px] text-slate-500 hover:text-navy-900 transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Claims Queue
           </Link>
@@ -133,15 +133,15 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
         {/* Hero Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-[44px] font-serif font-normal text-ink-black tracking-[-0.66px] leading-[1.3]">
+            <h1 className="text-[44px] font-serif font-normal text-navy-900 tracking-[-0.66px] leading-[1.3]">
               Claim Verification
             </h1>
-            <p className="text-[17px] text-slate-gray mt-1">
+            <p className="text-[17px] text-slate-500 mt-1">
               Payment claim details for{" "}
               {org ? (
                 <Link
                   href={`/app/admin/orgs/${org.id}`}
-                  className="font-medium text-ink-black hover:underline"
+                  className="font-medium text-navy-900 hover:underline"
                 >
                   {org.name}
                 </Link>
@@ -154,17 +154,17 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
         </div>
 
         {/* Claim Information Card */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
-          <h2 className="text-[20px] font-medium text-ink-black pb-4 border-b border-[#f2f2f3]">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+          <h2 className="text-[20px] font-medium text-navy-900 pb-4 border-b border-[#f2f2f3]">
             Claim Details
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
             <div>
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Organization
               </label>
-              <div className="mt-1 text-[16px] font-medium text-ink-black">
+              <div className="mt-1 text-[16px] font-medium text-navy-900">
                 {org ? (
                   <Link
                     href={`/app/admin/orgs/${org.id}`}
@@ -179,10 +179,10 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
             </div>
 
             <div>
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Subscription Plan
               </label>
-              <div className="mt-1 text-[16px] text-slate-gray">
+              <div className="mt-1 text-[16px] text-slate-500">
                 {plan ? (
                   <span>
                     {plan.name} (LKR {Number(plan.monthlyPrice).toLocaleString()}/month)
@@ -194,43 +194,43 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
             </div>
 
             <div>
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Claimed Amount
               </label>
-              <div className="mt-1 text-[22px] font-medium text-ink-black">
+              <div className="mt-1 text-[22px] font-medium text-navy-900">
                 {formatAmount(claim.amount)}
               </div>
             </div>
 
             <div>
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Bank Reference / Transaction ID
               </label>
-              <div className="mt-1 text-[16px] font-mono text-ink-black bg-mist-gray/60 px-3 py-1.5 rounded-[10px] inline-block">
+              <div className="mt-1 text-[16px] font-mono text-navy-900 bg-slate-50/60 px-3 py-1.5 rounded-[10px] inline-block">
                 {claim.bankReference}
               </div>
             </div>
 
             <div>
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Paid Date (Reported Transfer Date)
               </label>
-              <div className="mt-1 text-[16px] text-slate-gray">
+              <div className="mt-1 text-[16px] text-slate-500">
                 {formatDate(claim.paidDate)}
               </div>
             </div>
 
             <div>
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Submission Date
               </label>
-              <div className="mt-1 text-[16px] text-slate-gray">
+              <div className="mt-1 text-[16px] text-slate-500">
                 {formatDateTime(claim.submittedAt)}
               </div>
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+              <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                 Deposit Proof Slip / Document
               </label>
                 <div className="mt-2">
@@ -250,14 +250,14 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                         href={claim.proofUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] text-[14px] font-medium text-ink-black hover:bg-fog-white transition-colors"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#ececec] text-[14px] font-medium text-navy-900 hover:bg-slate-100 transition-colors"
                       >
                         <span>Open Document (New Tab)</span>
                         <span aria-hidden="true">↗</span>
                       </a>
                     </div>
                   ) : (
-                    <span className="text-[15px] text-slate-gray italic">
+                    <span className="text-[15px] text-slate-500 italic">
                       No proof document uploaded with this claim.
                     </span>
                   )}
@@ -268,41 +268,41 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
 
         {/* If Already Processed: Resolution Details */}
         {!isPending && (
-          <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
-            <h2 className="text-[20px] font-medium text-ink-black pb-4 border-b border-[#f2f2f3]">
+          <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+            <h2 className="text-[20px] font-medium text-navy-900 pb-4 border-b border-[#f2f2f3]">
               Resolution Information
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
               <div>
-                <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+                <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                   Final Status
                 </label>
                 <div className="mt-1">{getStatusBadge(claim.status)}</div>
               </div>
 
               <div>
-                <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+                <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                   Verified / Reviewed At
                 </label>
-                <div className="mt-1 text-[15px] text-slate-gray">
+                <div className="mt-1 text-[15px] text-slate-500">
                   {formatDateTime(claim.verifiedAt)}
                 </div>
               </div>
 
               <div>
-                <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+                <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                   Processed By Admin
                 </label>
-                <div className="mt-1 text-[15px] text-slate-gray">
+                <div className="mt-1 text-[15px] text-slate-500">
                   {claim.verifiedBy?.email || "Platform Admin"}
                 </div>
               </div>
 
               <div className="sm:col-span-2">
-                <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block">
+                <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block">
                   Verification Note / Reason
                 </label>
-                <div className="mt-1 p-4 rounded-[16px] bg-mist-gray text-[15px] text-ink-black whitespace-pre-wrap">
+                <div className="mt-1 p-4 rounded-[16px] bg-slate-50 text-[15px] text-navy-900 whitespace-pre-wrap">
                   {claim.reviewNote || "No note recorded."}
                 </div>
               </div>
@@ -312,10 +312,10 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
 
         {/* If Pending: Action Form */}
         {isPending && (
-          <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+          <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
             <div className="pb-4 border-b border-[#f2f2f3]">
-              <h2 className="text-[20px] font-medium text-ink-black">Verification Action</h2>
-              <p className="text-[14px] text-slate-gray mt-0.5">
+              <h2 className="text-[20px] font-medium text-navy-900">Verification Action</h2>
+              <p className="text-[14px] text-slate-500 mt-0.5">
                 Verify this payment claim to activate subscription, or reject if invalid.
               </p>
             </div>
@@ -328,26 +328,26 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
             >
               {/* Radio options */}
               <div>
-                <label className="text-[13px] font-medium uppercase tracking-wider text-ash-gray block mb-3">
+                <label className="text-[13px] font-medium uppercase tracking-wider text-slate-400 block mb-3">
                   Select Action
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label
                     id="action-label-approve"
-                    className="flex items-start gap-3 p-4 rounded-[16px] border border-[#ececec] cursor-pointer hover:border-ink-black transition-colors"
+                    className="flex items-start gap-3 p-4 rounded-[16px] border border-[#ececec] cursor-pointer hover:border-navy-900 transition-colors"
                   >
                     <input
                       type="radio"
                       name="action"
                       value="APPROVE"
                       defaultChecked={initialAction === "APPROVE"}
-                      className="mt-1 h-4 w-4 text-ink-black focus:ring-ink-black"
+                      className="mt-1 h-4 w-4 text-navy-900 focus:ring-navy-900"
                     />
                     <div>
-                      <div className="text-[15px] font-medium text-ink-black">
+                      <div className="text-[15px] font-medium text-navy-900">
                         Approve Claim
                       </div>
-                      <p className="text-[13px] text-slate-gray mt-0.5">
+                      <p className="text-[13px] text-slate-500 mt-0.5">
                         Marks claim as VERIFIED, activates organization subscription to ACTIVE, and sets current period end to 30 days from now.
                       </p>
                     </div>
@@ -355,20 +355,20 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
 
                   <label
                     id="action-label-reject"
-                    className="flex items-start gap-3 p-4 rounded-[16px] border border-[#ececec] cursor-pointer hover:border-ink-black transition-colors"
+                    className="flex items-start gap-3 p-4 rounded-[16px] border border-[#ececec] cursor-pointer hover:border-navy-900 transition-colors"
                   >
                     <input
                       type="radio"
                       name="action"
                       value="REJECT"
                       defaultChecked={initialAction === "REJECT"}
-                      className="mt-1 h-4 w-4 text-ink-black focus:ring-ink-black"
+                      className="mt-1 h-4 w-4 text-navy-900 focus:ring-navy-900"
                     />
                     <div>
-                      <div className="text-[15px] font-medium text-ink-black">
+                      <div className="text-[15px] font-medium text-navy-900">
                         Reject Claim
                       </div>
-                      <p className="text-[13px] text-slate-gray mt-0.5">
+                      <p className="text-[13px] text-slate-500 mt-0.5">
                         Marks claim as REJECTED. Subscription status is not changed. Requires a verification note.
                       </p>
                     </div>
@@ -380,7 +380,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
               <div>
                 <label
                   htmlFor="claim-note"
-                  className="text-[14px] font-medium text-ink-black block mb-1.5"
+                  className="text-[14px] font-medium text-navy-900 block mb-1.5"
                 >
                   Verification Note — required on reject, recommended on approve
                 </label>
@@ -389,7 +389,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                   name="note"
                   rows={4}
                   placeholder="e.g. Verified deposit with Commercial Bank statement reference #123456... or Invalid slip photo..."
-                  className="w-full bg-paper-white border border-[#ececec] rounded-[16px] p-3.5 text-[15px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                  className="w-full bg-white border border-[#ececec] rounded-[16px] p-3.5 text-[15px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
                 />
               </div>
 
@@ -398,7 +398,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                 <button
                   id="claim-submit-btn"
                   type="submit"
-                  className="rounded-full bg-ink-black text-paper-white px-6 py-2.5 text-[15px] font-medium hover:bg-opacity-90 transition-opacity"
+                  className="rounded-full bg-navy-900 text-white px-6 py-2.5 text-[15px] font-medium hover:bg-opacity-90 transition-opacity"
                 >
                   Submit Decision
                 </button>
@@ -449,7 +449,7 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                   }
 
                   if (feedback) {
-                    feedback.className = 'mt-4 p-4 rounded-[16px] text-[14px] bg-mist-gray text-slate-gray font-medium';
+                    feedback.className = 'mt-4 p-4 rounded-[16px] text-[14px] bg-slate-50 text-slate-500 font-medium';
                     feedback.textContent = 'Submitting decision...';
                     feedback.classList.remove('hidden');
                   }

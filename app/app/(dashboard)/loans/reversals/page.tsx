@@ -9,12 +9,12 @@ export default async function ReversalsPage() {
     <div className="flex flex-col gap-8 lg:gap-12">
       <div className="flex justify-between items-end gap-6">
         <div>
-          <h1 className="text-[44px] font-serif text-ink-black">Payment Reversals</h1>
-          <p className="text-slate-gray">Review and approve payment reversal requests.</p>
+          <h1 className="text-[44px] font-serif text-navy-900">Payment Reversals</h1>
+          <p className="text-slate-500">Review and approve payment reversal requests.</p>
         </div>
       </div>
 
-      <section className="overflow-x-auto rounded-[24px] bg-mist-gray p-8 text-ink-black shadow-subtle">
+      <section className="overflow-x-auto rounded-[24px] bg-slate-50 p-8 text-navy-900 shadow-subtle">
         <h2 className="mb-6 text-xl font-medium">Reversal Queue</h2>
         <table className="w-full text-left border-collapse">
           <thead>
@@ -55,7 +55,7 @@ export default async function ReversalsPage() {
                   {req.status === "REQUESTED" ? (
                     <ReversalActionButtons reversalId={req.id} />
                   ) : (
-                    <span className="text-sm text-slate-gray">
+                    <span className="text-sm text-slate-500">
                       {req.status} by {req.approvedById ? "Admin" : "System"}
                     </span>
                   )}
@@ -64,7 +64,7 @@ export default async function ReversalsPage() {
             ))}
             {requests.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-slate-gray">
+                <td colSpan={8} className="py-8 text-center text-slate-500">
                   No reversal requests found.
                 </td>
               </tr>

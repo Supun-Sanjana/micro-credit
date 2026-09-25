@@ -27,7 +27,7 @@ function getStatusBadge(status: string) {
       )
     default:
       return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
           {status}
         </span>
       )
@@ -112,13 +112,13 @@ export default async function AdminClaimsQueuePage() {
   ])
 
   return (
-    <div className="min-h-screen bg-mist-gray p-6 sm:p-10 font-sans text-ink-black">
+    <div className="min-h-screen bg-slate-50 p-6 sm:p-10 font-sans text-navy-900">
       <div className="max-w-[1200px] mx-auto space-y-8">
         {/* Navigation Breadcrumb */}
         <div>
           <Link
             href="/app/admin"
-            className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
+            className="text-[15px] text-slate-500 hover:text-navy-900 transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard
           </Link>
@@ -126,24 +126,24 @@ export default async function AdminClaimsQueuePage() {
 
         {/* Hero Header */}
         <div>
-          <h1 className="text-[44px] font-serif font-normal text-ink-black tracking-[-0.66px] leading-[1.3]">
+          <h1 className="text-[44px] font-serif font-normal text-navy-900 tracking-[-0.66px] leading-[1.3]">
             Payment Claims
           </h1>
-          <p className="text-[17px] text-slate-gray mt-1">
+          <p className="text-[17px] text-slate-500 mt-1">
             Verification queue for offline bank transfer subscription payments.
           </p>
         </div>
 
         {/* Pending Claims Section */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#f2f2f3]">
             <div>
-              <h2 className="text-[20px] font-medium text-ink-black">Pending Verification Queue</h2>
-              <p className="text-[14px] text-slate-gray mt-0.5">
+              <h2 className="text-[20px] font-medium text-navy-900">Pending Verification Queue</h2>
+              <p className="text-[14px] text-slate-500 mt-0.5">
                 Claims requiring platform admin review and approval
               </p>
             </div>
-            <div className="text-[14px] font-medium text-slate-gray">
+            <div className="text-[14px] font-medium text-slate-500">
               {pendingClaims.length} {pendingClaims.length === 1 ? "claim pending" : "claims pending"}
             </div>
           </div>
@@ -152,22 +152,22 @@ export default async function AdminClaimsQueuePage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#ececec]">
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Org Name
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Amount (LKR)
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Bank Reference
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Paid Date
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Submitted At
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray text-right">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400 text-right">
                     Actions
                   </th>
                 </tr>
@@ -175,7 +175,7 @@ export default async function AdminClaimsQueuePage() {
               <tbody>
                 {pendingClaims.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-[15px] text-slate-gray">
+                    <td colSpan={6} className="py-12 text-center text-[15px] text-slate-500">
                       No pending payment claims waiting for verification. All caught up!
                     </td>
                   </tr>
@@ -183,21 +183,21 @@ export default async function AdminClaimsQueuePage() {
                   pendingClaims.map((claim) => (
                     <tr
                       key={claim.id}
-                      className="border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                      className="border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                     >
-                      <td className="py-4 px-4 font-medium text-[15px] text-ink-black">
+                      <td className="py-4 px-4 font-medium text-[15px] text-navy-900">
                         {claim.subscription?.organization?.name || "Unknown Org"}
                       </td>
-                      <td className="py-4 px-4 font-medium text-[15px] text-ink-black">
+                      <td className="py-4 px-4 font-medium text-[15px] text-navy-900">
                         {formatAmount(claim.amount)}
                       </td>
-                      <td className="py-4 px-4 font-mono text-[14px] text-slate-gray">
+                      <td className="py-4 px-4 font-mono text-[14px] text-slate-500">
                         {claim.bankReference}
                       </td>
-                      <td className="py-4 px-4 text-[15px] text-slate-gray">
+                      <td className="py-4 px-4 text-[15px] text-slate-500">
                         {formatDate(claim.paidDate)}
                       </td>
-                      <td className="py-4 px-4 text-[15px] text-slate-gray">
+                      <td className="py-4 px-4 text-[15px] text-slate-500">
                         {formatDateTime(claim.submittedAt)}
                       </td>
                       <td className="py-4 px-4 text-right">
@@ -225,15 +225,15 @@ export default async function AdminClaimsQueuePage() {
         </div>
 
         {/* Recently Processed Claims Section */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#f2f2f3]">
             <div>
-              <h2 className="text-[20px] font-medium text-ink-black">Recently Processed Claims</h2>
-              <p className="text-[14px] text-slate-gray mt-0.5">
+              <h2 className="text-[20px] font-medium text-navy-900">Recently Processed Claims</h2>
+              <p className="text-[14px] text-slate-500 mt-0.5">
                 Last 20 verified or rejected payment claims, ordered by processed date
               </p>
             </div>
-            <div className="text-[14px] font-medium text-slate-gray">
+            <div className="text-[14px] font-medium text-slate-500">
               {processedClaims.length} {processedClaims.length === 1 ? "claim" : "claims"}
             </div>
           </div>
@@ -242,25 +242,25 @@ export default async function AdminClaimsQueuePage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#ececec]">
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Org Name
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Amount (LKR)
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Bank Reference
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Status
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Paid Date
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Processed At
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray text-right">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400 text-right">
                     Actions
                   </th>
                 </tr>
@@ -268,7 +268,7 @@ export default async function AdminClaimsQueuePage() {
               <tbody>
                 {processedClaims.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-[15px] text-slate-gray">
+                    <td colSpan={7} className="py-12 text-center text-[15px] text-slate-500">
                       No processed payment claims recorded yet.
                     </td>
                   </tr>
@@ -276,30 +276,30 @@ export default async function AdminClaimsQueuePage() {
                   processedClaims.map((claim) => (
                     <tr
                       key={claim.id}
-                      className="border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                      className="border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                     >
-                      <td className="py-4 px-4 font-medium text-[15px] text-ink-black">
+                      <td className="py-4 px-4 font-medium text-[15px] text-navy-900">
                         {claim.subscription?.organization?.name || "Unknown Org"}
                       </td>
-                      <td className="py-4 px-4 font-medium text-[15px] text-ink-black">
+                      <td className="py-4 px-4 font-medium text-[15px] text-navy-900">
                         {formatAmount(claim.amount)}
                       </td>
-                      <td className="py-4 px-4 font-mono text-[14px] text-slate-gray">
+                      <td className="py-4 px-4 font-mono text-[14px] text-slate-500">
                         {claim.bankReference}
                       </td>
                       <td className="py-4 px-4">
                         {getStatusBadge(claim.status)}
                       </td>
-                      <td className="py-4 px-4 text-[15px] text-slate-gray">
+                      <td className="py-4 px-4 text-[15px] text-slate-500">
                         {formatDate(claim.paidDate)}
                       </td>
-                      <td className="py-4 px-4 text-[15px] text-slate-gray">
+                      <td className="py-4 px-4 text-[15px] text-slate-500">
                         {formatDateTime(claim.verifiedAt)}
                       </td>
                       <td className="py-4 px-4 text-right">
                         <Link
                           href={`/app/admin/claims/${claim.id}`}
-                          className="inline-flex items-center gap-1 text-[13px] font-medium text-ink-black hover:text-slate-gray transition-colors"
+                          className="inline-flex items-center gap-1 text-[13px] font-medium text-navy-900 hover:text-slate-500 transition-colors"
                         >
                           View →
                         </Link>

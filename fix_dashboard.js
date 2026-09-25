@@ -1,108 +1,15 @@
-import { auth } from "@/auth"
-import prisma from "@/lib/prisma"
-import Link from "next/link"
-import { ArrowRight, TrendingUp, Users, DollarSign, Wallet, FileText, Activity } from "lucide-react"
-import { FinancialChart } from "@/components/financial-chart"
+const fs = require('fs');
+const file = 'app/app/(dashboard)/dashboard/page.tsx';
+let content = fs.readFileSync(file, 'utf8');
 
-export default async function DashboardPage() {
-  const session = await auth()
-  
-  if (session?.user?.role === "FIELD_OFFICER") {
-    const officerId = session.user.id
-    
-    // Fetch assigned centres
-    const assignedCentres = await prisma.centre.findMany({
-      where: { officerId },
-      include: {
-        members: {
-          include: {
-            loans: {
-              where: { status: { in: ['ACTIVE', 'OVERDUE'] } },
-              include: {
-                repaymentSchedule: {
-                  where: { isPaid: false, scheduledDate: { lte: new Date() } }
-                }
-              }
-            }
-          }
-        }
-      }
-    })
-    
-    let totalTarget = 0
-    let totalOverdue = 0
-    let centresList: any[] = []
-    
-    const today = new Date()
-    today.setHours(0,0,0,0)
+// Ensure extra icons are imported
+if (!content.includes('Users')) {
+  content = content.replace('import { ArrowRight, TrendingUp } from "lucide-react"', 'import { ArrowRight, TrendingUp, Users, DollarSign, Wallet, FileText, Activity } from "lucide-react"');
+}
 
-    for (const c of assignedCentres) {
-      let centreTarget = 0
-      for (const m of c.members) {
-        for (const l of m.loans) {
-          for (const s of l.repaymentSchedule) {
-            const isToday = s.scheduledDate.getTime() === today.getTime()
-            if (isToday) {
-              totalTarget += Number(s.scheduledAmount)
-              centreTarget += Number(s.scheduledAmount)
-            } else if (s.scheduledDate < today) {
-              totalOverdue += Number(s.scheduledAmount)
-              totalTarget += Number(s.scheduledAmount)
-              centreTarget += Number(s.scheduledAmount)
-            }
-          }
-        }
-      }
-      centresList.push({ id: c.id, name: c.name, target: centreTarget, membersCount: c.members.length })
-    }
+const adminViewRegex = /\/\/ Admin View \(Default\)[\s\S]*/;
 
-    return (
-      <div className="flex flex-col gap-8 max-w-5xl mx-auto w-full">
-        <div>
-          <h1 className="text-[28px] font-serif font-medium tracking-tight text-navy-900 mb-1">
-            Officer Dashboard
-          </h1>
-          <p className="text-[15px] text-slate-500">
-            Overview of today's collections and tasks for your assigned centres.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <StatCard title="Today's Target (Incl. Overdue)" value={`LKR ${totalTarget.toLocaleString()}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />${totalOverdue > 0 ? `LKR ${totalOverdue.toLocaleString()} Overdue` : 'On track'}</>} />
-          <StatCard title="Assigned Centres" value={`${assignedCentres.length}`} delta={<><ArrowRight className="w-3 h-3 mr-1 inline" />View Itinerary below</>} />
-        </div>
-        
-        <div className="mt-8">
-          <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">Today's Itinerary</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {centresList.map(c => (
-              <div key={c.id} className="bg-white rounded-[20px] p-6 shadow-subtle flex flex-col gap-3 border border-[#ececec]">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium text-[16px] text-navy-900">{c.name}</h3>
-                    <span className="text-[14px] text-slate-500">{c.membersCount} members</span>
-                  </div>
-                  <span className="bg-[#f0f9f4] text-[#137333] px-3 py-1 rounded-full text-[13px] font-medium">
-                    LKR {c.target.toLocaleString()}
-                  </span>
-                </div>
-                <Link href={`/app/collection?centreId=${c.id}`} className="mt-2 flex items-center justify-center gap-2 bg-navy-900 text-white py-2 rounded-full text-[14px] font-medium hover:bg-navy-900/90 transition-colors">
-                  Open Collection Sheet <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            ))}
-            {centresList.length === 0 && (
-              <div className="col-span-full py-8 text-center text-slate-500 bg-slate-50 rounded-[20px]">
-                No centres assigned to your portfolio yet.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Admin View (Default)
+const newAdminView = `// Admin View (Default)
   const orgId = session?.user?.organizationId;
   if (!orgId) return <div>Invalid Session</div>;
 
@@ -116,11 +23,11 @@ export default async function DashboardPage() {
     savingsAccounts,
     recentAuditLogs
   ] = await Promise.all([
-    prisma.loan.findMany({ where: { member: { organizationId: orgId }, status: 'ACTIVE' }, select: { outstanding: true } }),
+    prisma.loan.findMany({ where: { organizationId: orgId, status: 'ACTIVE' }, select: { outstanding: true } }),
     prisma.loanRepayment.findMany({ 
       where: { 
         organizationId: orgId, 
-        paidDate: { gte: today } 
+        repaymentDate: { gte: today } 
       }, 
       select: { amount: true } 
     }),
@@ -145,9 +52,9 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Active Capital" value={`LKR ${activeCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Live Portfolio</>} />
-        <StatCard title="Today's Collections" value={`LKR ${todayCollections.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Real-time Sync</>} />
-        <StatCard title="Total Savings" value={`LKR ${totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><Wallet className="w-3 h-3 mr-1 inline" />Pooled Capital</>} />
+        <StatCard title="Active Capital" value={\`LKR \${activeCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}\`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Live Portfolio</>} />
+        <StatCard title="Today's Collections" value={\`LKR \${todayCollections.toLocaleString(undefined, { maximumFractionDigits: 0 })}\`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Real-time Sync</>} />
+        <StatCard title="Total Savings" value={\`LKR \${totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}\`} delta={<><Wallet className="w-3 h-3 mr-1 inline" />Pooled Capital</>} />
         <StatCard title="Registered Members" value={membersCount.toString()} delta={<><Users className="w-3 h-3 mr-1 inline" />Active Community</>} />
       </div>
 
@@ -218,7 +125,7 @@ export default async function DashboardPage() {
                       {log.action} {log.entityType}
                     </p>
                     <p className="text-[13px] text-slate-gray mt-0.5">
-                      {log.user?.name || log.user?.email || 'System'} ï¿½ {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {log.user.name || log.user.email} • {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
@@ -244,4 +151,8 @@ function StatCard({ title, value, delta }: { title: string, value: string, delta
       <span className="text-[13px] font-medium text-[#137333] mt-2 flex items-center">{delta}</span>
     </div>
   )
-}
+}`
+
+content = content.replace(adminViewRegex, newAdminView);
+fs.writeFileSync(file, content);
+console.log('done');

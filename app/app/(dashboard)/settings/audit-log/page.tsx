@@ -81,17 +81,17 @@ export default async function AuditLogPage() {
       {/* Hero Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-[32px] font-serif font-normal text-ink-black tracking-[-0.66px] leading-[1.3]">
+          <h1 className="text-[32px] font-serif font-normal text-navy-900 tracking-[-0.66px] leading-[1.3]">
             Audit Log
           </h1>
-          <p className="text-[15px] text-slate-gray mt-1">
+          <p className="text-[15px] text-slate-500 mt-1">
             Immutable traceability record of changes across your organization.
           </p>
         </div>
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+      <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
         {/* Search Bar & Stats */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#f2f2f3]">
           <div className="relative w-full max-w-sm">
@@ -99,10 +99,10 @@ export default async function AuditLogPage() {
               id="audit-search-input"
               type="text"
               placeholder="Filter by action, user, entity type, or note..."
-              className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[15px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+              className="w-full bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[15px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
             />
           </div>
-          <div id="audit-count-display" className="text-[14px] text-slate-gray font-medium">
+          <div id="audit-count-display" className="text-[14px] text-slate-500 font-medium">
             {auditLogs.length} {auditLogs.length === 1 ? "audit entry" : "audit entries"}
           </div>
         </div>
@@ -112,19 +112,19 @@ export default async function AuditLogPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#ececec]">
-                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                   Date & Time
                 </th>
-                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                   User
                 </th>
-                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                   Action
                 </th>
-                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                   Entity
                 </th>
-                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                   Details
                 </th>
               </tr>
@@ -132,7 +132,7 @@ export default async function AuditLogPage() {
             <tbody id="audit-table-body">
               {auditLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-[15px] text-slate-gray">
+                  <td colSpan={5} className="py-12 text-center text-[15px] text-slate-500">
                     No audit log records found.
                   </td>
                 </tr>
@@ -143,12 +143,12 @@ export default async function AuditLogPage() {
                     <tr
                       key={log.id}
                       data-search={searchData}
-                      className="audit-table-row border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                      className="audit-table-row border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                     >
-                      <td className="py-4 px-4 text-[14px] text-slate-gray whitespace-nowrap">
+                      <td className="py-4 px-4 text-[14px] text-slate-500 whitespace-nowrap">
                         {formatDateTime(log.createdAt)}
                       </td>
-                      <td className="py-4 px-4 text-[14px] font-medium text-ink-black">
+                      <td className="py-4 px-4 text-[14px] font-medium text-navy-900">
                         {log.user?.email || "System"}
                       </td>
                       <td className="py-4 px-4 text-[14px]">
@@ -157,12 +157,12 @@ export default async function AuditLogPage() {
                       <td className="py-4 px-4 text-[14px]">
                         <div className="flex flex-col gap-0.5">
                           <div>{getTargetBadge(log.entityType)}</div>
-                          <span className="font-mono text-[12px] text-slate-gray">
+                          <span className="font-mono text-[12px] text-slate-500">
                             {log.entityId}
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-[14px] text-slate-gray max-w-md break-words">
+                      <td className="py-4 px-4 text-[14px] text-slate-500 max-w-md break-words">
                         {log.note || "—"}
                       </td>
                     </tr>
@@ -170,7 +170,7 @@ export default async function AuditLogPage() {
                 })
               )}
               <tr id="audit-no-matches" style={{ display: "none" }}>
-                <td colSpan={5} className="py-12 text-center text-[15px] text-slate-gray">
+                <td colSpan={5} className="py-12 text-center text-[15px] text-slate-500">
                   No matching audit records found.
                 </td>
               </tr>

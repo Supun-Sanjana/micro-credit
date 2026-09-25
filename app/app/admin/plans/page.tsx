@@ -40,13 +40,13 @@ export default async function AdminPlansPage() {
   })
 
   return (
-    <div className="min-h-screen bg-mist-gray p-6 sm:p-10 font-sans text-ink-black">
+    <div className="min-h-screen bg-slate-50 p-6 sm:p-10 font-sans text-navy-900">
       <div className="max-w-[1200px] mx-auto space-y-8">
         {/* Navigation Breadcrumb */}
         <div>
           <Link
             href="/app/admin"
-            className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
+            className="text-[15px] text-slate-500 hover:text-navy-900 transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard
           </Link>
@@ -55,29 +55,29 @@ export default async function AdminPlansPage() {
         {/* Hero Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-[44px] font-serif font-normal text-ink-black tracking-[-0.66px] leading-[1.3]">
+            <h1 className="text-[44px] font-serif font-normal text-navy-900 tracking-[-0.66px] leading-[1.3]">
               Subscription Plans
             </h1>
-            <p className="text-[17px] text-slate-gray mt-1">
+            <p className="text-[17px] text-slate-500 mt-1">
               Configure tenant pricing tiers, resource allocations, and feature quotas.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Link
               href="/app/admin/orgs"
-              className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
+              className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-white border border-[#ececec] text-slate-500 hover:text-navy-900 hover:border-navy-900 transition-colors"
             >
               Organizations
             </Link>
             <Link
               href="/app/admin/claims"
-              className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
+              className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-white border border-[#ececec] text-slate-500 hover:text-navy-900 hover:border-navy-900 transition-colors"
             >
               Claims
             </Link>
             <Link
               href="/app/admin/audit-logs"
-              className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-paper-white border border-[#ececec] text-slate-gray hover:text-ink-black hover:border-ink-black transition-colors"
+              className="text-[14px] font-medium px-3.5 py-2 rounded-[12px] bg-white border border-[#ececec] text-slate-500 hover:text-navy-900 hover:border-navy-900 transition-colors"
             >
               Audit Logs
             </Link>
@@ -85,15 +85,15 @@ export default async function AdminPlansPage() {
         </div>
 
         {/* Plans Table Card */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#f2f2f3]">
             <div>
-              <h2 className="text-[20px] font-medium text-ink-black">Existing Plans</h2>
-              <p className="text-[14px] text-slate-gray mt-0.5">
+              <h2 className="text-[20px] font-medium text-navy-900">Existing Plans</h2>
+              <p className="text-[14px] text-slate-500 mt-0.5">
                 Current active and inactive tiers available for tenant subscriptions
               </p>
             </div>
-            <div className="text-[14px] font-medium text-slate-gray">
+            <div className="text-[14px] font-medium text-slate-500">
               {plans.length} {plans.length === 1 ? "plan configured" : "plans configured"}
             </div>
           </div>
@@ -102,25 +102,25 @@ export default async function AdminPlansPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#ececec]">
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Plan Name
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Seats
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Branches
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Storage (MB)
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Price (LKR / mo)
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Status
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray text-right">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400 text-right">
                     Subscribers
                   </th>
                 </tr>
@@ -128,7 +128,7 @@ export default async function AdminPlansPage() {
               <tbody>
                 {plans.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-[15px] text-slate-gray">
+                    <td colSpan={7} className="py-12 text-center text-[15px] text-slate-500">
                       No subscription plans found. Create your first plan using the form below.
                     </td>
                   </tr>
@@ -136,21 +136,21 @@ export default async function AdminPlansPage() {
                   plans.map((plan) => (
                     <tr
                       key={plan.id}
-                      className="border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                      className="border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                     >
-                      <td className="py-4 px-4 font-medium text-[15px] text-ink-black">
+                      <td className="py-4 px-4 font-medium text-[15px] text-navy-900">
                         {plan.name}
                       </td>
-                      <td className="py-4 px-4 text-[14px] text-ink-black">
+                      <td className="py-4 px-4 text-[14px] text-navy-900">
                         {plan.maxOfficerSeats} {plan.maxOfficerSeats === 1 ? "seat" : "seats"}
                       </td>
-                      <td className="py-4 px-4 text-[14px] text-ink-black">
+                      <td className="py-4 px-4 text-[14px] text-navy-900">
                         {plan.maxBranches} {plan.maxBranches === 1 ? "branch" : "branches"}
                       </td>
-                      <td className="py-4 px-4 text-[14px] text-ink-black">
+                      <td className="py-4 px-4 text-[14px] text-navy-900">
                         {formatStorage(plan.storageQuotaMb)}
                       </td>
-                      <td className="py-4 px-4 font-medium text-[14px] text-ink-black">
+                      <td className="py-4 px-4 font-medium text-[14px] text-navy-900">
                         {formatAmount(plan.monthlyPrice)}
                       </td>
                       <td className="py-4 px-4 text-[14px]">
@@ -159,12 +159,12 @@ export default async function AdminPlansPage() {
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
                             Inactive
                           </span>
                         )}
                       </td>
-                      <td className="py-4 px-4 text-[14px] text-slate-gray text-right font-mono">
+                      <td className="py-4 px-4 text-[14px] text-slate-500 text-right font-mono">
                         {plan._count.subscriptions}
                       </td>
                     </tr>
@@ -176,10 +176,10 @@ export default async function AdminPlansPage() {
         </div>
 
         {/* Create Plan Form Card */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           <div className="pb-4 border-b border-[#f2f2f3]">
-            <h2 className="text-[20px] font-medium text-ink-black">Create New Plan</h2>
-            <p className="text-[14px] text-slate-gray mt-0.5">
+            <h2 className="text-[20px] font-medium text-navy-900">Create New Plan</h2>
+            <p className="text-[14px] text-slate-500 mt-0.5">
               Specify officer limits, branch boundaries, storage allocation, and monthly billing amount
             </p>
           </div>
@@ -195,7 +195,7 @@ export default async function AdminPlansPage() {
               <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-1">
                 <label
                   htmlFor="plan-name"
-                  className="text-[12px] uppercase tracking-wider text-ash-gray font-medium"
+                  className="text-[12px] uppercase tracking-wider text-slate-400 font-medium"
                 >
                   Plan Name <span className="text-red-500">*</span>
                 </label>
@@ -205,7 +205,7 @@ export default async function AdminPlansPage() {
                   type="text"
                   required
                   placeholder="e.g. Professional Tier"
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
                 />
               </div>
 
@@ -213,7 +213,7 @@ export default async function AdminPlansPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="plan-seats"
-                  className="text-[12px] uppercase tracking-wider text-ash-gray font-medium"
+                  className="text-[12px] uppercase tracking-wider text-slate-400 font-medium"
                 >
                   Max Officer Seats <span className="text-red-500">*</span>
                 </label>
@@ -225,7 +225,7 @@ export default async function AdminPlansPage() {
                   step="1"
                   required
                   placeholder="e.g. 10"
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
                 />
               </div>
 
@@ -233,7 +233,7 @@ export default async function AdminPlansPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="plan-branches"
-                  className="text-[12px] uppercase tracking-wider text-ash-gray font-medium"
+                  className="text-[12px] uppercase tracking-wider text-slate-400 font-medium"
                 >
                   Max Branches <span className="text-red-500">*</span>
                 </label>
@@ -245,7 +245,7 @@ export default async function AdminPlansPage() {
                   step="1"
                   required
                   placeholder="e.g. 3"
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
                 />
               </div>
 
@@ -253,7 +253,7 @@ export default async function AdminPlansPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="plan-storage"
-                  className="text-[12px] uppercase tracking-wider text-ash-gray font-medium"
+                  className="text-[12px] uppercase tracking-wider text-slate-400 font-medium"
                 >
                   Storage Quota (MB) <span className="text-red-500">*</span>
                 </label>
@@ -265,9 +265,9 @@ export default async function AdminPlansPage() {
                   step="1"
                   required
                   placeholder="e.g. 2048 (2 GB)"
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
                 />
-                <span className="text-[11px] text-slate-gray">
+                <span className="text-[11px] text-slate-500">
                   1024 MB = 1 GB, 5120 MB = 5 GB
                 </span>
               </div>
@@ -276,7 +276,7 @@ export default async function AdminPlansPage() {
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="plan-price"
-                  className="text-[12px] uppercase tracking-wider text-ash-gray font-medium"
+                  className="text-[12px] uppercase tracking-wider text-slate-400 font-medium"
                 >
                   Monthly Price (LKR) <span className="text-red-500">*</span>
                 </label>
@@ -288,16 +288,16 @@ export default async function AdminPlansPage() {
                   step="0.01"
                   required
                   placeholder="e.g. 12500.00"
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
                 />
-                <span className="text-[11px] text-slate-gray">
+                <span className="text-[11px] text-slate-500">
                   Standard recurring fee per billing cycle
                 </span>
               </div>
 
               {/* Is Active Toggle */}
               <div className="flex flex-col justify-center gap-1.5 pt-2">
-                <label className="text-[12px] uppercase tracking-wider text-ash-gray font-medium">
+                <label className="text-[12px] uppercase tracking-wider text-slate-400 font-medium">
                   Plan Availability
                 </label>
                 <label className="inline-flex items-center gap-2 cursor-pointer mt-1">
@@ -306,9 +306,9 @@ export default async function AdminPlansPage() {
                     name="isActive"
                     type="checkbox"
                     defaultChecked
-                    className="w-4 h-4 rounded text-ink-black border-[#ececec] focus:ring-ink-black"
+                    className="w-4 h-4 rounded text-navy-900 border-[#ececec] focus:ring-navy-900"
                   />
-                  <span className="text-[14px] text-ink-black">Active (Available for tenant signups)</span>
+                  <span className="text-[14px] text-navy-900">Active (Available for tenant signups)</span>
                 </label>
               </div>
             </div>
@@ -320,14 +320,14 @@ export default async function AdminPlansPage() {
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#f2f2f3]">
               <button
                 type="reset"
-                className="px-5 py-2.5 rounded-[14px] text-[14px] font-medium text-slate-gray hover:text-ink-black hover:bg-fog-white transition-colors"
+                className="px-5 py-2.5 rounded-[14px] text-[14px] font-medium text-slate-500 hover:text-navy-900 hover:bg-slate-100 transition-colors"
               >
                 Reset
               </button>
               <button
                 id="create-plan-submit-btn"
                 type="submit"
-                className="px-6 py-2.5 rounded-[14px] text-[14px] font-medium bg-ink-black text-paper-white hover:bg-[#2c2c2c] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-[14px] text-[14px] font-medium bg-navy-900 text-white hover:bg-[#2c2c2c] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Create Plan
               </button>
@@ -413,7 +413,7 @@ export default async function AdminPlansPage() {
                 } else if (type === 'error') {
                   feedback.className = 'text-[14px] font-medium text-[#c5221f]';
                 } else {
-                  feedback.className = 'text-[14px] font-medium text-slate-gray';
+                  feedback.className = 'text-[14px] font-medium text-slate-500';
                 }
               }
             })();

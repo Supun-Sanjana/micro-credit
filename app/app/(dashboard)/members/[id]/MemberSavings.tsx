@@ -112,7 +112,7 @@ export function MemberSavings({ memberId }: { memberId: string }) {
                   required
                 />
               </div>
-              <Button type="submit" className="bg-ink-black text-white">Create Account</Button>
+              <Button type="submit" className="bg-navy-900 text-white">Create Account</Button>
             </form>
           </CardContent>
         </Card>

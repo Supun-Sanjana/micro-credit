@@ -71,10 +71,10 @@ export default function MigrationsPage() {
     <div className="mx-auto max-w-4xl space-y-8">
       
       <div className="flex flex-col gap-4">
-        <h1 className="text-[32px] leading-[1.3] text-ink-black font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>
+        <h1 className="text-[32px] leading-[1.3] text-navy-900 font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>
           Data Migrations
         </h1>
-        <p className="text-[17px] text-slate-gray leading-[1.35]">
+        <p className="text-[17px] text-slate-500 leading-[1.35]">
           Bulk import historical data and establish opening accounting balances.
         </p>
       </div>
@@ -82,32 +82,32 @@ export default function MigrationsPage() {
       <div className="flex gap-4 border-b border-[#ececec] pb-4">
         <button 
           onClick={() => { setActiveTab("MEMBERS"); setFile(null); setPreview(null); setResult(null); setCsvText("") }}
-          className={`px-4 py-2 rounded-xl text-[15px] font-medium transition-colors ${activeTab === "MEMBERS" ? "bg-ink-black text-paper-white" : "text-slate-gray hover:bg-mist-gray"}`}
+          className={`px-4 py-2 rounded-xl text-[15px] font-medium transition-colors ${activeTab === "MEMBERS" ? "bg-navy-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
         >
           1. Import Members
         </button>
         <button 
           onClick={() => { setActiveTab("LOANS"); setFile(null); setPreview(null); setResult(null); setCsvText("") }}
-          className={`px-4 py-2 rounded-xl text-[15px] font-medium transition-colors ${activeTab === "LOANS" ? "bg-ink-black text-paper-white" : "text-slate-gray hover:bg-mist-gray"}`}
+          className={`px-4 py-2 rounded-xl text-[15px] font-medium transition-colors ${activeTab === "LOANS" ? "bg-navy-900 text-white" : "text-slate-500 hover:bg-slate-50"}`}
         >
           2. Import Active Loans
         </button>
       </div>
 
-      <div className="bg-paper-white rounded-[24px] border border-[#ececec] p-8 shadow-subtle-1">
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#ececec] rounded-xl p-12 bg-mist-gray/30">
-          <Database className="w-10 h-10 text-slate-gray mb-4" />
-          <h3 className="text-[16px] font-medium text-ink-black mb-2">Upload {activeTab === "MEMBERS" ? "Members" : "Loans"} CSV</h3>
-          <p className="text-[14px] text-slate-gray mb-6 text-center">
+      <div className="bg-white rounded-[24px] border border-[#ececec] p-8 shadow-subtle-1">
+        <div className="flex flex-col items-center justify-center border-2 border-dashed border-[#ececec] rounded-xl p-12 bg-slate-50/30">
+          <Database className="w-10 h-10 text-slate-500 mb-4" />
+          <h3 className="text-[16px] font-medium text-navy-900 mb-2">Upload {activeTab === "MEMBERS" ? "Members" : "Loans"} CSV</h3>
+          <p className="text-[14px] text-slate-500 mb-6 text-center">
             {activeTab === "MEMBERS" 
               ? "Expected columns: name, nic, contact, centreCode, address"
               : "Expected columns: memberNic, productName, loanAmount, outstanding, weeksRemaining, grantedDate"}
           </p>
-          <label className="bg-ink-black text-paper-white px-6 py-3 rounded-xl text-[15px] font-medium cursor-pointer hover:bg-ink-black/90 transition-colors">
+          <label className="bg-navy-900 text-white px-6 py-3 rounded-xl text-[15px] font-medium cursor-pointer hover:bg-navy-900/90 transition-colors">
             Select CSV File
             <input type="file" accept=".csv" className="hidden" onChange={handleFile} />
           </label>
-          {file && <p className="mt-4 text-[14px] font-medium text-ink-black">Selected: {file.name}</p>}
+          {file && <p className="mt-4 text-[14px] font-medium text-navy-900">Selected: {file.name}</p>}
         </div>
 
         {csvText && !preview && !result && (
@@ -115,7 +115,7 @@ export default function MigrationsPage() {
             <button 
               onClick={handlePreview}
               disabled={isPending}
-              className="bg-ink-black text-paper-white px-6 py-3 rounded-xl text-[15px] font-medium disabled:opacity-50"
+              className="bg-navy-900 text-white px-6 py-3 rounded-xl text-[15px] font-medium disabled:opacity-50"
             >
               {isPending ? "Validating..." : "Preview Import"}
             </button>
@@ -124,19 +124,19 @@ export default function MigrationsPage() {
 
         {preview && !result && (
           <div className="mt-8 space-y-6">
-            <div className="flex gap-4 p-4 rounded-xl border border-border/40 bg-mist-gray/30">
+            <div className="flex gap-4 p-4 rounded-xl border border-border/40 bg-slate-50/30">
               <div className="flex-1">
-                <div className="text-[13px] text-slate-gray uppercase tracking-wider mb-1">Total Rows</div>
-                <div className="text-[24px] font-medium text-ink-black">{preview.total}</div>
+                <div className="text-[13px] text-slate-500 uppercase tracking-wider mb-1">Total Rows</div>
+                <div className="text-[24px] font-medium text-navy-900">{preview.total}</div>
               </div>
               <div className="flex-1">
-                <div className="text-[13px] text-slate-gray uppercase tracking-wider mb-1">Valid (Ready)</div>
+                <div className="text-[13px] text-slate-500 uppercase tracking-wider mb-1">Valid (Ready)</div>
                 <div className="text-[24px] font-medium text-[#137333] flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5" /> {preview.valid}
                 </div>
               </div>
               <div className="flex-1">
-                <div className="text-[13px] text-slate-gray uppercase tracking-wider mb-1">Errors (Will skip)</div>
+                <div className="text-[13px] text-slate-500 uppercase tracking-wider mb-1">Errors (Will skip)</div>
                 <div className="text-[24px] font-medium text-[#c5221f] flex items-center gap-2">
                   <AlertCircle className="w-5 h-5" /> {preview.errors}
                 </div>
@@ -158,7 +158,7 @@ export default function MigrationsPage() {
               <button 
                 onClick={handleExecute}
                 disabled={isPending || preview.valid === 0}
-                className="bg-ink-black text-paper-white px-6 py-3 rounded-xl text-[15px] font-medium disabled:opacity-50"
+                className="bg-navy-900 text-white px-6 py-3 rounded-xl text-[15px] font-medium disabled:opacity-50"
               >
                 {isPending ? "Executing..." : `Import ${preview.valid} Valid Rows`}
               </button>

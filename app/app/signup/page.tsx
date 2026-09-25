@@ -54,7 +54,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#ffffff] p-4 font-sans selection:bg-blush-peach selection:text-sienna-brown">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#ffffff] p-4 font-sans selection:bg-brand-50 selection:text-brand-700">
       {/* Floating Product Artifact (Signup Card) */}
       <div
         className="w-full max-w-[460px] bg-[#ffffff] rounded-[20px] p-[40px] flex flex-col my-8"

@@ -51,7 +51,7 @@ export default async function AccountingPage({
   }
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6 bg-mist-gray min-h-screen">
+    <div className="flex-1 space-y-4 p-8 pt-6 bg-slate-50 min-h-screen">
       <div className="flex items-center justify-between space-y-2">
         <h1 className="text-3xl font-serif font-bold tracking-tight">Accounting</h1>
       </div>
@@ -64,7 +64,7 @@ export default async function AccountingPage({
         </TabsList>
 
         <TabsContent value="chart" className="space-y-4">
-          <Card className="rounded-[20px] shadow-subtle-3 bg-paper-white border-none">
+          <Card className="rounded-[20px] shadow-subtle-3 bg-white border-none">
             <CardHeader>
               <CardTitle>Create Account</CardTitle>
             </CardHeader>
@@ -98,7 +98,7 @@ export default async function AccountingPage({
             </CardContent>
           </Card>
 
-          <Card className="rounded-[20px] shadow-subtle-3 bg-paper-white border-none">
+          <Card className="rounded-[20px] shadow-subtle-3 bg-white border-none">
             <CardHeader>
               <CardTitle>Accounts</CardTitle>
             </CardHeader>
@@ -131,7 +131,7 @@ export default async function AccountingPage({
         </TabsContent>
 
         <TabsContent value="journal" className="space-y-4">
-          <Card className="rounded-[20px] shadow-subtle-3 bg-paper-white border-none">
+          <Card className="rounded-[20px] shadow-subtle-3 bg-white border-none">
             <CardHeader>
               <CardTitle>Journal Entries</CardTitle>
             </CardHeader>
@@ -187,7 +187,7 @@ export default async function AccountingPage({
         </TabsContent>
 
         <TabsContent value="trial" className="space-y-4">
-          <Card className="rounded-[20px] shadow-subtle-3 bg-paper-white border-none">
+          <Card className="rounded-[20px] shadow-subtle-3 bg-white border-none">
             <CardHeader>
               <CardTitle>Trial Balance</CardTitle>
             </CardHeader>

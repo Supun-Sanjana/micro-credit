@@ -174,7 +174,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<any
 
           {/* Documents Section */}
           <section className="mt-8">
-            <h2 className="text-[26px] font-serif font-normal text-ink-black tracking-[-0.23px] mb-6">
+            <h2 className="text-[26px] font-serif font-normal text-navy-900 tracking-[-0.23px] mb-6">
               Documents
             </h2>
             <MemberDocuments memberId={memberId} />

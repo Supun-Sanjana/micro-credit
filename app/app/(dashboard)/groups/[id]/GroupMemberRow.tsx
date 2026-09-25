@@ -25,17 +25,17 @@ export function GroupMemberRow({ membership }: { membership: any }) {
   return (
     <tr className="border-b border-border/40 last:border-0">
       <td className="py-5 pr-4">
-        <Link href={`/app/members/${membership.member.id}`} className="text-[16px] font-sans text-ink-black hover:text-slate-gray transition-colors">
+        <Link href={`/app/members/${membership.member.id}`} className="text-[16px] font-sans text-navy-900 hover:text-slate-500 transition-colors">
           {membership.member.memberNumber || 'N/A'}
         </Link>
       </td>
-      <td className="py-5 pr-4 text-[16px] font-sans text-ink-black">
+      <td className="py-5 pr-4 text-[16px] font-sans text-navy-900">
         {membership.member.name}
       </td>
-      <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+      <td className="py-5 pr-4 text-[16px] font-sans text-slate-500">
         {membership.member.contact1 || '—'}
       </td>
-      <td className="py-5 pr-4 text-[16px] font-sans text-slate-gray">
+      <td className="py-5 pr-4 text-[16px] font-sans text-slate-500">
         {new Date(membership.joinedAt).toLocaleDateString()}
       </td>
       <td className="py-5 pr-4">
@@ -43,7 +43,7 @@ export function GroupMemberRow({ membership }: { membership: any }) {
           value={membership.role}
           onChange={handleRoleChange}
           disabled={isPendingRole || membership.status !== "ACTIVE"}
-          className="bg-transparent text-[14px] font-sans text-ink-black border border-[#ececec] rounded-[8px] px-[8px] py-[4px] outline-none"
+          className="bg-transparent text-[14px] font-sans text-navy-900 border border-[#ececec] rounded-[8px] px-[8px] py-[4px] outline-none"
         >
           <option value="MEMBER">Member</option>
           <option value="LEADER">Leader</option>

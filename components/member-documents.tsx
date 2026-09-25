@@ -208,7 +208,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
     <div className="space-y-6">
       {/* Upload Section with Type Tabs */}
       <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
-        <h3 className="text-base font-semibold text-ink-black mb-4">
+        <h3 className="text-base font-semibold text-navy-900 mb-4">
           Upload Member Document
         </h3>
 
@@ -229,19 +229,19 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                 }}
                 className={`relative flex flex-col items-start justify-between p-3.5 rounded-lg border text-left transition-all ${
                   isSelected
-                    ? "border-ink-black bg-mist-gray/40 ring-1 ring-ink-black/20"
-                    : "border-[#e5e7eb] hover:border-slate-gray/40 bg-white"
+                    ? "border-navy-900 bg-slate-50/40 ring-1 ring-navy-900/20"
+                    : "border-[#e5e7eb] hover:border-slate-500/40 bg-white"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2 w-full">
                   <Icon
                     className={`w-4 h-4 ${
-                      isSelected ? "text-ink-black" : "text-slate-gray"
+                      isSelected ? "text-navy-900" : "text-slate-500"
                     }`}
                   />
                   <span
                     className={`text-sm font-medium leading-none ${
-                      isSelected ? "text-ink-black" : "text-slate-gray"
+                      isSelected ? "text-navy-900" : "text-slate-500"
                     }`}
                   >
                     {label}
@@ -253,7 +253,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                     <Check className="w-3 h-3" /> Uploaded ✓
                   </span>
                 ) : (
-                  <span className="text-[11px] text-slate-gray/80">
+                  <span className="text-[11px] text-slate-500/80">
                     Not uploaded
                   </span>
                 )}
@@ -277,16 +277,16 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
         {!selectedFile ? (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-[#d1d5db] hover:border-slate-gray/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-[#fafafa] hover:bg-white"
+            className="border-2 border-dashed border-[#d1d5db] hover:border-slate-500/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-[#fafafa] hover:bg-white"
           >
-            <div className="mx-auto w-12 h-12 rounded-full bg-mist-gray flex items-center justify-center text-slate-gray mb-3">
+            <div className="mx-auto w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 mb-3">
               <Upload className="w-6 h-6" />
             </div>
-            <p className="text-sm font-medium text-ink-black mb-1">
+            <p className="text-sm font-medium text-navy-900 mb-1">
               Select or capture a{" "}
               {DOCUMENT_TYPES.find((t) => t.type === selectedType)?.label}
             </p>
-            <p className="text-xs text-slate-gray mb-3">
+            <p className="text-xs text-slate-500 mb-3">
               Direct camera capture supported on mobile. Max 10MB (JPEG, PNG, WEBP, PDF)
             </p>
             <Button
@@ -320,14 +320,14 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                 )}
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-ink-black max-w-xs sm:max-w-md truncate">
+                    <p className="text-sm font-medium text-navy-900 max-w-xs sm:max-w-md truncate">
                       {selectedFile.name}
                     </p>
                     <Badge variant="outline" className="text-[10px] py-0 px-1.5">
                       {DOCUMENT_TYPES.find((t) => t.type === selectedType)?.label}
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-gray mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {formatBytes(selectedFile.size)} • {selectedFile.type || "Document"}
                   </p>
                 </div>
@@ -340,7 +340,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                   size="sm"
                   onClick={handleClearSelectedFile}
                   disabled={isUploading}
-                  className="text-slate-gray hover:text-ink-black"
+                  className="text-slate-500 hover:text-navy-900"
                 >
                   <X className="w-4 h-4 mr-1" />
                   Cancel
@@ -351,7 +351,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                   size="sm"
                   onClick={handleUpload}
                   disabled={isUploading}
-                  className="bg-ink-black text-paper-white hover:bg-ink-black/90 min-w-[100px]"
+                  className="bg-navy-900 text-white hover:bg-navy-900/90 min-w-[100px]"
                 >
                   {isUploading ? (
                     <>
@@ -390,10 +390,10 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
       <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-ink-black">
+            <h3 className="text-base font-semibold text-navy-900">
               Uploaded Documents
             </h3>
-            <span className="text-xs bg-mist-gray text-slate-gray px-2 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-slate-50 text-slate-500 px-2 py-0.5 rounded-full font-medium">
               {documents.length}
             </span>
           </div>
@@ -407,17 +407,17 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
         )}
 
         {isLoading ? (
-          <div className="py-12 flex flex-col items-center justify-center text-slate-gray">
+          <div className="py-12 flex flex-col items-center justify-center text-slate-500">
             <Loader2 className="w-6 h-6 animate-spin mb-2" />
             <p className="text-sm">Loading documents...</p>
           </div>
         ) : documents.length === 0 ? (
           <div className="py-10 text-center border border-dashed border-[#e5e7eb] rounded-lg">
-            <FileCheck className="w-8 h-8 text-slate-gray/50 mx-auto mb-2" />
-            <p className="text-sm font-medium text-slate-gray">
+            <FileCheck className="w-8 h-8 text-slate-500/50 mx-auto mb-2" />
+            <p className="text-sm font-medium text-slate-500">
               No documents uploaded yet for this member.
             </p>
-            <p className="text-xs text-slate-gray/80 mt-1">
+            <p className="text-xs text-slate-500/80 mt-1">
               Upload NIC photos, payslips, or bank book copies above.
             </p>
           </div>
@@ -439,9 +439,9 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge
                           variant="secondary"
-                          className="text-[11px] font-medium bg-mist-gray text-ink-black flex items-center gap-1 py-0 px-2"
+                          className="text-[11px] font-medium bg-slate-50 text-navy-900 flex items-center gap-1 py-0 px-2"
                         >
-                          <TypeIcon className="w-3 h-3 text-slate-gray" />
+                          <TypeIcon className="w-3 h-3 text-slate-500" />
                           {typeInfo?.label || doc.type}
                         </Badge>
                         <Badge
@@ -450,11 +450,11 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                         >
                           {doc.status}
                         </Badge>
-                        <span className="text-sm font-medium text-ink-black truncate max-w-[220px] sm:max-w-xs md:max-w-md">
+                        <span className="text-sm font-medium text-navy-900 truncate max-w-[220px] sm:max-w-xs md:max-w-md">
                           {filename}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-gray mt-1">
+                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                         <span>{formatBytes(doc.fileSize)}</span>
                         <span>•</span>
                         <span>{formatDate(doc.uploadedAt)}</span>

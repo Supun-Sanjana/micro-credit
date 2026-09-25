@@ -27,7 +27,7 @@ export default async function DashboardLayout({
   const status = subscription?.status || "ACTIVE"
 
   return (
-    <div className="min-h-screen bg-paper-white font-sans text-ink-black selection:bg-blush-peach selection:text-sienna-brown flex flex-col">
+    <div className="min-h-screen bg-white font-sans text-navy-900 selection:bg-brand-50 selection:text-brand-700 flex flex-col">
       <AccessGate status={status} />
       <SubscriptionBanner />
       <DashboardShell user={session?.user} orgName={orgName}>

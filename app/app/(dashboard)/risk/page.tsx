@@ -60,19 +60,19 @@ export default function RiskPage() {
 
       <div className="bg-white rounded-xl shadow-subtle-3 border border-[#ececec] overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-slate-gray">Loading alerts...</div>
+          <div className="p-8 text-center text-slate-500">Loading alerts...</div>
         ) : alerts.length === 0 ? (
-          <div className="p-8 text-center text-slate-gray">No open risk alerts found.</div>
+          <div className="p-8 text-center text-slate-500">No open risk alerts found.</div>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="bg-[#fafafa] border-b border-[#ececec]">
               <tr>
-                <th className="px-4 py-3 font-medium text-slate-gray">Type</th>
-                <th className="px-4 py-3 font-medium text-slate-gray">Severity</th>
-                <th className="px-4 py-3 font-medium text-slate-gray">Entity</th>
-                <th className="px-4 py-3 font-medium text-slate-gray">Description</th>
-                <th className="px-4 py-3 font-medium text-slate-gray">Status</th>
-                <th className="px-4 py-3 font-medium text-slate-gray text-right">Actions</th>
+                <th className="px-4 py-3 font-medium text-slate-500">Type</th>
+                <th className="px-4 py-3 font-medium text-slate-500">Severity</th>
+                <th className="px-4 py-3 font-medium text-slate-500">Entity</th>
+                <th className="px-4 py-3 font-medium text-slate-500">Description</th>
+                <th className="px-4 py-3 font-medium text-slate-500">Status</th>
+                <th className="px-4 py-3 font-medium text-slate-500 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#ececec]">
@@ -81,7 +81,7 @@ export default function RiskPage() {
                   <td className="px-4 py-3 font-medium">{alert.type.replace(/_/g, ' ')}</td>
                   <td className="px-4 py-3">{getSeverityBadge(alert.severity)}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs text-slate-gray block">{alert.entityType}</span>
+                    <span className="text-xs text-slate-500 block">{alert.entityType}</span>
                     <span className="font-mono text-xs">{alert.entityId.slice(-8)}</span>
                   </td>
                   <td className="px-4 py-3 max-w-md truncate">{alert.description}</td>
@@ -92,7 +92,7 @@ export default function RiskPage() {
                     {alert.status === 'OPEN' && (
                       <button 
                         onClick={() => handleStatusChange(alert.id, 'ACKNOWLEDGED')}
-                        className="text-xs font-medium text-sienna-brown hover:underline"
+                        className="text-xs font-medium text-brand-700 hover:underline"
                       >
                         Acknowledge
                       </button>

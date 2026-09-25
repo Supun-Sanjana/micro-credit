@@ -120,15 +120,15 @@ export default function RestructureForm({ loan }: { loan: any }) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       <div className="flex flex-col gap-6">
-        <Card className="shadow-subtle rounded-[20px] bg-paper-white border-none">
+        <Card className="shadow-subtle rounded-[20px] bg-white border-none">
           <CardHeader>
-            <CardTitle className="font-serif text-xl text-ink-black">Current Schedule</CardTitle>
+            <CardTitle className="font-serif text-xl text-navy-900">Current Schedule</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="max-h-[500px] overflow-auto rounded-lg border border-mist-gray/30">
+            <div className="max-h-[500px] overflow-auto rounded-lg border border-slate-200/30">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-mist-gray/10">
+                  <TableRow className="bg-slate-50/10">
                     <TableHead className="w-12">No.</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Amount</TableHead>
@@ -137,8 +137,8 @@ export default function RestructureForm({ loan }: { loan: any }) {
                 </TableHeader>
                 <TableBody>
                   {loan.repaymentSchedule.map((s: any, idx: number) => (
-                    <TableRow key={s.id} className={s.isPaid ? "bg-mist-gray/5" : ""}>
-                      <TableCell className="font-medium text-slate-gray">{idx + 1}</TableCell>
+                    <TableRow key={s.id} className={s.isPaid ? "bg-slate-50/5" : ""}>
+                      <TableCell className="font-medium text-slate-500">{idx + 1}</TableCell>
                       <TableCell>{format(parseISO(s.scheduledDate), "MMM d, yyyy")}</TableCell>
                       <TableCell>{s.scheduledAmount}</TableCell>
                       <TableCell>
@@ -156,27 +156,27 @@ export default function RestructureForm({ loan }: { loan: any }) {
                 </TableBody>
               </Table>
             </div>
-            <div className="mt-6 p-5 bg-mist-gray/10 rounded-xl flex justify-between items-center border border-mist-gray/20">
-              <span className="font-medium text-slate-gray">Remaining Outstanding</span>
-              <span className="font-serif text-2xl font-bold text-ink-black">{loan.outstanding}</span>
+            <div className="mt-6 p-5 bg-slate-50/10 rounded-xl flex justify-between items-center border border-slate-200/20">
+              <span className="font-medium text-slate-500">Remaining Outstanding</span>
+              <span className="font-serif text-2xl font-bold text-navy-900">{loan.outstanding}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-col gap-6">
-        <Card className="shadow-subtle rounded-[20px] bg-paper-white border-none">
+        <Card className="shadow-subtle rounded-[20px] bg-white border-none">
           <CardHeader>
-            <CardTitle className="font-serif text-xl text-ink-black">Configure New Schedule</CardTitle>
+            <CardTitle className="font-serif text-xl text-navy-900">Configure New Schedule</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-5">
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
-                <Label className="text-slate-gray">New Term (Periods)</Label>
+                <Label className="text-slate-500">New Term (Periods)</Label>
                 <Input type="number" value={newTerm} onChange={e => setNewTerm(e.target.value)} />
               </div>
               <div className="flex flex-col gap-2">
-                <Label className="text-slate-gray">Frequency</Label>
+                <Label className="text-slate-500">Frequency</Label>
                 <Select value={frequency} onValueChange={(v) => v && setFrequency(v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select frequency" />
@@ -192,7 +192,7 @@ export default function RestructureForm({ loan }: { loan: any }) {
             </div>
             
             <div className="flex flex-col gap-2">
-              <Label className="text-slate-gray">Start Date</Label>
+              <Label className="text-slate-500">Start Date</Label>
               <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
             </div>
             
@@ -201,11 +201,11 @@ export default function RestructureForm({ loan }: { loan: any }) {
             </Button>
             
             {newSchedule.length > 0 && (
-              <div className="mt-4 flex flex-col gap-5 border-t border-mist-gray/20 pt-6">
-                <div className="max-h-[300px] overflow-auto rounded-lg border border-mist-gray/30">
+              <div className="mt-4 flex flex-col gap-5 border-t border-slate-200/20 pt-6">
+                <div className="max-h-[300px] overflow-auto rounded-lg border border-slate-200/30">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-mist-gray/10">
+                      <TableRow className="bg-slate-50/10">
                         <TableHead className="w-12">No.</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Amount</TableHead>
@@ -214,7 +214,7 @@ export default function RestructureForm({ loan }: { loan: any }) {
                     <TableBody>
                       {newSchedule.map((s, idx) => (
                         <TableRow key={s.id}>
-                          <TableCell className="font-medium text-slate-gray">{idx + 1}</TableCell>
+                          <TableCell className="font-medium text-slate-500">{idx + 1}</TableCell>
                           <TableCell>
                             <Input 
                               type="date" 
@@ -238,15 +238,15 @@ export default function RestructureForm({ loan }: { loan: any }) {
                   </Table>
                 </div>
                 
-                <div className="flex justify-between items-center p-4 bg-mist-gray/10 rounded-xl border border-mist-gray/20">
-                  <span className="text-sm font-medium text-slate-gray">New Total:</span>
-                  <span className={`font-serif text-xl font-bold ${newScheduleTotal < outstanding ? 'text-destructive' : 'text-ink-black'}`}>
+                <div className="flex justify-between items-center p-4 bg-slate-50/10 rounded-xl border border-slate-200/20">
+                  <span className="text-sm font-medium text-slate-500">New Total:</span>
+                  <span className={`font-serif text-xl font-bold ${newScheduleTotal < outstanding ? 'text-destructive' : 'text-navy-900'}`}>
                     {newScheduleTotal.toFixed(2)}
                   </span>
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  <Label className="text-slate-gray">Reason for Restructure</Label>
+                  <Label className="text-slate-500">Reason for Restructure</Label>
                   <Textarea 
                     value={reason} 
                     onChange={e => setReason(e.target.value)} 

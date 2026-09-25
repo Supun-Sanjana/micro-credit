@@ -32,12 +32,12 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-mist-gray">
-      <div className="bg-paper-white p-[40px] rounded-[24px] shadow-subtle-3 w-full max-w-[400px]">
-        <h1 className="text-[26px] font-sans font-medium text-ink-black tracking-[-0.23px] mb-2">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="bg-white p-[40px] rounded-[24px] shadow-subtle-3 w-full max-w-[400px]">
+        <h1 className="text-[26px] font-sans font-medium text-navy-900 tracking-[-0.23px] mb-2">
           Platform Admin
         </h1>
-        <p className="text-[15px] text-slate-gray mb-8">
+        <p className="text-[15px] text-slate-500 mb-8">
           Restricted access. Super admins only.
         </p>
 
@@ -49,28 +49,28 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">Email</label>
+            <label className="text-[13px] text-slate-400 font-sans uppercase tracking-wider">Email</label>
             <input 
               name="email"
               type="email" 
               required
-              className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+              className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">Password</label>
+            <label className="text-[13px] text-slate-400 font-sans uppercase tracking-wider">Password</label>
             <div className="relative">
               <input 
                 name="password"
                 type={showPassword ? "text" : "password"} 
                 required
-                className="w-full bg-paper-white border border-[#ececec] rounded-[16px] pl-[16px] pr-[48px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                className="w-full bg-white border border-[#ececec] rounded-[16px] pl-[16px] pr-[48px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-gray hover:text-ink-black transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-navy-900 transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -79,13 +79,13 @@ export default function AdminLoginPage() {
           </div>
 
           {requires2FA && (
-            <div className="flex flex-col gap-2 mt-2 p-4 bg-mist-gray rounded-[16px]">
-              <label className="text-[13px] text-ash-gray font-sans uppercase tracking-wider">2FA Token (Authenticator)</label>
+            <div className="flex flex-col gap-2 mt-2 p-4 bg-slate-50 rounded-[16px]">
+              <label className="text-[13px] text-slate-400 font-sans uppercase tracking-wider">2FA Token (Authenticator)</label>
               <input 
                 name="token"
                 type="text" 
                 maxLength={6}
-                className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black text-center tracking-[0.5em] font-mono"
+                className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 text-center tracking-[0.5em] font-mono"
               />
             </div>
           )}
@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
           <button 
             type="submit"
             disabled={loading}
-            className="mt-4 flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="mt-4 flex items-center justify-center bg-navy-900 text-white rounded-full px-[24px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {loading ? (
               <>

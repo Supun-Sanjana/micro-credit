@@ -25,15 +25,15 @@ export default function CentresListPage() {
     fetchCentres()
   }, [])
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-gray" /></div>
+  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-500" /></div>
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6 pb-24">
       <div className="flex flex-col gap-1 pt-2">
-        <h1 className="text-[28px] leading-[1.3] text-ink-black font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>
+        <h1 className="text-[28px] leading-[1.3] text-navy-900 font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>
           My Centres
         </h1>
-        <p className="text-[15px] text-slate-gray">
+        <p className="text-[15px] text-slate-500">
           Select a centre to view today's collection sheet.
         </p>
       </div>
@@ -45,7 +45,7 @@ export default function CentresListPage() {
       )}
 
       {centres.length === 0 && !error ? (
-        <div className="bg-paper-white rounded-2xl border border-[#ececec] p-8 text-center text-slate-gray shadow-subtle-1 text-sm">
+        <div className="bg-white rounded-2xl border border-[#ececec] p-8 text-center text-slate-500 shadow-subtle-1 text-sm">
           You are not currently assigned to any active centres.
         </div>
       ) : (
@@ -54,21 +54,21 @@ export default function CentresListPage() {
             <Link 
               key={centre.id} 
               href={`/app/field/centres/${centre.id}`}
-              className="flex items-center justify-between bg-paper-white rounded-2xl border border-[#ececec] p-5 shadow-subtle-1 active:scale-[0.98] transition-transform"
+              className="flex items-center justify-between bg-white rounded-2xl border border-[#ececec] p-5 shadow-subtle-1 active:scale-[0.98] transition-transform"
             >
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-mist-gray flex items-center justify-center text-ink-black">
+                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-navy-900">
                   <MapPin className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[16px] font-medium text-ink-black">{centre.name}</h3>
-                  <div className="flex items-center gap-1.5 text-[13px] text-slate-gray mt-1">
+                  <h3 className="text-[16px] font-medium text-navy-900">{centre.name}</h3>
+                  <div className="flex items-center gap-1.5 text-[13px] text-slate-500 mt-1">
                     <Users className="w-3.5 h-3.5" /> 
                     <span>Assigned Collection</span>
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-slate-gray" />
+              <ChevronRight className="w-5 h-5 text-slate-500" />
             </Link>
           ))}
         </div>

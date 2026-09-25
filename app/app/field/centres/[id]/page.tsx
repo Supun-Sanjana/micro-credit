@@ -141,13 +141,13 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
     }
   }
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-gray" /></div>
+  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-slate-500" /></div>
 
   return (
     <div className="mx-auto space-y-6 p-4 pb-24">
       <div className="flex flex-col gap-1 pt-2">
         <div className="flex items-center justify-between">
-          <h1 className="text-[24px] text-ink-black font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>
+          <h1 className="text-[24px] text-navy-900 font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>
             Centre {centreId}
           </h1>
           {isOffline && (
@@ -156,20 +156,20 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
             </span>
           )}
         </div>
-        <p className="text-[14px] text-slate-gray">
+        <p className="text-[14px] text-slate-500">
           Today's scheduled collections.
         </p>
       </div>
 
       {!data || data.length === 0 ? (
-        <div className="bg-paper-white rounded-2xl border border-[#ececec] p-8 text-center text-slate-gray shadow-subtle-1 text-sm">
+        <div className="bg-white rounded-2xl border border-[#ececec] p-8 text-center text-slate-500 shadow-subtle-1 text-sm">
           No collections scheduled for today.
         </div>
       ) : (
         <div className="space-y-4">
           {data.map((member: any) => (
-            <div key={member.id} className="bg-paper-white rounded-2xl border border-[#ececec] p-4 shadow-subtle-1">
-              <h3 className="text-[15px] font-medium text-ink-black mb-3">{member.firstName} {member.lastName}</h3>
+            <div key={member.id} className="bg-white rounded-2xl border border-[#ececec] p-4 shadow-subtle-1">
+              <h3 className="text-[15px] font-medium text-navy-900 mb-3">{member.firstName} {member.lastName}</h3>
               
               <div className="space-y-3">
                 {member.loans?.map((loan: any) => {
@@ -180,10 +180,10 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
                   const due = Number(schedule.principalDue) + Number(schedule.interestDue)
 
                   return (
-                    <div key={loan.id} className="flex flex-col gap-3 p-3 bg-mist-gray/40 rounded-xl border border-[#ececec]">
+                    <div key={loan.id} className="flex flex-col gap-3 p-3 bg-slate-50/40 rounded-xl border border-[#ececec]">
                       <div className="flex justify-between items-center">
-                        <div className="text-[12px] text-slate-gray">Due Amount</div>
-                        <div className="text-[15px] font-medium text-ink-black">LKR {due}</div>
+                        <div className="text-[12px] text-slate-500">Due Amount</div>
+                        <div className="text-[15px] font-medium text-navy-900">LKR {due}</div>
                       </div>
                       
                       {outcome ? (
@@ -192,10 +192,10 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
                         </div>
                       ) : (
                         <div className="grid grid-cols-3 gap-2">
-                          <button onClick={() => openDrawer(loan.id, 'FULL')} className="bg-ink-black text-paper-white py-2 rounded-lg text-[13px] font-medium active:scale-95 transition-transform">
+                          <button onClick={() => openDrawer(loan.id, 'FULL')} className="bg-navy-900 text-white py-2 rounded-lg text-[13px] font-medium active:scale-95 transition-transform">
                             Full
                           </button>
-                          <button onClick={() => openDrawer(loan.id, 'PARTIAL')} className="bg-paper-white border border-[#ececec] text-ink-black py-2 rounded-lg text-[13px] font-medium active:scale-95 transition-transform">
+                          <button onClick={() => openDrawer(loan.id, 'PARTIAL')} className="bg-white border border-[#ececec] text-navy-900 py-2 rounded-lg text-[13px] font-medium active:scale-95 transition-transform">
                             Partial
                           </button>
                           <button onClick={() => openDrawer(loan.id, 'MISSED')} className="bg-[#fce8e6] text-[#c5221f] py-2 rounded-lg text-[13px] font-medium active:scale-95 transition-transform">
@@ -215,38 +215,38 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
       {/* Action Drawer */}
       {activeLoanId && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-ink-black/40 backdrop-blur-sm" onClick={closeDrawer} />
-          <div className="relative bg-paper-white rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-200">
-            <button onClick={closeDrawer} className="absolute right-4 top-4 p-2 bg-mist-gray rounded-full text-slate-gray"><X className="w-5 h-5" /></button>
+          <div className="absolute inset-0 bg-navy-900/40 backdrop-blur-sm" onClick={closeDrawer} />
+          <div className="relative bg-white rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full duration-200">
+            <button onClick={closeDrawer} className="absolute right-4 top-4 p-2 bg-slate-50 rounded-full text-slate-500"><X className="w-5 h-5" /></button>
             
-            <h2 className="text-[20px] font-serif mb-6 text-ink-black">
+            <h2 className="text-[20px] font-serif mb-6 text-navy-900">
               {drawerMode === 'FULL' ? 'Confirm Full Payment' : drawerMode === 'PARTIAL' ? 'Record Partial Payment' : 'Log Missed Payment'}
             </h2>
 
             {drawerMode !== 'MISSED' ? (
               <div className="space-y-4">
                 <div>
-                  <label className="text-[13px] font-medium text-slate-gray mb-1 block">Amount (LKR)</label>
+                  <label className="text-[13px] font-medium text-slate-500 mb-1 block">Amount (LKR)</label>
                   <input 
                     type="number"
                     value={amountInput}
                     onChange={e => setAmountInput(e.target.value)}
-                    className="w-full text-[24px] font-medium border-b-2 border-[#ececec] py-2 outline-none focus:border-ink-black bg-transparent"
+                    className="w-full text-[24px] font-medium border-b-2 border-[#ececec] py-2 outline-none focus:border-navy-900 bg-transparent"
                     autoFocus
                   />
                 </div>
                 {drawerMode === 'FULL' && (
-                  <p className="text-[13px] text-slate-gray">Expected amount is LKR {exactDueAmount}.</p>
+                  <p className="text-[13px] text-slate-500">Expected amount is LKR {exactDueAmount}.</p>
                 )}
               </div>
             ) : (
               <div className="space-y-4">
                 <div>
-                  <label className="text-[13px] font-medium text-slate-gray mb-1 block">Reason</label>
+                  <label className="text-[13px] font-medium text-slate-500 mb-1 block">Reason</label>
                   <select 
                     value={missedReason}
                     onChange={e => setMissedReason(e.target.value)}
-                    className="w-full bg-mist-gray border border-[#ececec] rounded-xl px-4 py-3 outline-none focus:border-ink-black text-[14px]"
+                    className="w-full bg-slate-50 border border-[#ececec] rounded-xl px-4 py-3 outline-none focus:border-navy-900 text-[14px]"
                   >
                     <option value="NO_CASH">No Cash</option>
                     <option value="MEMBER_UNAVAILABLE">Member Unavailable</option>
@@ -257,12 +257,12 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
                   </select>
                 </div>
                 <div>
-                  <label className="text-[13px] font-medium text-slate-gray mb-1 block">Notes (Optional)</label>
+                  <label className="text-[13px] font-medium text-slate-500 mb-1 block">Notes (Optional)</label>
                   <input 
                     type="text"
                     value={missedNotes}
                     onChange={e => setMissedNotes(e.target.value)}
-                    className="w-full bg-mist-gray border border-[#ececec] rounded-xl px-4 py-3 outline-none focus:border-ink-black text-[14px]"
+                    className="w-full bg-slate-50 border border-[#ececec] rounded-xl px-4 py-3 outline-none focus:border-navy-900 text-[14px]"
                     placeholder="Enter details..."
                   />
                 </div>
@@ -272,7 +272,7 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
             <button
               onClick={handleSubmit}
               disabled={submitting || (drawerMode !== 'MISSED' && !amountInput)}
-              className="w-full mt-8 bg-ink-black text-paper-white py-4 rounded-xl text-[15px] font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full mt-8 bg-navy-900 text-white py-4 rounded-xl text-[15px] font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
               {drawerMode === 'MISSED' ? 'Save Missed Payment' : 'Confirm Collection'}

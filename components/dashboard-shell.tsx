@@ -98,7 +98,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
     <div className="flex flex-col gap-6 py-6 px-4">
       {navGroups.map((group) => (
         <div key={group.name} className="flex flex-col gap-2">
-          <h3 className="text-xs font-semibold text-slate-gray uppercase tracking-wider px-3">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-3">
             {group.name}
           </h3>
           <div className="flex flex-col gap-1">
@@ -111,13 +111,13 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-colors",
                     isActive 
-                      ? "bg-blush-peach text-sienna-brown" 
-                      : "text-ink-black hover:bg-[#fafafa]"
+                      ? "bg-brand-600 text-white" 
+                      : "text-slate-300 hover:bg-white/10 hover:text-white"
                   )}
                 >
-                  <Icon className={cn("w-5 h-5", isActive ? "text-sienna-brown" : "text-slate-gray")} />
+                  <Icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400")} />
                   {item.label}
                 </Link>
               )
@@ -131,19 +131,19 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
   return (
     <>
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-paper-white border-b border-[#ececec] px-4 sm:px-6 h-[72px] flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-6 h-[72px] flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 -ml-2 text-ink-black hover:bg-[#fafafa] rounded-lg"
+            className="lg:hidden p-2 -ml-2 text-slate-700 hover:bg-slate-50 rounded-lg"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
           <Link href="/app/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blush-peach rounded-xl flex items-center justify-center border border-[#ececec]">
-              <div className="w-5 h-5 border-2 border-sienna-brown rounded-sm transform rotate-45" />
+            <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center border border-brand-100">
+              <div className="w-5 h-5 border-2 border-brand-600 rounded-sm transform rotate-45" />
             </div>
-            <span className="text-[20px] font-serif font-medium tracking-tight hidden sm:block">
+            <span className="text-[20px] font-semibold tracking-tight hidden sm:block text-navy-950">
               {orgName}
             </span>
           </Link>
@@ -153,27 +153,27 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         <div className="relative" ref={profileRef}>
           <button 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-3 hover:bg-[#fafafa] p-1.5 rounded-full pr-4 transition-colors border border-transparent hover:border-[#ececec]"
+            className="flex items-center gap-3 hover:bg-slate-50 p-1.5 rounded-full pr-4 transition-colors border border-transparent hover:border-slate-200"
           >
-            <div className="w-10 h-10 bg-[#f0f0f0] rounded-full flex items-center justify-center overflow-hidden">
-              <UserIcon className="w-5 h-5 text-slate-gray" />
+            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border border-slate-200">
+              <UserIcon className="w-5 h-5 text-slate-500" />
             </div>
             <div className="hidden sm:flex flex-col items-start">
-              <span className="text-[14px] font-medium leading-none">{user?.name || "User"}</span>
-              <span className="text-[12px] text-slate-gray mt-1 leading-none">{user?.role === "ADMIN" ? "Admin" : "Officer"}</span>
+              <span className="text-[14px] font-medium leading-none text-navy-900">{user?.name || "User"}</span>
+              <span className="text-[12px] text-slate-500 mt-1 leading-none">{user?.role === "ADMIN" ? "Admin" : "Officer"}</span>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-gray ml-1" />
+            <ChevronDown className="w-4 h-4 text-slate-400 ml-1" />
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-[#ececec] rounded-2xl shadow-subtle-3 py-2 z-50">
-              <div className="px-4 py-3 border-b border-[#ececec] sm:hidden">
-                <p className="text-sm font-medium text-ink-black truncate">{user?.name}</p>
-                <p className="text-xs text-slate-gray truncate">{user?.email}</p>
+            <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50">
+              <div className="px-4 py-3 border-b border-slate-100 sm:hidden">
+                <p className="text-sm font-medium text-navy-900 truncate">{user?.name}</p>
+                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
               </div>
               <button
                 onClick={() => signOut({ callbackUrl: "/app/login" })}
-                className="w-full text-left px-4 py-2.5 text-[15px] text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-[15px] text-danger-600 hover:bg-danger-50 flex items-center gap-2 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Sign out
@@ -184,9 +184,9 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
       </header>
 
       {/* Main Layout Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden bg-slate-50">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-[260px] border-r border-[#ececec] bg-white overflow-y-auto shrink-0">
+        <aside className="hidden lg:block w-[260px] bg-navy-950 overflow-y-auto shrink-0 shadow-[inset_-1px_0_0_rgba(255,255,255,0.1)]">
           <NavContent />
         </aside>
 
@@ -194,10 +194,10 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-30 flex">
             <div 
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm" 
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" 
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <aside className="relative w-[280px] max-w-[80%] h-[calc(100vh-72px)] mt-[72px] bg-white border-r border-[#ececec] overflow-y-auto flex-1 shadow-xl">
+            <aside className="relative w-[280px] max-w-[80%] h-[calc(100vh-72px)] mt-[72px] bg-navy-950 overflow-y-auto flex-1 shadow-xl">
               <NavContent />
             </aside>
           </div>

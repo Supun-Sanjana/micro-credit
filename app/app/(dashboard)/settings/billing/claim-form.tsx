@@ -22,15 +22,15 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
 
   if (hasPendingClaim) {
     return (
-      <div className="rounded-[20px] bg-mist-gray/80 border border-border/40 p-6 flex items-start gap-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blush-peach text-sienna-brown">
+      <div className="rounded-[20px] bg-slate-50/80 border border-border/40 p-6 flex items-start gap-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700">
           <Clock className="h-5 w-5" />
         </div>
         <div>
-          <h4 className="text-[16px] font-medium text-ink-black">
+          <h4 className="text-[16px] font-medium text-navy-900">
             A payment claim is currently under review.
           </h4>
-          <p className="text-[14px] text-slate-gray mt-1 leading-relaxed">
+          <p className="text-[14px] text-slate-500 mt-1 leading-relaxed">
             Our platform administrators are currently verifying your recent bank transaction. Once approved, your subscription status and validity period will update automatically.
           </p>
         </div>
@@ -75,12 +75,12 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
   }
 
   return (
-    <div className="bg-paper-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30">
+    <div className="bg-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30">
       <div className="mb-6">
-        <h3 className="text-[22px] font-sans font-medium text-ink-black tracking-tight">
+        <h3 className="text-[22px] font-sans font-medium text-navy-900 tracking-tight">
           Submit Payment Claim
         </h3>
-        <p className="text-[15px] text-slate-gray mt-1">
+        <p className="text-[15px] text-slate-500 mt-1">
           Enter your bank transfer or deposit details to activate or renew your organization subscription.
         </p>
       </div>
@@ -100,7 +100,7 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex flex-col space-y-2">
-              <label htmlFor="claim-amount" className="text-[14px] text-ink-black font-medium ml-1">
+              <label htmlFor="claim-amount" className="text-[14px] text-navy-900 font-medium ml-1">
                 Payment Amount (LKR) <span className="text-red-500">*</span>
               </label>
               <input
@@ -112,12 +112,12 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="e.g. 15000.00"
-                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
               />
             </div>
 
             <div className="flex flex-col space-y-2">
-              <label htmlFor="claim-bank-ref" className="text-[14px] text-ink-black font-medium ml-1">
+              <label htmlFor="claim-bank-ref" className="text-[14px] text-navy-900 font-medium ml-1">
                 Bank Reference / Slip No <span className="text-red-500">*</span>
               </label>
               <input
@@ -127,14 +127,14 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
                 value={bankReference}
                 onChange={(e) => setBankReference(e.target.value)}
                 placeholder="e.g. BOC-TXN-20260912-984"
-                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="flex flex-col space-y-2">
-              <label htmlFor="claim-paid-date" className="text-[14px] text-ink-black font-medium ml-1">
+              <label htmlFor="claim-paid-date" className="text-[14px] text-navy-900 font-medium ml-1">
                 Paid Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -143,12 +143,12 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
                 required
                 value={paidDate}
                 onChange={(e) => setPaidDate(e.target.value)}
-                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-ink-black outline-none focus:border-ink-black transition-colors"
+                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[14px] text-[15px] text-navy-900 outline-none focus:border-navy-900 transition-colors"
               />
             </div>
 
             <div className="flex flex-col space-y-2">
-              <label htmlFor="claim-proof-file" className="text-[14px] text-ink-black font-medium ml-1">
+              <label htmlFor="claim-proof-file" className="text-[14px] text-navy-900 font-medium ml-1">
                 Proof Document (Optional)
               </label>
               <input
@@ -156,7 +156,7 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
                 type="file"
                 accept="image/*,application/pdf"
                 onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[10px] text-[15px] text-ink-black outline-none focus:border-ink-black transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-ink-black file:text-white hover:file:opacity-90"
+                className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[10px] text-[15px] text-navy-900 outline-none focus:border-navy-900 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-navy-900 file:text-white hover:file:opacity-90"
               />
             </div>
           </div>
@@ -165,7 +165,7 @@ export function ClaimForm({ hasPendingClaim, defaultAmount }: ClaimFormProps) {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center justify-center bg-ink-black text-paper-white rounded-full px-6 py-3 text-[14px] font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="inline-flex items-center justify-center bg-navy-900 text-white rounded-full px-6 py-3 text-[14px] font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {loading ? (
                 <>

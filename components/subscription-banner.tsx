@@ -29,7 +29,7 @@ export async function SubscriptionBanner() {
   // Priority 1: If latest claim is PENDING
   if (latestClaim && latestClaim.status === "PENDING") {
     return (
-      <div className="w-full bg-mist-gray text-ink-black py-2 px-4 text-center text-[13px] font-medium border-b border-[#ececec]">
+      <div className="w-full bg-slate-50 text-navy-900 py-2 px-4 text-center text-[13px] font-medium border-b border-[#ececec]">
         Your recent payment claim is under review. Thank you for your patience.
       </div>
     )

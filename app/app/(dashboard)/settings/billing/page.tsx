@@ -82,7 +82,7 @@ export default async function BillingSettingsPage() {
         )
       default:
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-mist-gray text-slate-gray">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-50 text-slate-500">
             {status}
           </span>
         )
@@ -111,7 +111,7 @@ export default async function BillingSettingsPage() {
         )
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
             {status}
           </span>
         )
@@ -132,12 +132,12 @@ export default async function BillingSettingsPage() {
       {/* Header */}
       <div>
         <h1
-          className="text-[44px] leading-[1.25] text-ink-black font-serif font-normal"
+          className="text-[44px] leading-[1.25] text-navy-900 font-serif font-normal"
           style={{ letterSpacing: "-0.66px" }}
         >
           Subscription & Billing
         </h1>
-        <p className="text-[17px] text-slate-gray mt-2">
+        <p className="text-[17px] text-slate-500 mt-2">
           Manage your organization plan, resource quotas, and offline payment claims.
         </p>
       </div>
@@ -145,70 +145,70 @@ export default async function BillingSettingsPage() {
       {subscription && (
         <>
           {/* Plan Overview Card */}
-          <div className="bg-paper-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30 flex flex-col gap-6">
+          <div className="bg-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30 flex flex-col gap-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/40">
               <div>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-[26px] font-medium text-ink-black tracking-tight">
+                  <h2 className="text-[26px] font-medium text-navy-900 tracking-tight">
                     {subscription.plan.name}
                   </h2>
                   {getStatusBadge(subscription.status)}
                 </div>
-                <p className="text-[15px] text-slate-gray mt-1">
+                <p className="text-[15px] text-slate-500 mt-1">
                   Current subscription tier assigned to your organization.
                 </p>
               </div>
 
               <div className="text-left sm:text-right">
-                <div className="text-[28px] font-medium text-ink-black tracking-tight">
+                <div className="text-[28px] font-medium text-navy-900 tracking-tight">
                   LKR {Number(subscription.plan.monthlyPrice).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </div>
-                <div className="text-[14px] text-slate-gray">per month</div>
+                <div className="text-[14px] text-slate-500">per month</div>
               </div>
             </div>
 
             {/* Quota Limits & Dates Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-fog-white p-5 rounded-[18px] border border-border/30">
-                <div className="flex items-center gap-2 text-slate-gray mb-2">
+              <div className="bg-slate-100 p-5 rounded-[18px] border border-border/30">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
                   <Users className="h-4 w-4" />
                   <span className="text-[13px] font-medium uppercase tracking-wider">Officer Seats</span>
                 </div>
-                <div className="text-[22px] font-medium text-ink-black">
-                  {subscription.plan.maxOfficerSeats} <span className="text-[14px] font-normal text-slate-gray">seats</span>
+                <div className="text-[22px] font-medium text-navy-900">
+                  {subscription.plan.maxOfficerSeats} <span className="text-[14px] font-normal text-slate-500">seats</span>
                 </div>
               </div>
 
-              <div className="bg-fog-white p-5 rounded-[18px] border border-border/30">
-                <div className="flex items-center gap-2 text-slate-gray mb-2">
+              <div className="bg-slate-100 p-5 rounded-[18px] border border-border/30">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
                   <Building2 className="h-4 w-4" />
                   <span className="text-[13px] font-medium uppercase tracking-wider">Branches</span>
                 </div>
-                <div className="text-[22px] font-medium text-ink-black">
-                  {subscription.plan.maxBranches} <span className="text-[14px] font-normal text-slate-gray">locations</span>
+                <div className="text-[22px] font-medium text-navy-900">
+                  {subscription.plan.maxBranches} <span className="text-[14px] font-normal text-slate-500">locations</span>
                 </div>
               </div>
 
-              <div className="bg-fog-white p-5 rounded-[18px] border border-border/30">
-                <div className="flex items-center gap-2 text-slate-gray mb-2">
+              <div className="bg-slate-100 p-5 rounded-[18px] border border-border/30">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
                   <HardDrive className="h-4 w-4" />
                   <span className="text-[13px] font-medium uppercase tracking-wider">Storage Quota</span>
                 </div>
-                <div className="text-[22px] font-medium text-ink-black">
+                <div className="text-[22px] font-medium text-navy-900">
                   {subscription.plan.storageQuotaMb >= 1024
                     ? `${(subscription.plan.storageQuotaMb / 1024).toFixed(1)} GB`
                     : `${subscription.plan.storageQuotaMb} MB`}
                 </div>
               </div>
 
-              <div className="bg-fog-white p-5 rounded-[18px] border border-border/30">
-                <div className="flex items-center gap-2 text-slate-gray mb-2">
+              <div className="bg-slate-100 p-5 rounded-[18px] border border-border/30">
+                <div className="flex items-center gap-2 text-slate-500 mb-2">
                   <Calendar className="h-4 w-4" />
                   <span className="text-[13px] font-medium uppercase tracking-wider">
                     {subscription.status === "TRIAL" ? "Trial Ends" : "Period End"}
                   </span>
                 </div>
-                <div className="text-[20px] font-medium text-ink-black">
+                <div className="text-[20px] font-medium text-navy-900">
                   {subscription.status === "TRIAL"
                     ? formatDate(subscription.trialEndsAt)
                     : formatDate(subscription.currentPeriodEnd)}
@@ -217,13 +217,13 @@ export default async function BillingSettingsPage() {
             </div>
 
             {/* Trial / Validity Timeline Info */}
-            <div className="flex flex-wrap items-center justify-between text-[14px] text-slate-gray pt-4 border-t border-border/40 gap-4">
+            <div className="flex flex-wrap items-center justify-between text-[14px] text-slate-500 pt-4 border-t border-border/40 gap-4">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-slate-gray" />
+                <Clock className="h-4 w-4 text-slate-500" />
                 <span>Trial ends: <strong>{formatDate(subscription.trialEndsAt)}</strong></span>
               </div>
               <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-slate-gray" />
+                <CreditCard className="h-4 w-4 text-slate-500" />
                 <span>Current period ends: <strong>{formatDate(subscription.currentPeriodEnd)}</strong></span>
               </div>
             </div>
@@ -236,25 +236,25 @@ export default async function BillingSettingsPage() {
           />
 
           {/* Past Payment Claims Table */}
-          <div className="bg-paper-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30">
+          <div className="bg-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30">
             <div className="mb-6">
-              <h3 className="text-[22px] font-sans font-medium text-ink-black tracking-tight">
+              <h3 className="text-[22px] font-sans font-medium text-navy-900 tracking-tight">
                 Payment Claims History
               </h3>
-              <p className="text-[15px] text-slate-gray mt-1">
+              <p className="text-[15px] text-slate-500 mt-1">
                 Record of offline bank deposits and subscription renewal submissions.
               </p>
             </div>
 
             {subscription.paymentClaims.length === 0 ? (
-              <div className="rounded-[18px] bg-fog-white p-8 text-center text-slate-gray text-[15px] border border-border/30">
+              <div className="rounded-[18px] bg-slate-100 p-8 text-center text-slate-500 text-[15px] border border-border/30">
                 No payment claims submitted yet.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[14px]">
                   <thead>
-                    <tr className="border-b border-border/40 text-slate-gray text-[13px] uppercase tracking-wider font-medium">
+                    <tr className="border-b border-border/40 text-slate-500 text-[13px] uppercase tracking-wider font-medium">
                       <th className="py-3.5 px-4">Amount</th>
                       <th className="py-3.5 px-4">Bank Reference</th>
                       <th className="py-3.5 px-4">Status</th>
@@ -262,22 +262,22 @@ export default async function BillingSettingsPage() {
                       <th className="py-3.5 px-4">Submitted At</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/20 text-ink-black">
+                  <tbody className="divide-y divide-border/20 text-navy-900">
                     {subscription.paymentClaims.map((claim) => (
-                      <tr key={claim.id} className="hover:bg-fog-white/60 transition-colors">
+                      <tr key={claim.id} className="hover:bg-slate-100/60 transition-colors">
                         <td className="py-4 px-4 font-medium whitespace-nowrap">
                           LKR {Number(claim.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="py-4 px-4 font-mono text-[13px] text-slate-gray">
+                        <td className="py-4 px-4 font-mono text-[13px] text-slate-500">
                           {claim.bankReference}
                         </td>
                         <td className="py-4 px-4 whitespace-nowrap">
                           {getClaimStatusBadge(claim.status)}
                         </td>
-                        <td className="py-4 px-4 text-slate-gray whitespace-nowrap">
+                        <td className="py-4 px-4 text-slate-500 whitespace-nowrap">
                           {formatDate(claim.paidDate)}
                         </td>
-                        <td className="py-4 px-4 text-slate-gray whitespace-nowrap">
+                        <td className="py-4 px-4 text-slate-500 whitespace-nowrap">
                           {formatDate(claim.submittedAt)}
                         </td>
                       </tr>

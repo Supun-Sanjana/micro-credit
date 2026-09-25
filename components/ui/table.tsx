@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { cn } from "cn"
+import { cva, type VariantProps } from "class-variance-authority"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -51,14 +52,30 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   )
 }
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+const tableRowVariants = cva(
+  "border-b transition-colors has-aria-expanded:bg-slate-50 data-[state=selected]:bg-brand-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-white hover:bg-slate-50",
+        selected: "bg-brand-50 hover:bg-brand-100/50",
+        overdue: "bg-danger-50 hover:bg-danger-100/50",
+        highlighted: "bg-warning-50 hover:bg-warning-100/50",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+interface TableRowProps extends React.ComponentProps<"tr">, VariantProps<typeof tableRowVariants> {}
+
+function TableRow({ className, variant, ...props }: TableRowProps) {
   return (
     <tr
       data-slot="table-row"
-      className={cn(
-        "border-b transition-colors hover:bg-muted/50 has-aria-expanded:bg-muted/50 data-[state=selected]:bg-muted",
-        className
-      )}
+      className={cn(tableRowVariants({ variant }), className)}
       {...props}
     />
   )

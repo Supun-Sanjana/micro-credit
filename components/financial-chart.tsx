@@ -38,7 +38,7 @@ export function FinancialChart() {
         <select 
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="bg-[#f8f9fa] border-none text-[13px] font-medium text-ink-black py-2 px-4 rounded-full cursor-pointer hover:bg-[#f0f0f0] transition-colors focus:ring-0"
+          className="bg-[#f8f9fa] border-none text-[13px] font-medium text-navy-900 py-2 px-4 rounded-full cursor-pointer hover:bg-[#f0f0f0] transition-colors focus:ring-0"
         >
           <option value="6M">Last 6 Months</option>
           <option value="1Y">This Year</option>

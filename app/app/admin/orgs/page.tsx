@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic"
 function getStatusBadge(status?: string | null) {
   if (!status) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
         No Plan
       </span>
     )
@@ -35,7 +35,7 @@ function getStatusBadge(status?: string | null) {
       )
     default:
       return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-mist-gray text-slate-gray">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-medium bg-slate-50 text-slate-500">
           {status.replace(/_/g, " ")}
         </span>
       )
@@ -71,13 +71,13 @@ export default async function AdminOrganizationsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-mist-gray p-6 sm:p-10 font-sans text-ink-black">
+    <div className="min-h-screen bg-slate-50 p-6 sm:p-10 font-sans text-navy-900">
       <div className="max-w-[1200px] mx-auto">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
           <Link
             href="/app/admin"
-            className="text-[15px] text-slate-gray hover:text-ink-black transition-colors inline-flex items-center gap-1.5"
+            className="text-[15px] text-slate-500 hover:text-navy-900 transition-colors inline-flex items-center gap-1.5"
           >
             ← Back to Dashboard
           </Link>
@@ -85,16 +85,16 @@ export default async function AdminOrganizationsPage() {
 
         {/* Hero Header */}
         <div className="mb-8">
-          <h1 className="text-[44px] font-serif font-normal text-ink-black tracking-[-0.66px] leading-[1.3]">
+          <h1 className="text-[44px] font-serif font-normal text-navy-900 tracking-[-0.66px] leading-[1.3]">
             Organizations
           </h1>
-          <p className="text-[17px] text-slate-gray mt-1">
+          <p className="text-[17px] text-slate-500 mt-1">
             Platform tenant overview, subscription statuses, and account management.
           </p>
         </div>
 
         {/* Main Content Card */}
-        <div className="bg-paper-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
+        <div className="bg-white rounded-[24px] border border-[#ececec] shadow-subtle-3 p-6 sm:p-8">
           {/* Search Bar & Stats */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#f2f2f3]">
             <div className="relative w-full max-w-sm">
@@ -102,10 +102,10 @@ export default async function AdminOrganizationsPage() {
                 id="org-search-input"
                 type="text"
                 placeholder="Search organizations by name..."
-                className="w-full bg-paper-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[15px] text-ink-black placeholder:text-smoke-gray outline-none focus:border-ink-black transition-colors"
+                className="w-full bg-white border border-[#ececec] rounded-[16px] px-4 py-2.5 text-[15px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900 transition-colors"
               />
             </div>
-            <div id="org-count-display" className="text-[14px] text-slate-gray font-medium">
+            <div id="org-count-display" className="text-[14px] text-slate-500 font-medium">
               {organizations.length} {organizations.length === 1 ? "organization" : "organizations"}
             </div>
           </div>
@@ -115,22 +115,22 @@ export default async function AdminOrganizationsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#ececec]">
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Org Name
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Plan
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Status
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Users
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400">
                     Created
                   </th>
-                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-ash-gray text-right">
+                  <th className="py-3.5 px-4 text-[13px] font-medium uppercase tracking-wider text-slate-400 text-right">
                     Actions
                   </th>
                 </tr>
@@ -138,7 +138,7 @@ export default async function AdminOrganizationsPage() {
               <tbody>
                 {organizations.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-[15px] text-slate-gray">
+                    <td colSpan={6} className="py-12 text-center text-[15px] text-slate-500">
                       No organizations found.
                     </td>
                   </tr>
@@ -157,27 +157,27 @@ export default async function AdminOrganizationsPage() {
                       <tr
                         key={org.id}
                         data-org-name={org.name}
-                        className="org-table-row border-b border-[#f2f2f3] hover:bg-fog-white transition-colors"
+                        className="org-table-row border-b border-[#f2f2f3] hover:bg-slate-100 transition-colors"
                       >
-                        <td className="py-4 px-4 font-medium text-[15px] text-ink-black">
+                        <td className="py-4 px-4 font-medium text-[15px] text-navy-900">
                           {org.name}
                         </td>
-                        <td className="py-4 px-4 text-[15px] text-slate-gray">
+                        <td className="py-4 px-4 text-[15px] text-slate-500">
                           {planName}
                         </td>
                         <td className="py-4 px-4">
                           {getStatusBadge(status)}
                         </td>
-                        <td className="py-4 px-4 text-[15px] text-slate-gray">
+                        <td className="py-4 px-4 text-[15px] text-slate-500">
                           {userCount} {userCount === 1 ? "user" : "users"}
                         </td>
-                        <td className="py-4 px-4 text-[15px] text-slate-gray">
+                        <td className="py-4 px-4 text-[15px] text-slate-500">
                           {createdFormatted}
                         </td>
                         <td className="py-4 px-4 text-right">
                           <Link
                             href={`/app/admin/orgs/${org.id}`}
-                            className="inline-flex items-center gap-1 text-[14px] font-medium text-ink-black hover:text-slate-gray transition-colors"
+                            className="inline-flex items-center gap-1 text-[14px] font-medium text-navy-900 hover:text-slate-500 transition-colors"
                           >
                             View →
                           </Link>
@@ -193,7 +193,7 @@ export default async function AdminOrganizationsPage() {
             <div
               id="org-no-matches"
               style={{ display: "none" }}
-              className="py-12 text-center text-[15px] text-slate-gray"
+              className="py-12 text-center text-[15px] text-slate-500"
             >
               No organizations match your search.
             </div>

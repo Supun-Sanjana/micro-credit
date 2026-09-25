@@ -211,19 +211,19 @@ export default function CollectionPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
         <div className="flex flex-col gap-4">
           <h1 
-            className="text-[44px] leading-[1.3] text-ink-black font-serif font-normal"
+            className="text-[44px] leading-[1.3] text-navy-900 font-serif font-normal"
             style={{ letterSpacing: '-0.66px' }}
           >
             Daily Collection
           </h1>
-          <p className="text-[17px] text-slate-gray max-w-[600px] leading-[1.35]">
+          <p className="text-[17px] text-slate-500 max-w-[600px] leading-[1.35]">
             Record center cash collections for the day.
           </p>
         </div>
         <button 
           onClick={handleSave}
           disabled={isSaving || dueList.length === 0}
-          className="flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex items-center justify-center bg-navy-900 text-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {isSaving ? "Saving..." : "Bulk Save"}
         </button>
@@ -232,28 +232,28 @@ export default function CollectionPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-[48px]">
         
         <div className="lg:col-span-4 h-fit flex flex-col gap-8">
-          <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">
-            <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">
+          <div className="bg-white rounded-[20px] shadow-subtle-3 p-[32px]">
+            <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">
               Collection Parameters
             </h2>
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <label className="text-[15px] text-ink-black font-sans ml-1">Date</label>
+                <label className="text-[15px] text-navy-900 font-sans ml-1">Date</label>
                 <input 
                   type="date"
                   value={selectedDate}
                   onChange={e => setSelectedDate(e.target.value)}
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
                 />
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[15px] text-ink-black font-sans ml-1">Centre</label>
+                <label className="text-[15px] text-navy-900 font-sans ml-1">Centre</label>
                 <select 
                   value={selectedCentre}
                   onChange={e => setSelectedCentre(e.target.value)}
                   disabled={isLoadingCentres}
-                  className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none disabled:opacity-50"
+                  className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 appearance-none disabled:opacity-50"
                 >
                   {centres.map(c => (
                     <option key={c.id} value={c.id}>{c.name} ({c.centreCode})</option>
@@ -267,19 +267,19 @@ export default function CollectionPage() {
           </div>
 
           {dueList.length > 0 && (
-            <div className="bg-mist-gray rounded-[20px] p-[32px] flex flex-col gap-4">
-              <h2 className="text-[20px] font-sans font-medium text-ink-black">Summary</h2>
+            <div className="bg-slate-50 rounded-[20px] p-[32px] flex flex-col gap-4">
+              <h2 className="text-[20px] font-sans font-medium text-navy-900">Summary</h2>
               <div className="flex justify-between items-center text-[16px]">
-                <span className="text-slate-gray">Expected</span>
-                <span className="text-ink-black font-medium">Rs. {totalExpected.toLocaleString()}</span>
+                <span className="text-slate-500">Expected</span>
+                <span className="text-navy-900 font-medium">Rs. {totalExpected.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center text-[16px]">
-                <span className="text-slate-gray">Collected</span>
+                <span className="text-slate-500">Collected</span>
                 <span className="text-[#2e7d32] font-medium">Rs. {totalCollected.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center text-[16px] border-t border-[#ececec] pt-4">
-                <span className="text-slate-gray">Shortfall</span>
-                <span className="text-sienna-brown font-medium">Rs. {shortfall.toLocaleString()}</span>
+                <span className="text-slate-500">Shortfall</span>
+                <span className="text-brand-700 font-medium">Rs. {shortfall.toLocaleString()}</span>
               </div>
               <div className="mt-2 w-full bg-[#ececec] rounded-full h-2 overflow-hidden">
                 <div 
@@ -287,21 +287,21 @@ export default function CollectionPage() {
                   style={{ width: `${percentComplete}%` }}
                 />
               </div>
-              <span className="text-[14px] text-slate-gray text-right">{percentComplete}% Complete</span>
+              <span className="text-[14px] text-slate-500 text-right">{percentComplete}% Complete</span>
             </div>
           )}
         </div>
 
         <div className="lg:col-span-8">
-          <div className="bg-mist-gray rounded-[24px] p-[32px] md:p-[40px]">
+          <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-[26px] font-sans font-medium text-ink-black tracking-[-0.23px]">
+              <h2 className="text-[26px] font-sans font-medium text-navy-900 tracking-[-0.23px]">
                 Due List
               </h2>
               {dueList.length > 0 && (
                 <button
                   onClick={markAllFullPay}
-                  className="text-[14px] text-ink-black font-medium underline underline-offset-4 hover:text-slate-gray"
+                  className="text-[14px] text-navy-900 font-medium underline underline-offset-4 hover:text-slate-500"
                 >
                   Mark All Full Pay
                 </button>
@@ -315,14 +315,14 @@ export default function CollectionPage() {
                 ))}
               </div>
             ) : dueList.length === 0 ? (
-              <div className="text-center py-12 text-[15px] text-slate-gray">
+              <div className="text-center py-12 text-[15px] text-slate-500">
                 No active loans found for this centre today.
               </div>
             ) : (
               <div className="flex flex-col gap-8">
                 {Object.entries(groupedList).map(([groupName, items]) => (
                   <div key={groupName} className="flex flex-col gap-4">
-                    <h3 className="text-[18px] font-medium text-ink-black border-b border-[#ececec] pb-2">
+                    <h3 className="text-[18px] font-medium text-navy-900 border-b border-[#ececec] pb-2">
                       {groupName}
                     </h3>
                     {items.map((item) => {
@@ -334,25 +334,25 @@ export default function CollectionPage() {
                           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-[18px] font-sans text-ink-black font-medium">{item.memberName}</span>
+                                <span className="text-[18px] font-sans text-navy-900 font-medium">{item.memberName}</span>
                               </div>
-                              <span className="text-[14px] text-slate-gray font-sans">{item.memberNumber}</span>
-                              <div className="text-[15px] font-sans text-ink-black mt-1">
+                              <span className="text-[14px] text-slate-500 font-sans">{item.memberNumber}</span>
+                              <div className="text-[15px] font-sans text-navy-900 mt-1">
                                 Loan Due: LKR {item.totalDue.toLocaleString()}
                                 {item.arrearsBF > 0 && (
-                                  <span className="text-sienna-brown text-[13px] ml-2">
+                                  <span className="text-brand-700 text-[13px] ml-2">
                                     (incl. Arrears: {item.arrearsBF.toLocaleString()})
                                   </span>
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-4 mt-2">
                                 {item.compulsorySavingsId && (
-                                  <span className="text-[13px] text-slate-gray">
+                                  <span className="text-[13px] text-slate-500">
                                     Comp. Savings Bal: LKR {item.compulsorySavingsBalance.toLocaleString()}
                                   </span>
                                 )}
                                 {item.voluntarySavingsId && (
-                                  <span className="text-[13px] text-slate-gray">
+                                  <span className="text-[13px] text-slate-500">
                                     Vol. Savings Bal: LKR {item.voluntarySavingsBalance.toLocaleString()}
                                   </span>
                                 )}
@@ -362,9 +362,9 @@ export default function CollectionPage() {
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                               {/* Loan Repayment Input */}
                               <div className="flex flex-col gap-1">
-                                <label className="text-[12px] text-slate-gray pl-1">Loan Repayment</label>
+                                <label className="text-[12px] text-slate-500 pl-1">Loan Repayment</label>
                                 <div className="relative">
-                                  <span className="absolute left-[12px] top-[10px] text-[14px] text-smoke-gray font-sans">Rs</span>
+                                  <span className="absolute left-[12px] top-[10px] text-[14px] text-slate-300 font-sans">Rs</span>
                                   <input 
                                     type="number"
                                     value={col.amount}
@@ -372,11 +372,11 @@ export default function CollectionPage() {
                                     readOnly={col.status === 'FULL' || col.status === 'NP' || !item.loanId}
                                     placeholder="0.00"
                                     className={`w-[120px] border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors ${
-                                      !item.loanId ? 'bg-mist-gray text-smoke-gray cursor-not-allowed' :
+                                      !item.loanId ? 'bg-slate-50 text-slate-300 cursor-not-allowed' :
                                       col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32] border-[#a5d6a7]' :
-                                      col.status === 'NP' ? 'bg-[#ffebee] text-sienna-brown border-[#ffcdd2]' :
+                                      col.status === 'NP' ? 'bg-[#ffebee] text-brand-700 border-[#ffcdd2]' :
                                       col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17] border-[#ffe082]' :
-                                      'bg-paper-white text-ink-black focus:border-ink-black'
+                                      'bg-white text-navy-900 focus:border-navy-900'
                                     }`}
                                   />
                                 </div>
@@ -385,15 +385,15 @@ export default function CollectionPage() {
                               {/* Compulsory Savings Input */}
                               {item.compulsorySavingsId && (
                                 <div className="flex flex-col gap-1">
-                                  <label className="text-[12px] text-slate-gray pl-1">Comp. Deposit</label>
+                                  <label className="text-[12px] text-slate-500 pl-1">Comp. Deposit</label>
                                   <div className="relative">
-                                    <span className="absolute left-[12px] top-[10px] text-[14px] text-smoke-gray font-sans">Rs</span>
+                                    <span className="absolute left-[12px] top-[10px] text-[14px] text-slate-300 font-sans">Rs</span>
                                     <input 
                                       type="number"
                                       value={col.compulsorySavingsDeposit}
                                       onChange={(e) => handleAmountChange(memberId, e.target.value, 'compulsory')}
                                       placeholder="0.00"
-                                      className="w-[120px] bg-paper-white text-ink-black focus:border-ink-black border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors"
+                                      className="w-[120px] bg-white text-navy-900 focus:border-navy-900 border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors"
                                     />
                                   </div>
                                 </div>
@@ -402,15 +402,15 @@ export default function CollectionPage() {
                               {/* Voluntary Savings Input */}
                               {item.voluntarySavingsId && (
                                 <div className="flex flex-col gap-1">
-                                  <label className="text-[12px] text-slate-gray pl-1">Vol. Deposit</label>
+                                  <label className="text-[12px] text-slate-500 pl-1">Vol. Deposit</label>
                                   <div className="relative">
-                                    <span className="absolute left-[12px] top-[10px] text-[14px] text-smoke-gray font-sans">Rs</span>
+                                    <span className="absolute left-[12px] top-[10px] text-[14px] text-slate-300 font-sans">Rs</span>
                                     <input 
                                       type="number"
                                       value={col.voluntarySavingsDeposit}
                                       onChange={(e) => handleAmountChange(memberId, e.target.value, 'voluntary')}
                                       placeholder="0.00"
-                                      className="w-[120px] bg-paper-white text-ink-black focus:border-ink-black border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors"
+                                      className="w-[120px] bg-white text-navy-900 focus:border-navy-900 border border-[#ececec] rounded-[12px] pl-[32px] pr-[12px] py-[8px] text-[14px] outline-none transition-colors"
                                     />
                                   </div>
                                 </div>
@@ -418,11 +418,11 @@ export default function CollectionPage() {
 
                               {item.loanId && (
                                 <div className="flex flex-col gap-1 mt-auto">
-                                  <div className="flex bg-paper-white border border-[#ececec] rounded-[12px] p-1 gap-1">
+                                  <div className="flex bg-white border border-[#ececec] rounded-[12px] p-1 gap-1">
                                     <button
                                       onClick={() => handleStatusChange(memberId, 'FULL', item.totalDue)}
                                       className={`px-2 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors ${
-                                        col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32]' : 'text-slate-gray hover:bg-mist-gray'
+                                        col.status === 'FULL' ? 'bg-[#e8f5e9] text-[#2e7d32]' : 'text-slate-500 hover:bg-slate-50'
                                       }`}
                                     >
                                       FULL
@@ -430,7 +430,7 @@ export default function CollectionPage() {
                                     <button
                                       onClick={() => handleStatusChange(memberId, 'PARTIAL', item.totalDue)}
                                       className={`px-2 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors ${
-                                        col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17]' : 'text-slate-gray hover:bg-mist-gray'
+                                        col.status === 'PARTIAL' ? 'bg-[#fff8e1] text-[#f57f17]' : 'text-slate-500 hover:bg-slate-50'
                                       }`}
                                     >
                                       PARTIAL
@@ -438,7 +438,7 @@ export default function CollectionPage() {
                                     <button
                                       onClick={() => handleStatusChange(memberId, 'NP', item.totalDue)}
                                       className={`px-2 py-1.5 rounded-[8px] text-[12px] font-medium transition-colors ${
-                                        col.status === 'NP' ? 'bg-[#ffebee] text-sienna-brown' : 'text-slate-gray hover:bg-mist-gray'
+                                        col.status === 'NP' ? 'bg-[#ffebee] text-brand-700' : 'text-slate-500 hover:bg-slate-50'
                                       }`}
                                     >
                                       NP

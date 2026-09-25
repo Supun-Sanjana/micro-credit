@@ -71,7 +71,7 @@ export function OfflineSyncManager() {
   if (isOnline && pendingCount === 0) return null
 
   return (
-    <div className="fixed bottom-6 right-6 bg-ink-black text-paper-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-[14px] font-medium z-50">
+    <div className="fixed bottom-6 right-6 bg-navy-900 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-[14px] font-medium z-50">
       {!isOnline ? (
         <>
           <WifiOff className="w-4 h-4 text-[#c5221f]" />

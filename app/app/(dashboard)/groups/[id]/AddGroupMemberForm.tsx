@@ -25,21 +25,21 @@ export function AddGroupMemberForm({ groupId, availableMembers }: { groupId: str
   }
 
   return (
-    <div className="bg-paper-white rounded-[20px] shadow-subtle-3 p-[32px]">
-      <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">
+    <div className="bg-white rounded-[20px] shadow-subtle-3 p-[32px]">
+      <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">
         Add Member
       </h2>
       {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label className="text-[15px] text-ink-black font-sans ml-1">Select Member</label>
+          <label className="text-[15px] text-navy-900 font-sans ml-1">Select Member</label>
           <select 
             required
             value={memberId}
             onChange={e => setMemberId(e.target.value)}
-            className="bg-paper-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-ink-black outline-none focus:border-ink-black appearance-none"
+            className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 appearance-none"
           >
-            <option value="" disabled className="text-smoke-gray">Choose available member</option>
+            <option value="" disabled className="text-slate-300">Choose available member</option>
             {availableMembers.map(m => (
               <option key={m.id} value={m.id}>{m.name} ({m.memberNumber || 'N/A'})</option>
             ))}
@@ -50,7 +50,7 @@ export function AddGroupMemberForm({ groupId, availableMembers }: { groupId: str
           <button 
             type="submit"
             disabled={isPending || !memberId || availableMembers.length === 0}
-            className="w-full flex items-center justify-center bg-ink-black text-paper-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="w-full flex items-center justify-center bg-navy-900 text-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {isPending ? "Adding..." : "Add Member"}
           </button>
