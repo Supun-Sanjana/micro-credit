@@ -15,10 +15,11 @@ async function getSession() {
 export async function getSavingsProducts() {
   const session = await getSession()
   const orgId = session.user.organizationId!
-  return prisma.savingsProduct.findMany({
+  const products = await prisma.savingsProduct.findMany({
     where: { organizationId: orgId },
     orderBy: { createdAt: "desc" },
   })
+  return products.map(p => ({ ...p, interestRate: p.interestRate.toString(), minimumBalance: p.minimumBalance.toString() }))
 }
 
 export async function createSavingsProduct(data: {
@@ -72,7 +73,7 @@ export async function getMemberSavingsAccounts(memberId: string) {
   const session = await getSession()
   const orgId = session.user.organizationId!
 
-  return prisma.savingsAccount.findMany({
+  const accounts = await prisma.savingsAccount.findMany({
     where: { memberId, organizationId: orgId },
     include: {
       product: true,
@@ -81,8 +82,16 @@ export async function getMemberSavingsAccounts(memberId: string) {
         take: 10,
       }
     },
-    orderBy: { createdAt: "desc" },
-  })
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+  return accounts.map(a => ({
+    ...a,
+    balance: a.balance.toString(),
+    product: { ...a.product, interestRate: a.product.interestRate.toString(), minimumBalance: a.product.minimumBalance.toString() },
+    transactions: a.transactions.map(t => ({ ...t, amount: t.amount.toString() }))
+  }))
 }
 
 export async function openSavingsAccount(data: {
@@ -92,7 +101,7 @@ export async function openSavingsAccount(data: {
 }) {
   const session = await getSession()
   const role = session.user.role as string
-  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") throw new Error("Forbidden: requires branch manager or higher")
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER" && role !== "ADMIN") throw new Error("Forbidden: requires branch manager or higher")
   // @ts-ignore
   return _openSavingsAccount(data)
 }
@@ -123,7 +132,7 @@ async function _openSavingsAccount(data: {
   })
 
   revalidatePath(`/app/members/${data.memberId}`)
-  return { success: true, account }
+  return { success: true, account: { ...account, balance: account.balance.toString() } }
 }
 
 export async function postSavingsTransaction(data: {
@@ -134,7 +143,7 @@ export async function postSavingsTransaction(data: {
 }) {
   const session = await getSession()
   const role = session.user.role as string
-  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") throw new Error("Forbidden: requires branch manager or higher")
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER" && role !== "ADMIN") throw new Error("Forbidden: requires branch manager or higher")
   // @ts-ignore
   return _postSavingsTransaction(data)
 }
