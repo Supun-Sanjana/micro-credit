@@ -23,7 +23,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         
         // --- ACCOUNTING ---
         const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
-        const receivableAcc = await getAccountByCode(dal.organizationId, '1100')
+        const { balancesFromLoan } = await import("@/lib/payment-allocation")
+        const balances = balancesFromLoan(loan as any)
+        const receivableAcc = await getAccountByCode(dal.organizationId, '1100', tx)
+        const cashAcc = await getAccountByCode(dal.organizationId, '1000', tx)
+        const interestAcc = await getAccountByCode(dal.organizationId, '4000', tx)
+        
         const loanMember = await tx.member.findUnique({ where: { id: loan.memberId }, include: { centre: true }})
         const branchId = loanMember?.centre.branchId
 
@@ -37,9 +42,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           sourceId: newLoan.id,
           tx,
           lines: [
-            { accountId: receivableAcc.id, debit: loan.outstanding, credit: 0 },
-            { accountId: receivableAcc.id, debit: 0, credit: loan.outstanding }
-          ]
+            { accountId: receivableAcc.id, debit: 0, credit: balances.PRINCIPAL },
+            { accountId: interestAcc.id, debit: 0, credit: balances.INTEREST },
+            { accountId: receivableAcc.id, debit: terms.loanAmount, credit: 0 },
+            { accountId: cashAcc.id, debit: 0, credit: amount.minus(loan.outstanding) }          ]
         })
 
         // --- NOTIFICATION ---
@@ -71,8 +77,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         
         // --- ACCOUNTING ---
         const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
-        const expenseAcc = await getAccountByCode(dal.organizationId, '5000')
-        const receivableAcc = await getAccountByCode(dal.organizationId, '1100')
+        const expenseAcc = await getAccountByCode(dal.organizationId, '5000', tx)
+        const receivableAcc = await getAccountByCode(dal.organizationId, '1100', tx)
         
         // We need branchId
         const loanMember = await tx.member.findUnique({ where: { id: loan.memberId }, include: { centre: true }})
@@ -102,8 +108,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         
         // --- ACCOUNTING ---
         const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
-        const cashAcc = await getAccountByCode(dal.organizationId, '1000')
-        const expenseAcc = await getAccountByCode(dal.organizationId, '5000')
+        const cashAcc = await getAccountByCode(dal.organizationId, '1000', tx)
+        const expenseAcc = await getAccountByCode(dal.organizationId, '5000', tx)
         
         const loanMember = await tx.member.findUnique({ where: { id: loan.memberId }, include: { centre: true }})
         const branchId = loanMember?.centre.branchId

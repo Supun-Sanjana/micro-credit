@@ -129,11 +129,11 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
 
   // 8. Post Accounting Journal
   const cashAccountCode = params.method === "BANK_TRANSFER" ? "1001" : "1000"
-  const cashAccount = await getAccountByCode(params.organizationId, cashAccountCode)
-  const principalAcc = await getAccountByCode(params.organizationId, "1100")
-  const interestAcc = await getAccountByCode(params.organizationId, "4000")
-  const feeAcc = await getAccountByCode(params.organizationId, "4010")
-  const penaltyAcc = await getAccountByCode(params.organizationId, "4020")
+  const cashAccount = await getAccountByCode(params.organizationId, cashAccountCode, tx)
+  const principalAcc = await getAccountByCode(params.organizationId, "1100", tx)
+  const interestAcc = await getAccountByCode(params.organizationId, "4000", tx)
+  const feeAcc = await getAccountByCode(params.organizationId, "4010", tx)
+  const penaltyAcc = await getAccountByCode(params.organizationId, "4020", tx)
 
   if (!cashAccount || !principalAcc || !interestAcc || !feeAcc || !penaltyAcc) {
     throw new Error("Required accounting codes not found for repayment posting")

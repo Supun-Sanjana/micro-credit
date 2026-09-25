@@ -1,3 +1,4 @@
+import { addDays, addMonths } from "date-fns"
 "use server"
 
 import { getScopedDal } from "@/lib/dal"
@@ -169,18 +170,28 @@ export async function executeLoanMigration(validRows: any[]) {
       })
 
       // Generate remaining schedule rows
-      const schedules = []
-      let currentDate = new Date()
-      for (let i = 1; i <= weeksRemaining; i++) {
-        currentDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-        schedules.push({
-          loanId: loan.id,
-          instalmentNumber: product.numberOfWeeks - weeksRemaining + i,
-          scheduledDate: currentDate,
-          scheduledAmount: loan.weeklyRental,
-          isPaid: false
-        })
-      }
+        const schedules = []
+        let currentDate = new Date()
+        const frequency = product.repaymentFrequency || 'WEEKLY'
+        for (let i = 1; i <= weeksRemaining; i++) {
+          if (frequency === 'DAILY') {
+            currentDate = addDays(currentDate, 1)
+          } else if (frequency === 'WEEKLY') {
+            currentDate = addDays(currentDate, 7)
+          } else if (frequency === 'BIWEEKLY') {
+            currentDate = addDays(currentDate, 14)
+          } else if (frequency === 'MONTHLY') {
+            currentDate = addMonths(currentDate, 1)
+          }
+          
+          schedules.push({
+            loanId: loan.id,
+            instalmentNumber: product.numberOfWeeks - weeksRemaining + i,
+            scheduledDate: currentDate,
+            scheduledAmount: loan.weeklyRental,
+            isPaid: false
+          })
+        }
 
       if (schedules.length > 0) {
         await tx.repaymentSchedule.createMany({ data: schedules })
@@ -194,8 +205,8 @@ export async function executeLoanMigration(validRows: any[]) {
     // Debit 1100 (Loan Receivable)
     // Credit 3900 (Opening Balances Equity) - or equivalent
     try {
-      const receivableAccount = await getAccountByCode(dal.organizationId, '1100')
-      let equityAccount = await getAccountByCode(dal.organizationId, '3900')
+      const receivableAccount = await getAccountByCode(dal.organizationId, '1100', tx)
+      let equityAccount = await getAccountByCode(dal.organizationId, '3900', tx)
       
       if (!equityAccount) {
          // Create it if it doesn't exist

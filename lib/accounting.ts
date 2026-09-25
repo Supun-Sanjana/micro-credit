@@ -35,6 +35,17 @@ export async function postJournalEntry(params: PostJournalParams): Promise<Journ
     throw new Error(`Journal entry does not balance. Debits: ${totalDebit.toString()}, Credits: ${totalCredit.toString()}`)
   }
 
+  // 1.5 Validate Accounting Period
+  if (params.periodId) {
+    const period = await db.accountingPeriod.findUnique({ where: { id: params.periodId } })
+    if (!period || period.organizationId !== params.organizationId) {
+      throw new Error('Invalid accounting period')
+    }
+    if (period.status === 'CLOSED') {
+      throw new Error(`Cannot post to closed accounting period`)
+    }
+  }
+
   // 2. Validate all accounts belong to organization
   const accountIds = params.lines.map(l => l.accountId)
   const accounts = await db.chartOfAccount.findMany({
@@ -78,8 +89,9 @@ export async function postJournalEntry(params: PostJournalParams): Promise<Journ
 /**
  * Helper to fetch a standard account by code. Useful for generic posting templates.
  */
-export async function getAccountByCode(organizationId: string, code: string) {
-  const account = await prisma.chartOfAccount.findUnique({
+export async function getAccountByCode(organizationId: string, code: string, tx?: any) {
+  const db = tx || prisma
+  const account = await db.chartOfAccount.findUnique({
     where: {
       organizationId_code: {
         organizationId,

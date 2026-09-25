@@ -1,3 +1,4 @@
+import { addDays, addMonths } from "date-fns"
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 import { calculateLoanTerms } from "@/lib/calc-engine"
@@ -116,23 +117,35 @@ export async function PUT(
       const grantedDate = new Date(json.grantedDate || new Date())
       const schedules: any[] = []
       
-      // Generate exactly N rows, 7 days apart
-      let currentDate = new Date(grantedDate)
-      for (let i = 1; i <= terms.numberOfWeeks; i++) {
-        currentDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000)
-        
-        let amount = terms.weeklyRental
-        if (i === terms.numberOfWeeks) {
-          amount = terms.finalPayment // Use the exact final payment to absorb pennies
+      const frequency = loan.loanProduct.repaymentFrequency || 'WEEKLY'
+        if (frequency === 'CUSTOM') {
+          throw new Error("CUSTOM repayment frequency is not yet supported")
         }
 
-        schedules.push({
-          instalmentNumber: i,
-          scheduledDate: currentDate,
-          scheduledAmount: amount,
-          isPaid: false
-        })
-      }
+        let currentDate = new Date(grantedDate)
+        for (let i = 1; i <= terms.numberOfInstallments; i++) {
+          if (frequency === 'DAILY') {
+            currentDate = addDays(currentDate, 1)
+          } else if (frequency === 'WEEKLY') {
+            currentDate = addDays(currentDate, 7)
+          } else if (frequency === 'BIWEEKLY') {
+            currentDate = addDays(currentDate, 14)
+          } else if (frequency === 'MONTHLY') {
+            currentDate = addMonths(currentDate, 1)
+          }
+          
+          let amount = terms.installmentAmount
+          if (i === terms.numberOfInstallments) {
+            amount = terms.finalPayment // Use the exact final payment to absorb pennies
+          }
+  
+          schedules.push({
+            instalmentNumber: i,
+            scheduledDate: currentDate,
+            scheduledAmount: amount,
+            isPaid: false
+          })
+        }
 
       const updated = await dal.prisma.$transaction(async (tx) => {
         // Acquire row lock
@@ -156,8 +169,8 @@ export async function PUT(
 
         // POST JOURNAL ENTRY for Disbursement (Debit Loan Receivable, Credit Cash)
         const { postJournalEntry, getAccountByCode } = await import("@/lib/accounting")
-        const receivableAccount = await getAccountByCode(dal.organizationId, '1100')
-        const cashAccount = await getAccountByCode(dal.organizationId, '1000')
+        const receivableAccount = await getAccountByCode(dal.organizationId, '1100', tx)
+        const cashAccount = await getAccountByCode(dal.organizationId, '1000', tx)
 
         if (!receivableAccount || !cashAccount) throw new Error("Missing accounting codes for disbursement");
 

@@ -180,8 +180,8 @@ export async function POST(request: Request) {
            })
            
            // Accounting
-           const cashAcc = await getAccountByCode(dal.organizationId, '1000')
-           const compSavAcc = await getAccountByCode(dal.organizationId, '2000')
+           const cashAcc = await getAccountByCode(dal.organizationId, '1000', tx)
+           const compSavAcc = await getAccountByCode(dal.organizationId, '2000', tx)
            await postJournalEntry({
               organizationId: dal.organizationId,
               branchId: undefined, // we'll rely on dal scope if needed, or skip branchId for savings for now
@@ -218,8 +218,8 @@ export async function POST(request: Request) {
            })
            
            // Accounting
-           const cashAcc = await getAccountByCode(dal.organizationId, '1000')
-           const volSavAcc = await getAccountByCode(dal.organizationId, '2010')
+           const cashAcc = await getAccountByCode(dal.organizationId, '1000', tx)
+           const volSavAcc = await getAccountByCode(dal.organizationId, '2010', tx)
            await postJournalEntry({
               organizationId: dal.organizationId,
               branchId: undefined, 
