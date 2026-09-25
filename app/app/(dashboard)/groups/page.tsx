@@ -88,24 +88,18 @@ function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
 }
 
 export default function GroupsPage() {
-  const [groups, setGroups] = useState<any[]>([])
-  const [centres, setCentres] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [centreFilter, setCentreFilter] = useState("")
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true)
-      const [gr, cr] = await Promise.all([fetch("/api/groups"), fetch("/api/centres")])
-      if (gr.ok) setGroups(await gr.json())
-      if (cr.ok) setCentres(await cr.json())
-    } finally { setIsLoading(false) }
-  }
-  useEffect(() => { fetchData() }, [])
+  const queryClient = useQueryClient()
+  const { data: groupsRes, isLoading } = useQuery({ queryKey: ['groups'], queryFn: async () => (await fetch('/api/groups')).json() })
+  const groups = Array.isArray(groupsRes?.data) ? groupsRes.data : Array.isArray(groupsRes) ? groupsRes : []
+  
+  const { data: centresRes } = useQuery({ queryKey: ['centres'], queryFn: async () => (await fetch('/api/centres')).json(), staleTime: 600000 })
+  const centres = Array.isArray(centresRes?.data) ? centresRes.data : Array.isArray(centresRes) ? centresRes : []
 
-  const filtered = groups.filter(g => {
+  const filtered = groups.filter((g: any) => {
     const q = search.toLowerCase()
     const matchSearch = !q || (g.name || "").toLowerCase().includes(q) || String(g.groupNumber).includes(q)
     const matchCentre = !centreFilter || g.centreId === centreFilter
@@ -178,7 +172,7 @@ export default function GroupsPage() {
           </table>
         </div>
       </div>
-      <AddGroupDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} centres={centres} onSuccess={() => {}} />
+      <AddGroupDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} centres={centres} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['groups'] })} />
     </div>
   )
 }

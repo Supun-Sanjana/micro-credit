@@ -99,31 +99,25 @@ function AddCentreDrawer({ open, onClose, branches, officers, onSuccess }: any) 
 }
 
 export default function CentresPage() {
-  const [centres, setCentres] = useState<any[]>([])
-  const [branches, setBranches] = useState<Branch[]>([])
-  const [officers, setOfficers] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [search, setSearch] = useState("")
   const [branchFilter, setBranchFilter] = useState("")
+  const [page, setPage] = useState(1)
+  const limit = 50
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true)
-      const [centresRes, branchesRes, usersRes] = await Promise.all([
-        fetch('/api/centres'), fetch('/api/branches'), fetch('/api/team')
-      ])
-      if (centresRes.ok) setCentres(await centresRes.json())
-      if (branchesRes.ok) setBranches(await branchesRes.json())
-      if (usersRes.ok) {
-        const users = await usersRes.json()
-        setOfficers(users.filter((u: any) => u.role === "USER" || u.role === "FIELD_OFFICER"))
-      }
-    } finally { setIsLoading(false) }
-  }
-  useEffect(() => { fetchData() }, [])
+  const queryClient = useQueryClient()
+  const { data: centresRes, isLoading, isFetching } = useQuery({ queryKey: ['centres', page, limit], queryFn: async () => (await fetch(`/api/centres?page=${page}&limit=${limit}`)).json() })
+  const centres = centresRes?.data || centresRes || []
+  const total = centresRes?.meta?.total || centres.length
+  const totalPages = centresRes?.meta?.totalPages || 1
 
-  const filtered = centres.filter(c => {
+  const { data: branchesRes } = useQuery({ queryKey: ['branches'], queryFn: async () => (await fetch('/api/branches')).json(), staleTime: 600000 })
+  const branches = branchesRes?.data || branchesRes || []
+
+  const { data: officersRes } = useQuery({ queryKey: ['team'], queryFn: async () => { const res = await fetch('/api/team'); const users = await res.json(); return users.filter((u: any) => u.role === "USER" || u.role === "FIELD_OFFICER") }, staleTime: 600000 })
+  const officers = officersRes || []
+
+  const filtered = centres.filter((c: any) => {
     const q = search.toLowerCase()
     const matchSearch = !q || (c.name || "").toLowerCase().includes(q) || (c.centreCode || "").toLowerCase().includes(q)
     const matchBranch = !branchFilter || c.branchId === branchFilter
@@ -215,7 +209,7 @@ export default function CentresPage() {
           </table>
         </div>
       </div>
-      <AddCentreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} branches={branches} officers={officers} onSuccess={() => {}} />
+      <AddCentreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} branches={branches} officers={officers} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['centres'] })} />
     </div>
   )
 }
