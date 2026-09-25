@@ -169,7 +169,7 @@ export default function CentresPage() {
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={5} className="py-20 text-center text-slate-400">No centres found</td></tr>
               ) : filtered.map((c: any) => {
-                const branch = branches.find(b => b.id === c.branchId)
+                const branch = branches.find((b: any) => b.id === c.branchId)
                 return (
                   <tr key={c.id} className="hover:bg-gray-50/70 transition-colors group">
                     <td className="py-3.5 px-5">
