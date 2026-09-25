@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server"
 import { getScopedDal } from "@/lib/dal"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const dal = await getScopedDal()
+    const { searchParams } = new URL(request.url)
+    const where: any = { branch: { organizationId: dal.organizationId } }
     
-    // Fetch centres where branch belongs to user's org
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "50")
     const skip = (page - 1) * limit
@@ -25,8 +26,6 @@ export async function GET() {
       data: centres,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
     })
-    
-    
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 401 })
   }
