@@ -1,8 +1,9 @@
-"use client"
+const fs = require('fs');
+const code = `"use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Search, Plus, X, ChevronDown, MapPin } from "lucide-react"
+import { Search, Plus, X, ChevronDown, MapPin, Users, Hash } from "lucide-react"
 
 function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
   const [form, setForm] = useState({ centreId: "", groupNumber: "", name: "", meetingDay: "", meetingTime: "" })
@@ -32,8 +33,8 @@ function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
 
   return (
     <>
-      <div className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
-      <aside className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={\`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 \${open ? "opacity-100" : "opacity-0 pointer-events-none"}\`} onClick={onClose} />
+      <aside className={\`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out \${open ? "translate-x-0" : "translate-x-full"}\`}>
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div><h2 className="text-[17px] font-semibold text-navy-900">Create Group</h2><p className="text-[13px] text-slate-500 mt-0.5">Add a new member group</p></div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
@@ -44,7 +45,7 @@ function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
           <div className="flex flex-col gap-1.5">
             <label className="text-[13px] font-medium text-slate-700">Centre <span className="text-danger-500">*</span></label>
             <div className="relative">
-              <select required value={form.centreId} onChange={e => setForm({...form, centreId: e.target.value})} className={`${inputCls} appearance-none pr-10`}>
+              <select required value={form.centreId} onChange={e => setForm({...form, centreId: e.target.value})} className={\`\${inputCls} appearance-none pr-10\`}>
                 <option value="" disabled>Select centre...</option>
                 {centres.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -115,7 +116,7 @@ export default function GroupsPage() {
     <div className="flex flex-col h-full">
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Groups</h1>
+          <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Groups Directory</h1>
           <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${groups.length} groups across ${centres.length} centres`}</p>
         </div>
         <button onClick={() => setDrawerOpen(true)} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
@@ -162,15 +163,9 @@ export default function GroupsPage() {
                     </Link>
                     <p className="text-[12px] text-slate-400 mt-0.5">Group {g.groupNumber}</p>
                   </td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">
-                     <span className="inline-flex items-center gap-1.5"><MapPin className="w-3 h-3 text-slate-400" />{g.centre?.name || "â€”"}</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{g.meetingDay ? `${g.meetingDay} ${g.meetingTime || ''}` : "â€”"}</td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">
-                    <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-navy-50 text-navy-700 px-2.5 py-0.5 rounded-full">
-                      {g.memberships?.length || 0} Members
-                    </span>
-                  </td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{g.centre?.name || "—"}</td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{g.meetingDay ? `${g.meetingDay} ${g.meetingTime || ''}` : "—"}</td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{g.memberships?.length || 0}</td>
                 </tr>
               ))}
             </tbody>
@@ -181,3 +176,6 @@ export default function GroupsPage() {
     </div>
   )
 }
+`
+fs.writeFileSync('app/app/(dashboard)/groups/page.tsx', code);
+console.log('Groups done');

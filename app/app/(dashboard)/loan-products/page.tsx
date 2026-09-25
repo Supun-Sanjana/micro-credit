@@ -2,340 +2,208 @@
 
 import { useState, useEffect } from "react"
 import { LoanProduct } from "@/lib/types"
+import { Search, Plus, X, Box, MoreHorizontal, Edit, Trash2 } from "lucide-react"
 
-// Extended type to support UI requirements before backend is updated
 interface ExtendedLoanProduct extends LoanProduct {
-  interestType?: "FLAT" | "REDUCING";
-  rate?: number;
-  docFee?: number;
-  insuranceFee?: number;
-  penaltyRate?: number;
+  interestType?: "FLAT" | "REDUCING"; rate?: number; docFee?: number; insuranceFee?: number; penaltyRate?: number;
+}
+
+function AddProductDrawer({ open, onClose, onSuccess, editProduct }: any) {
+  const [form, setForm] = useState({ name: "", loanType: "QUICK" as any, numberOfWeeks: 13, interestType: "FLAT" as any, rate: 0, docFee: 0, insuranceFee: 0, penaltyRate: 0 })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState("")
+  
+  useEffect(() => {
+    if (open) {
+      if (editProduct) {
+        setForm({ name: editProduct.name, loanType: editProduct.loanType, numberOfWeeks: editProduct.numberOfWeeks, interestType: editProduct.interestType || "FLAT", rate: editProduct.rate || 0, docFee: editProduct.docFee || 0, insuranceFee: editProduct.insuranceFee || 0, penaltyRate: editProduct.penaltyRate || 0 })
+      } else {
+        setForm({ name: "", loanType: "QUICK", numberOfWeeks: 13, interestType: "FLAT", rate: 0, docFee: 0, insuranceFee: 0, penaltyRate: 0 })
+      }
+      setError("")
+    }
+  }, [open, editProduct])
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault()
+    try {
+      setSubmitting(true); setError("")
+      const payload = { ...form, multiplier: 1.17, calculationMethod: "FLAT", interestMethod: "FLAT", repaymentFrequency: "WEEKLY", isActive: true }
+      const res = await fetch(editProduct ? `/api/loan-products/${editProduct.id}` : '/api/loan-products', {
+        method: editProduct ? 'PUT' : 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to save product") }
+      onSuccess(); onClose()
+    } catch (err: any) { setError(err.message) }
+    finally { setSubmitting(false) }
+  }
+
+  const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10 transition-all"
+
+  return (
+    <>
+      <div className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
+      <aside className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div><h2 className="text-[17px] font-semibold text-navy-900">{editProduct ? 'Edit Product' : 'Create Product'}</h2><p className="text-[13px] text-slate-500 mt-0.5">Configure lending terms</p></div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+          {error && <div className="text-[13px] text-danger-600 bg-danger-50 rounded-lg px-4 py-3 border border-danger-100">{error}</div>}
+          
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-slate-700">Product Name <span className="text-danger-500">*</span></label>
+            <input required placeholder="E.g. Quick 13W" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className={inputCls} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-700">Category</label>
+              <select value={form.loanType} onChange={e => setForm({...form, loanType: e.target.value})} className={inputCls}>
+                <option value="QUICK">QUICK</option><option value="BUSINESS">BUSINESS</option><option value="MICRO">MICRO</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-700">Weeks <span className="text-danger-500">*</span></label>
+              <input required type="number" min="1" value={form.numberOfWeeks} onChange={e => setForm({...form, numberOfWeeks: parseInt(e.target.value)||0})} className={inputCls} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-700">Interest Type</label>
+              <select value={form.interestType} onChange={e => setForm({...form, interestType: e.target.value})} className={inputCls}>
+                <option value="FLAT">FLAT</option><option value="REDUCING">REDUCING</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-700">Rate (%) <span className="text-danger-500">*</span></label>
+              <input required type="number" step="0.1" value={form.rate} onChange={e => setForm({...form, rate: parseFloat(e.target.value)||0})} className={inputCls} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-700">Doc Fee</label>
+              <input type="number" value={form.docFee} onChange={e => setForm({...form, docFee: parseFloat(e.target.value)||0})} className={inputCls} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] font-medium text-slate-700">Insurance Fee</label>
+              <input type="number" value={form.insuranceFee} onChange={e => setForm({...form, insuranceFee: parseFloat(e.target.value)||0})} className={inputCls} />
+            </div>
+          </div>
+
+          <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-200 text-[14px] font-medium text-slate-600 hover:bg-gray-50 transition-colors">Cancel</button>
+            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? "Saving..." : (editProduct ? "Update" : "Create")}</button>
+          </div>
+        </form>
+      </aside>
+    </>
+  )
 }
 
 export default function LoanProductsPage() {
   const [products, setProducts] = useState<ExtendedLoanProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  
-  const [isEditing, setIsEditing] = useState(false)
-  const [currentId, setCurrentId] = useState<string | null>(null)
-  const [formData, setFormData] = useState({ 
-    name: "", 
-    loanType: "QUICK" as any, 
-    numberOfWeeks: 13,
-    interestType: "FLAT" as "FLAT" | "REDUCING",
-    rate: 0,
-    docFee: 0,
-    insuranceFee: 0,
-    penaltyRate: 0
-  })
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<ExtendedLoanProduct | null>(null)
+  const [search, setSearch] = useState("")
 
   const fetchProducts = async () => {
     try {
       setIsLoading(true)
       const res = await fetch('/api/loan-products')
-      if (res.ok) {
-        setProducts(await res.json())
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setIsLoading(false)
-    }
+      if (res.ok) setProducts(await res.json())
+    } finally { setIsLoading(false) }
   }
-
-  useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      setIsSubmitting(true)
-      
-      const payload = {
-        ...formData,
-        multiplier: 1.17, // Mock Decimal for API if required
-        calculationMethod: "FLAT",
-        interestMethod: "FLAT",
-        repaymentFrequency: "WEEKLY",
-        isActive: true,
-      }
-
-      if (isEditing && currentId) {
-        const res = await fetch(`/api/loan-products/${currentId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        if (res.ok) {
-          fetchProducts()
-          resetForm()
-        }
-      } else {
-        const res = await fetch('/api/loan-products', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        if (res.ok) {
-          fetchProducts()
-          resetForm()
-        }
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  useEffect(() => { fetchProducts() }, [])
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure?")) return
     try {
-      const res = await fetch(`/api/loan-products/${id}`, {
-        method: 'DELETE'
-      })
-      if (res.ok) {
-        fetchProducts()
-      }
-    } catch (err) {
-      console.error(err)
-    }
+      const res = await fetch(`/api/loan-products/${id}`, { method: 'DELETE' })
+      if (res.ok) fetchProducts()
+    } catch (err) {}
   }
 
-  const handleEdit = (product: ExtendedLoanProduct) => {
-    setIsEditing(true)
-    setCurrentId(product.id)
-    setFormData({
-      name: product.name,
-      loanType: product.loanType,
-      numberOfWeeks: product.numberOfWeeks,
-      interestType: product.interestType || "FLAT",
-      rate: product.rate || 0,
-      docFee: product.docFee || 0,
-      insuranceFee: product.insuranceFee || 0,
-      penaltyRate: product.penaltyRate || 0
-    })
-  }
-
-  const resetForm = () => {
-    setIsEditing(false)
-    setCurrentId(null)
-    setFormData({ 
-      name: "", loanType: "QUICK", numberOfWeeks: 13,
-      interestType: "FLAT", rate: 0, docFee: 0, insuranceFee: 0, penaltyRate: 0 
-    })
-  }
+  const filtered = products.filter(p => {
+    const q = search.toLowerCase()
+    return !q || p.name.toLowerCase().includes(q) || p.loanType.toLowerCase().includes(q)
+  })
 
   return (
-    <div className="flex flex-col gap-8 lg:gap-[48px]">
-      
-      {/* Hero Section */}
-      <div className="flex flex-col gap-4">
-        <h1 
-          className="text-[44px] leading-[1.3] text-navy-900 font-serif font-normal"
-          style={{ letterSpacing: '-0.66px' }}
-        >
-          Loan Products
-        </h1>
-        <p className="text-[17px] text-slate-500 max-w-[600px] leading-[1.35]">
-          Configure lending instruments, term duration, and interest schedules.
-        </p>
+    <div className="flex flex-col h-full">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Loan Products</h1>
+          <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${products.length} products configured`}</p>
+        </div>
+        <button onClick={() => { setEditingProduct(null); setDrawerOpen(true); }} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
+          <Plus className="w-4 h-4" /> Create Product
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-[48px]">
-        
-        {/* Form (Floating Product Artifact) */}
-        <div className="lg:col-span-4 h-fit">
-          <div className="bg-white rounded-[20px] shadow-subtle-3 p-[32px]">
-            <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">
-              {isEditing ? "Edit Product" : "New Product"}
-            </h2>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              
-              <div className="flex flex-col gap-2">
-                <label className="text-[15px] text-navy-900 font-sans ml-1">Product Name</label>
-                <input 
-                  required
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Quick 13W"
-                  className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 placeholder:text-slate-300 outline-none focus:border-navy-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-navy-900 font-sans ml-1">Category</label>
-                  <select 
-                    value={formData.loanType}
-                    onChange={e => setFormData({ ...formData, loanType: e.target.value as any })}
-                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 appearance-none"
-                  >
-                    <option value="QUICK">QUICK</option>
-                    <option value="BUSINESS">BUSINESS</option>
-                    <option value="MICRO">MICRO</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-navy-900 font-sans ml-1">Weeks</label>
-                  <input 
-                    required
-                    type="number"
-                    min="1"
-                    value={formData.numberOfWeeks}
-                    onChange={e => setFormData({ ...formData, numberOfWeeks: parseInt(e.target.value) || 0 })}
-                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 border-t border-[#ececec] pt-5">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-navy-900 font-sans ml-1">Interest Type</label>
-                  <select 
-                    value={formData.interestType}
-                    onChange={e => setFormData({ ...formData, interestType: e.target.value as any })}
-                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900 appearance-none"
-                  >
-                    <option value="FLAT">FLAT</option>
-                    <option value="REDUCING">REDUCING</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[15px] text-navy-900 font-sans ml-1">Rate (%)</label>
-                  <input 
-                    required
-                    type="number"
-                    step="0.1"
-                    value={formData.rate}
-                    onChange={e => setFormData({ ...formData, rate: parseFloat(e.target.value) || 0 })}
-                    className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 border-t border-[#ececec] pt-5">
-                <label className="text-[14px] font-sans text-slate-400 uppercase tracking-wider ml-1">
-                  Fees & Penalties
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[15px] text-navy-900 font-sans ml-1">Doc Fee</label>
-                    <input 
-                      type="number"
-                      value={formData.docFee}
-                      onChange={e => setFormData({ ...formData, docFee: parseFloat(e.target.value) || 0 })}
-                      className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[15px] text-navy-900 font-sans ml-1">Insurance</label>
-                    <input 
-                      type="number"
-                      value={formData.insuranceFee}
-                      onChange={e => setFormData({ ...formData, insuranceFee: parseFloat(e.target.value) || 0 })}
-                      className="bg-white border border-[#ececec] rounded-[16px] px-[16px] py-[14px] text-[16px] text-navy-900 outline-none focus:border-navy-900"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <button 
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 flex items-center justify-center bg-navy-900 text-white rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  {isSubmitting ? "Saving..." : (isEditing ? "Update" : "Create")}
-                </button>
-                {isEditing && (
-                  <button 
-                    type="button"
-                    onClick={resetForm}
-                    className="flex-1 flex items-center justify-center bg-transparent border border-navy-900 text-navy-900 rounded-full px-[20px] py-[14px] text-[16px] font-sans transition-opacity hover:opacity-70"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="relative flex-1 max-w-[480px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all" />
         </div>
-
-        {/* List (Neutral Card) */}
-        <div className="lg:col-span-8">
-          <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
-            <div className="w-full overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border/40">
-                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Name</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Category</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Terms</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal">Fees</th>
-                    <th className="pb-4 font-sans text-[15px] text-slate-500 font-normal text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-500">
-                        <div className="inline-block animate-spin w-5 h-5 border-2 border-navy-900 border-t-transparent rounded-full"></div>
-                      </td>
-                    </tr>
-                  ) : products.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center py-12 text-[15px] text-slate-500">
-                        No loan products configured.
-                      </td>
-                    </tr>
-                  ) : (
-                    products.map((product) => (
-                      <tr key={product.id} className="border-b border-border/40 last:border-0">
-                        <td className="py-5 pr-4 text-[16px] font-sans font-medium text-navy-900">
-                          {product.name}
-                        </td>
-                        <td className="py-5 pr-4">
-                           <span className="text-[14px] font-sans text-slate-400 uppercase tracking-wider">
-                             {product.loanType}
-                           </span>
-                        </td>
-                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-500">
-                          <div className="text-navy-900">{product.numberOfWeeks}W</div>
-                          <div className="text-[14px] mt-1">{product.rate || 0}% {product.interestType || "FLAT"}</div>
-                        </td>
-                        <td className="py-5 pr-4 text-[15px] font-sans text-slate-500">
-                          <div>Doc: {product.docFee || 0}</div>
-                          <div className="mt-1">Ins: {product.insuranceFee || 0}</div>
-                        </td>
-                        <td className="py-5 pl-4 text-right">
-                          <div className="flex items-center justify-end gap-4">
-                            <button 
-                              onClick={() => handleEdit(product)} 
-                              className="text-[15px] text-navy-900 hover:underline underline-offset-4"
-                            >
-                              Edit
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(product.id)} 
-                              className="text-[15px] text-brand-700 hover:underline underline-offset-4"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/80">
+                <th className="text-left py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Product</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Category</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Terms</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Fees</th>
+                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {isLoading ? (
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading products...</td></tr>
+              ) : filtered.length === 0 ? (
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400">No products found</td></tr>
+              ) : filtered.map(p => (
+                <tr key={p.id} className="hover:bg-gray-50/70 transition-colors group">
+                  <td className="py-3.5 px-5">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center flex-shrink-0 text-orange-700`}>
+                        <Box className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-[14px] font-semibold text-navy-900">{p.name}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4"><span className="text-[12px] font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full">{p.loanType}</span></td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">
+                    <div className="font-medium text-navy-900">{p.numberOfWeeks}W</div>
+                    <div className="text-[12px] mt-0.5 text-slate-500">{p.rate || 0}% {p.interestType || "FLAT"}</div>
+                  </td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">
+                    <div>Doc: LKR {p.docFee || 0}</div>
+                    <div className="text-[12px] mt-0.5 text-slate-500">Ins: LKR {p.insuranceFee || 0}</div>
+                  </td>
+                  <td className="py-3.5 px-5 text-right">
+                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => { setEditingProduct(p); setDrawerOpen(true); }} className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(p.id)} className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded-md transition-colors"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <AddProductDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} editProduct={editingProduct} onSuccess={fetchProducts} />
     </div>
   )
 }
