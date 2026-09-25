@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Centre, Branch } from "@/lib/types"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Search, Plus, X, ChevronDown, MapPin, Building2, UserCircle2 } from "lucide-react"
 
 function AddCentreDrawer({ open, onClose, branches, officers, onSuccess }: any) {
@@ -214,7 +215,7 @@ export default function CentresPage() {
           </table>
         </div>
       </div>
-      <AddCentreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} branches={branches} officers={officers} onSuccess={fetchData} />
+      <AddCentreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} branches={branches} officers={officers} onSuccess={() => {}} />
     </div>
   )
 }

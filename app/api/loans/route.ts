@@ -22,13 +22,27 @@ export async function GET(request: Request) {
     if (memberId) where.memberId = memberId
     if (status) where.status = status
 
-    const loans = await dal.prisma.loan.findMany({
-      where,
-      include: { member: true, loanProduct: true, guarantors: true },
-      orderBy: { createdAt: 'desc' }
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "10")
+    const skip = (page - 1) * limit
+
+    const [loans, total] = await Promise.all([
+      dal.prisma.loan.findMany({
+        where,
+        include: { member: true, loanProduct: true, guarantors: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit
+      }),
+      dal.prisma.loan.count({ where })
+    ])
+    
+    return NextResponse.json({
+      data: loans,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
     })
     
-    return NextResponse.json(loans)
+    
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 401 })
   }

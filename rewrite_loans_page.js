@@ -1,4 +1,9 @@
-"use client"
+const fs = require('fs');
+
+const file = 'app/app/(dashboard)/loans/page.tsx';
+let c = fs.readFileSync(file, 'utf8');
+
+const replacement = `"use client"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -15,7 +20,7 @@ export default function LoansPage() {
   const { data: loansRes, isLoading, error: fetchError, isFetching } = useQuery({
     queryKey: ['loans', page, limit],
     queryFn: async () => {
-      const res = await fetch(`/api/loans?page=${page}&limit=${limit}`)
+      const res = await fetch(\`/api/loans?page=\${page}&limit=\${limit}\`)
       if (!res.ok) throw new Error((await res.json()).error || "Could not load loans")
       return res.json()
     }
@@ -38,7 +43,7 @@ export default function LoansPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Loan Portfolio</h1>
-          <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${total} loans in portfolio`}</p>
+          <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : \`\${total} loans in portfolio\`}</p>
         </div>
         <Link href="/app/loans/new" className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
           <Plus className="w-4 h-4" /> New Application
@@ -54,7 +59,7 @@ export default function LoansPage() {
           </h2>
           <div className="flex flex-col gap-2">
             {pending.map(l => (
-              <Link key={l.id} href={`/app/loans/${l.id}`} className="bg-white px-4 py-3 rounded-lg shadow-sm border border-amber-100/50 flex justify-between items-center hover:border-amber-300 transition-colors">
+              <Link key={l.id} href={\`/app/loans/\${l.id}\`} className="bg-white px-4 py-3 rounded-lg shadow-sm border border-amber-100/50 flex justify-between items-center hover:border-amber-300 transition-colors">
                 <div className="flex flex-col">
                   <span className="text-[14px] font-medium text-navy-900">{l.member.name}</span>
                   <span className="text-[12px] text-slate-500">{l.loanProduct?.name || "Product unavailable"}</span>
@@ -96,15 +101,15 @@ export default function LoansPage() {
               ) : filtered.map(l => (
                 <tr key={l.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-3.5 px-5">
-                    <Link href={`/app/loans/${l.id}`} className="text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors">
+                    <Link href={\`/app/loans/\${l.id}\`} className="text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors">
                       {l.member.name}
                     </Link>
                   </td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{l.loanProduct?.name || "ï¿½"}</td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{l.loanProduct?.name || "—"}</td>
                   <td className="py-3.5 px-4 text-[13px] font-medium text-navy-900">LKR {Number(l.loanAmount).toLocaleString()}</td>
                   <td className="py-3.5 px-4 text-[13px] text-slate-600">LKR {Number(l.outstanding).toLocaleString()}</td>
                   <td className="py-3.5 px-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider ${l.status === 'ACTIVE' ? 'bg-success-50 text-success-700' : l.status === 'ARREARS' || l.status === 'DEFAULTED' ? 'bg-danger-50 text-danger-700' : 'bg-slate-100 text-slate-600'}`}>
+                    <span className={\`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider \${l.status === 'ACTIVE' ? 'bg-success-50 text-success-700' : l.status === 'ARREARS' || l.status === 'DEFAULTED' ? 'bg-danger-50 text-danger-700' : 'bg-slate-100 text-slate-600'}\`}>
                       {l.status}
                     </span>
                   </td>
@@ -140,4 +145,7 @@ export default function LoansPage() {
       </div>
     </div>
   )
-}
+}`
+
+fs.writeFileSync(file, replacement);
+console.log('done');

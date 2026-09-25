@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { LoanProduct } from "@/lib/types"
 import { Search, Plus, X, Box, MoreHorizontal, Edit, Trash2 } from "lucide-react"
 
@@ -125,7 +126,7 @@ export default function LoanProductsPage() {
     if (!confirm("Are you sure?")) return
     try {
       const res = await fetch(`/api/loan-products/${id}`, { method: 'DELETE' })
-      if (res.ok) fetchProducts()
+      if (res.ok) window.location.reload()
     } catch (err) {}
   }
 
@@ -203,7 +204,7 @@ export default function LoanProductsPage() {
           </table>
         </div>
       </div>
-      <AddProductDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} editProduct={editingProduct} onSuccess={fetchProducts} />
+      <AddProductDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} editProduct={editingProduct} onSuccess={() => {}} />
     </div>
   )
 }

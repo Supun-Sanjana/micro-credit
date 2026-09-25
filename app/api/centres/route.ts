@@ -6,15 +6,27 @@ export async function GET() {
     const dal = await getScopedDal()
     
     // Fetch centres where branch belongs to user's org
-    const centres = await dal.prisma.centre.findMany({
-      where: {
-        branch: { organizationId: dal.organizationId }
-      },
-      include: { branch: true, officer: true },
-      orderBy: [{ branchId: 'asc' }, { centreNumber: 'asc' }]
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "50")
+    const skip = (page - 1) * limit
+
+    const [centres, total] = await Promise.all([
+      dal.prisma.centre.findMany({
+        where,
+        include: { branch: true, officer: true },
+        orderBy: [{ branchId: 'asc' }, { centreCode: 'asc' }],
+        skip,
+        take: limit
+      }),
+      dal.prisma.centre.count({ where })
+    ])
+    
+    return NextResponse.json({
+      data: centres,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
     })
     
-    return NextResponse.json(centres)
+    
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 401 })
   }

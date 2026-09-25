@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Branch } from "@/lib/types"
 import { Search, Plus, X, Building, MapPin } from "lucide-react"
 
@@ -145,7 +146,7 @@ export default function BranchesPage() {
           </table>
         </div>
       </div>
-      <AddBranchDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSuccess={fetchData} />
+      <AddBranchDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSuccess={() => {}} />
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Search, Plus, X, ChevronDown, MapPin } from "lucide-react"
 
 function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
@@ -177,7 +178,7 @@ export default function GroupsPage() {
           </table>
         </div>
       </div>
-      <AddGroupDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} centres={centres} onSuccess={fetchData} />
+      <AddGroupDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} centres={centres} onSuccess={() => {}} />
     </div>
   )
 }

@@ -28,6 +28,7 @@ export const metadata: Metadata = {
 };
 
 import { OfflineSyncManager } from "@/components/OfflineSyncManager";
+import Providers from "@/components/providers/query-provider";
 
 export default function RootLayout({
   children,
@@ -37,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("h-full antialiased scroll-smooth", inter.variable, outfit.variable, instrumentSerif.variable, geistFallback.variable, geistMonoFallback.variable)}>
       <body className="min-h-full flex flex-col">
-        {children}
+        <Providers>{children}</Providers>
         <OfflineSyncManager />
       </body>
     </html>

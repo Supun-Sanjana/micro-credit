@@ -13,13 +13,27 @@ export async function GET(request: Request) {
     }
     if (centreId) where.centreId = centreId
 
-    const members = await dal.prisma.member.findMany({
-      where,
-      include: { centre: { include: { branch: true } } },
-      orderBy: { memberNumber: 'asc' }
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = parseInt(searchParams.get("limit") || "10")
+    const skip = (page - 1) * limit
+
+    const [members, total] = await Promise.all([
+      dal.prisma.member.findMany({
+        where,
+        include: { centre: { include: { branch: true } } },
+        orderBy: { memberNumber: 'asc' },
+        skip,
+        take: limit
+      }),
+      dal.prisma.member.count({ where })
+    ])
+    
+    return NextResponse.json({
+      data: members,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
     })
     
-    return NextResponse.json(members)
+    
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 401 })
   }
