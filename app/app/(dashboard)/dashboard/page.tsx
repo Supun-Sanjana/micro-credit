@@ -134,7 +134,7 @@ export default async function DashboardPage() {
   const totalSavings = savingsAccounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
 
   return (
-    <div className="flex flex-col gap-10 w-full max-w-7xl mx-auto">
+    <div className="flex flex-col gap-10 w-full h-full">
       <div>
         <h1 className="text-[28px] font-serif font-medium tracking-tight text-ink-black mb-1">
           Performance Overview

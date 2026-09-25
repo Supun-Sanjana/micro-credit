@@ -7,7 +7,7 @@ import {
   Menu, X, LogOut, LayoutDashboard, FileText, 
   Users, DollarSign, Settings, Building, MapPin, 
   Grid, Briefcase, ChevronDown, User as UserIcon,
-  RotateCcw, Bell, Database, ShieldCheck
+  RotateCcw, Bell, Database, ShieldCheck, AlertTriangle
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -60,7 +60,7 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         { href: "/app/loans", label: "Loans", icon: DollarSign },
         { href: "/app/collection", label: "Collection", icon: Briefcase },
         ...(!isFieldOfficer ? [{ href: "/app/documents", label: "Document Verification", icon: FileText }] : []),
-        ...(canViewFinance ? [{ href: "/app/risk", label: "Risk", icon: Bell }] : []),
+        ...(canViewFinance ? [{ href: "/app/risk", label: "Risk", icon: AlertTriangle }] : []),
       ],
     },
     ...(canViewFinance ? [
@@ -204,8 +204,10 @@ export function DashboardShell({ children, user, orgName }: DashboardShellProps)
         )}
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-6 md:py-[40px]">
-          {children}
+        <main className="flex-1 overflow-y-auto w-full px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          <div className="mx-auto w-full max-w-[1600px] h-full">
+            {children}
+          </div>
         </main>
       </div>
     </>
