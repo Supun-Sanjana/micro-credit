@@ -21,8 +21,9 @@ export function OfflineIndicator() {
   if (!isOffline) return null;
 
   return (
-    <div className="bg-red-500 text-white text-xs text-center p-1 w-full z-50">
-      🔴 Offline - Payments will be available when connection returns
+    <div className="bg-[#fce8e6] text-[#c5221f] border-b border-[#f9d2ce] text-[13px] font-medium text-center py-2 px-4 w-full z-50 flex items-center justify-center gap-2">
+      <span className="w-2 h-2 rounded-full bg-[#c5221f] animate-pulse" />
+      Working Offline - Data will sync automatically when online
     </div>
   );
 }
