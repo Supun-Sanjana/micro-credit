@@ -248,7 +248,7 @@ export default function MembersPage() {
         <div>
           <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Members</h1>
           <p className="text-[14px] text-slate-500 mt-0.5">
-            {isLoading ? "Loading�" : `${total} registered member${total !== 1 ? "s" : ""} across ${centres.length} centre${centres.length !== 1 ? "s" : ""}`}
+            {isLoading ? "Loading-" : `${total} registered member${total !== 1 ? "s" : ""} across ${centres.length} centre${centres.length !== 1 ? "s" : ""}`}
           </p>
         </div>
         <button
@@ -265,7 +265,7 @@ export default function MembersPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
-            placeholder="Search by name, NIC, or member no�"
+            placeholder="Search by name, NIC, or member no-"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all"
@@ -319,7 +319,7 @@ export default function MembersPage() {
                   <td colSpan={6} className="py-20 text-center">
                     <div className="inline-flex flex-col items-center gap-3 text-slate-400">
                       <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-[14px]">Loading members�</span>
+                      <span className="text-[14px]">Loading members-</span>
                     </div>
                   </td>
                 </tr>
@@ -371,7 +371,7 @@ export default function MembersPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <Link href={`/app/members/${m.id}`} className="text-[13px] font-mono text-brand-600 hover:text-brand-700 hover:underline transition-colors">
-                          {m.memberNumber ?? "�"}
+                          {m.memberNumber ?? "-"}
                         </Link>
                       </td>
                       <td className="py-3.5 px-4">
@@ -381,7 +381,7 @@ export default function MembersPage() {
                             {centre.name}
                           </span>
                         ) : (
-                          <span className="text-[13px] text-slate-300">�</span>
+                          <span className="text-[13px] text-slate-300">-</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
@@ -390,11 +390,11 @@ export default function MembersPage() {
                             G{m.groupNumber}
                           </span>
                         ) : (
-                          <span className="text-[13px] text-slate-300">�</span>
+                          <span className="text-[13px] text-slate-300">-</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="text-[13px] font-mono text-slate-500">{m.nic || "�"}</span>
+                        <span className="text-[13px] font-mono text-slate-500">{m.nic || "-"}</span>
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-success-50 text-success-700 px-2.5 py-1 rounded-full">

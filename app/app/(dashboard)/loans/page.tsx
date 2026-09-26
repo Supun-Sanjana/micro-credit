@@ -100,7 +100,7 @@ export default function LoansPage() {
                       {l.member.name}
                     </Link>
                   </td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{l.loanProduct?.name || "�"}</td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{l.loanProduct?.name || "-"}</td>
                   <td className="py-3.5 px-4 text-[13px] font-medium text-navy-900">LKR {Number(l.loanAmount).toLocaleString()}</td>
                   <td className="py-3.5 px-4 text-[13px] text-slate-600">LKR {Number(l.outstanding).toLocaleString()}</td>
                   <td className="py-3.5 px-4">
