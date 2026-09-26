@@ -28,6 +28,9 @@ export const authConfig = {
         token.organizationId = (user as any).organizationId
         token.branchId = (user as any).branchId
       }
+      if (token.role === "ADMIN") {
+        token.role = "SYSTEM_ADMIN"
+      }
       return token
     },
     async session({ session, token }) {
