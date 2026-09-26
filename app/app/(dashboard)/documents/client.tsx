@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -80,8 +81,10 @@ export function DocumentsClient() {
             ) : documents.map(doc => (
               <TableRow key={doc.id}>
                 <TableCell>
-                  <div className="font-medium text-gray-900">{doc.member.name}</div>
-                  <div className="text-xs text-gray-500">{doc.member.memberNumber}</div>
+                  <Link href={`/app/members/${doc.memberId}`} className="font-medium text-navy-900 hover:text-brand-600 transition-colors block">
+                    {doc.member.name}
+                  </Link>
+                  <div className="text-xs text-gray-500 mt-0.5">{doc.member.memberNumber}</div>
                 </TableCell>
                 <TableCell>{doc.type}</TableCell>
                 <TableCell>
