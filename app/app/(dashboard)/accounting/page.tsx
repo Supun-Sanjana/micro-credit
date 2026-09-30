@@ -50,16 +50,28 @@ export default async function AccountingPage({
     }
   }
 
+  const defaultTab =
+    params?.startDate || params?.endDate
+      ? "journal"
+      : params?.asOfDate
+      ? "trial"
+      : "chart"
+
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6 bg-slate-50 min-h-screen">
-      <div className="flex items-center justify-between space-y-2">
-        <h1 className="text-3xl font-serif font-bold tracking-tight">Accounting</h1>
+    <div className="flex-1 space-y-6 w-full">
+      <div>
+        <h1 className="text-[28px] font-serif font-medium tracking-tight text-navy-900">
+          Accounting
+        </h1>
+        <p className="text-[15px] text-slate-500 mt-1">
+          General ledger, chart of accounts, journal entries, and balance sheets.
+        </p>
       </div>
 
-      <Tabs defaultValue="chart" className="space-y-4">
-        <TabsList>
+      <Tabs defaultValue={defaultTab} className="w-full space-y-6">
+        <TabsList className="mb-2">
           <TabsTrigger value="chart">Chart of Accounts</TabsTrigger>
-          <TabsTrigger value="journal">Journal</TabsTrigger>
+          <TabsTrigger value="journal">Journal Entries</TabsTrigger>
           <TabsTrigger value="trial">Trial Balance</TabsTrigger>
         </TabsList>
 

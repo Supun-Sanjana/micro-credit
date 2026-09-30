@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,6 +5,882 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id                      String                       @id @default(cuid())
+  name                    String
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+  accountingPeriods       AccountingPeriod[]
+  approvalRules           ApprovalRule[]
+  auditLogs               AuditLog[]
+  branches                Branch[]
+  chartOfAccounts         ChartOfAccount[]
+  collectionAttempts      CollectionAttempt[]
+  fieldOfficerAssignments FieldOfficerAssignment[]
+  reconciliations         FieldOfficerReconciliation[]
+  groups                  Group[]
+  journalEntries          JournalEntry[]
+  loanProducts            LoanProduct[]
+  loanRepayments          LoanRepayment[]
+  members                 Member[]
+  memberDocuments         MemberDocument[]
+  subscription            Subscription?
+  users                   User[]
+}
+
+model User {
+  id                        String                       @id @default(cuid())
+  email                     String                       @unique
+  password                  String?
+  name                      String?
+  role                      Role                         @default(FIELD_OFFICER)
+  organizationId            String
+  createdAt                 DateTime                     @default(now())
+  updatedAt                 DateTime                     @updatedAt
+  branchId                  String?
+  accounts                  Account[]
+  auditLogs                 AuditLog[]
+  centres                   Centre[]
+  collectionAttempts        CollectionAttempt[]
+  DocumentVerification      DocumentVerification[]
+  fieldOfficerAssignments   FieldOfficerAssignment[]
+  reconciliations           FieldOfficerReconciliation[]
+  MemberDocument            MemberDocument[]
+  approvedPaymentReversals  PaymentReversal[]            @relation("ReversalApprovedBy")
+  requestedPaymentReversals PaymentReversal[]            @relation("ReversalRequestedBy")
+  sessions                  Session[]
+  branch                    Branch?                      @relation(fields: [branchId], references: [id])
+  organization              Organization                 @relation(fields: [organizationId], references: [id])
+  notificationPreferences   UserNotificationPreference[]
+
+  @@index([organizationId])
+}
+
+model Branch {
+  id                      String                       @id @default(cuid())
+  code                    String                       @unique
+  name                    String
+  address                 String?
+  organizationId          String
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
+  organization            Organization                 @relation(fields: [organizationId], references: [id])
+  cashFlows               CashFlow[]
+  centres                 Centre[]
+  ChartOfAccount          ChartOfAccount[]
+  fieldOfficerAssignments FieldOfficerAssignment[]
+  reconciliations         FieldOfficerReconciliation[]
+  groups                  Group[]
+  JournalEntry            JournalEntry[]
+  users                   User[]
+}
+
+model Centre {
+  id                      String                   @id @default(cuid())
+  centreNumber            Int
+  centreCode              String                   @unique
+  name                    String
+  isMicro                 Boolean                  @default(false)
+  branchId                String
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  officerId               String?
+  branch                  Branch                   @relation(fields: [branchId], references: [id])
+  officer                 User?                    @relation(fields: [officerId], references: [id])
+  fieldOfficerAssignments FieldOfficerAssignment[]
+  groups                  Group[]
+  members                 Member[]
+
+  @@index([branchId])
+  @@index([officerId])
+}
+
+model Member {
+  id                String             @id @default(cuid())
+  memberNumber      String
+  name              String
+  nic               String?
+  address           String?
+  contact1          String?
+  contact2          String?
+  groupNumber       Int?
+  centreId          String
+  organizationId    String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  creditAssessments CreditAssessment[]
+  financialProfiles FinancialProfile[]
+  groupMemberships  GroupMembership[]
+  guarantorFor      Guarantor[]
+  loans             Loan[]
+  centre            Centre             @relation(fields: [centreId], references: [id])
+  organization      Organization       @relation(fields: [organizationId], references: [id])
+  documents         MemberDocument[]
+  savingsAccounts   SavingsAccount[]
+
+  @@unique([memberNumber, organizationId])
+  @@index([centreId])
+  @@index([nic])
+  @@index([organizationId])
+}
+
+model LoanProduct {
+  id                 String                @id @default(cuid())
+  name               String
+  loanType           LoanType
+  numberOfWeeks      Int
+  organizationId     String
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  isActive           Boolean               @default(true)
+  multiplier         Decimal               @default(1.17) @db.Decimal(10, 4)
+  calculationMethod  LoanCalculationMethod @default(FLAT)
+  interestMethod     InterestMethod        @default(FLAT)
+  repaymentFrequency RepaymentFrequency    @default(WEEKLY)
+  term               Int?
+  gracePeriod        Int                   @default(0)
+  minimumAmount      Decimal?              @db.Decimal(12, 2)
+  maximumAmount      Decimal?              @db.Decimal(12, 2)
+  minimumTerm        Int?
+  maximumTerm        Int?
+  loans              Loan[]
+  organization       Organization          @relation(fields: [organizationId], references: [id])
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+}
+
+model Group {
+  id             String            @id @default(cuid())
+  organizationId String
+  branchId       String
+  centreId       String
+  groupNumber    Int
+  name           String
+  leaderMemberId String?
+  formationDate  DateTime?         @db.Date
+  meetingDay     String?
+  meetingTime    String?
+  status         GroupStatus       @default(ACTIVE)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  branch         Branch            @relation(fields: [branchId], references: [id])
+  centre         Centre            @relation(fields: [centreId], references: [id])
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  memberships    GroupMembership[]
+
+  @@unique([organizationId, centreId, groupNumber])
+  @@index([organizationId, branchId])
+  @@index([centreId, status])
+}
+
+model GroupMembership {
+  id       String                @id @default(cuid())
+  groupId  String
+  memberId String
+  joinedAt DateTime              @default(now())
+  leftAt   DateTime?
+  status   GroupMembershipStatus @default(ACTIVE)
+  role     GroupMembershipRole   @default(MEMBER)
+  group    Group                 @relation(fields: [groupId], references: [id])
+  member   Member                @relation(fields: [memberId], references: [id])
+
+  @@unique([groupId, memberId])
+  @@index([memberId, status])
+  @@index([groupId, status])
+}
+
+model Loan {
+  id                 String                @id @default(cuid())
+  memberId           String
+  loanProductId      String?
+  loanType           LoanType
+  loanNumber         String?
+  loanAmount         Decimal               @db.Decimal(12, 2)
+  weeklyRental       Decimal               @db.Decimal(10, 2)
+  numberOfWeeks      Int
+  totalReceivable    Decimal               @db.Decimal(12, 2)
+  grantedDate        DateTime?             @db.Date
+  expireDate         DateTime?             @db.Date
+  status             LoanStatus            @default(ACTIVE)
+  verificationStatus VerificationStatus    @default(PENDING)
+  verificationNote   String?
+  totalPaid          Decimal               @default(0) @db.Decimal(12, 2)
+  outstanding        Decimal               @db.Decimal(12, 2)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  guarantors         Guarantor[]
+  loanProduct        LoanProduct?          @relation(fields: [loanProductId], references: [id])
+  member             Member                @relation(fields: [memberId], references: [id])
+  refinanceTo        LoanRefinance?        @relation("NewLoan")
+  refinancesFrom     LoanRefinance?        @relation("SourceLoan")
+  repayments         LoanRepayment[]
+  restructures       LoanRestructure[]
+  scheduleVersions   LoanScheduleVersion[]
+  writeOffs          LoanWriteOff[]
+  MemberDocument     MemberDocument[]
+  repaymentSchedule  RepaymentSchedule[]
+
+  @@index([memberId])
+  @@index([loanType])
+  @@index([status])
+  @@index([grantedDate])
+}
+
+model LoanRepayment {
+  id                  String                   @id @default(cuid())
+  loanId              String
+  instalmentNumber    Int?
+  scheduledDate       DateTime?                @db.Date
+  paidDate            DateTime                 @db.Date
+  amount              Decimal                  @db.Decimal(10, 2)
+  method              RepaymentMethod          @default(CASH)
+  note                String?
+  collectedBy         String?
+  createdAt           DateTime                 @default(now())
+  transactionType     RepaymentTransactionType @default(PAYMENT)
+  reversalOfId        String?                  @unique
+  allocationMethod    String?
+  clientTransactionId String?
+  organizationId      String
+  loan                Loan                     @relation(fields: [loanId], references: [id])
+  organization        Organization             @relation(fields: [organizationId], references: [id])
+  reversalOf          LoanRepayment?           @relation("RepaymentReversal", fields: [reversalOfId], references: [id])
+  reversal            LoanRepayment?           @relation("RepaymentReversal")
+  allocations         PaymentAllocation[]
+  paymentReversal     PaymentReversal?         @relation("OriginalPaymentReversal")
+  reversalRecord      PaymentReversal?         @relation("ReversalPaymentRecord")
+
+  @@unique([loanId, instalmentNumber, paidDate])
+  @@unique([organizationId, clientTransactionId])
+  @@index([loanId])
+  @@index([paidDate])
+}
+
+model PaymentAllocation {
+  id        String                     @id @default(cuid())
+  paymentId String
+  component PaymentAllocationComponent
+  amount    Decimal                    @db.Decimal(12, 2)
+  createdAt DateTime                   @default(now())
+  payment   LoanRepayment              @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+}
+
+model PaymentReversal {
+  id                String                @id @default(cuid())
+  organizationId    String
+  repaymentId       String                @unique
+  reversalPaymentId String?               @unique
+  status            PaymentReversalStatus @default(REQUESTED)
+  reason            String
+  requestedById     String
+  approvedById      String?
+  requestedAt       DateTime              @default(now())
+  approvedAt        DateTime?
+  approvedBy        User?                 @relation("ReversalApprovedBy", fields: [approvedById], references: [id])
+  repayment         LoanRepayment         @relation("OriginalPaymentReversal", fields: [repaymentId], references: [id])
+  requestedBy       User                  @relation("ReversalRequestedBy", fields: [requestedById], references: [id])
+  reversalPayment   LoanRepayment?        @relation("ReversalPaymentRecord", fields: [reversalPaymentId], references: [id])
+
+  @@index([organizationId, status])
+}
+
+model Guarantor {
+  id           String   @id @default(cuid())
+  loanId       String
+  memberId     String?
+  name         String?
+  nic          String?
+  contact      String?
+  relationship String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  loan         Loan     @relation(fields: [loanId], references: [id])
+  member       Member?  @relation(fields: [memberId], references: [id])
+
+  @@index([loanId])
+  @@index([memberId])
+}
+
+model RepaymentSchedule {
+  id                 String               @id @default(cuid())
+  loanId             String
+  instalmentNumber   Int
+  scheduledDate      DateTime             @db.Date
+  scheduledAmount    Decimal              @db.Decimal(10, 2)
+  isPaid             Boolean              @default(false)
+  createdAt          DateTime             @default(now())
+  paidAmount         Decimal              @default(0) @db.Decimal(10, 2)
+  status             ScheduleStatus       @default(PENDING)
+  scheduleVersionId  String?
+  supersededAt       DateTime?
+  collectionAttempts CollectionAttempt[]
+  loan               Loan                 @relation(fields: [loanId], references: [id])
+  scheduleVersion    LoanScheduleVersion? @relation(fields: [scheduleVersionId], references: [id])
+
+  @@index([loanId])
+  @@index([scheduledDate])
+}
+
+model LoanRefinance {
+  id                     String   @id @default(cuid())
+  organizationId         String
+  sourceLoanId           String   @unique
+  newLoanId              String   @unique
+  settlementAmount       Decimal  @db.Decimal(12, 2)
+  additionalDisbursement Decimal  @db.Decimal(12, 2)
+  createdById            String
+  createdAt              DateTime @default(now())
+  newLoan                Loan     @relation("NewLoan", fields: [newLoanId], references: [id])
+  sourceLoan             Loan     @relation("SourceLoan", fields: [sourceLoanId], references: [id])
+
+  @@index([organizationId])
+}
+
+model LoanScheduleVersion {
+  id            String              @id @default(cuid())
+  loanId        String
+  version       Int
+  reason        String
+  effectiveDate DateTime            @db.Date
+  schedule      Json
+  createdById   String
+  approvedById  String?
+  approvedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  restructure   LoanRestructure?
+  loan          Loan                @relation(fields: [loanId], references: [id])
+  schedules     RepaymentSchedule[]
+
+  @@unique([loanId, version])
+  @@index([loanId, effectiveDate])
+}
+
+model LoanRestructure {
+  id                String              @id @default(cuid())
+  organizationId    String
+  loanId            String
+  scheduleVersionId String              @unique
+  reason            String
+  effectiveDate     DateTime            @db.Date
+  createdById       String
+  approvedById      String?
+  approvedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  loan              Loan                @relation(fields: [loanId], references: [id])
+  scheduleVersion   LoanScheduleVersion @relation(fields: [scheduleVersionId], references: [id])
+
+  @@index([organizationId, loanId])
+}
+
+model LoanWriteOff {
+  id                  String             @id @default(cuid())
+  organizationId      String
+  loanId              String
+  writtenOffPrincipal Decimal            @db.Decimal(12, 2)
+  writtenOffInterest  Decimal            @db.Decimal(12, 2)
+  writtenOffPenalty   Decimal            @default(0) @db.Decimal(12, 2)
+  reason              String
+  approvedById        String
+  approvedAt          DateTime           @default(now())
+  loan                Loan               @relation(fields: [loanId], references: [id])
+  recoveries          WriteOffRecovery[]
+
+  @@index([organizationId, loanId])
+}
+
+model WriteOffRecovery {
+  id            String       @id @default(cuid())
+  writeOffId    String
+  amount        Decimal      @db.Decimal(12, 2)
+  recoveredAt   DateTime     @db.Date
+  note          String?
+  collectedById String
+  createdAt     DateTime     @default(now())
+  writeOff      LoanWriteOff @relation(fields: [writeOffId], references: [id])
+
+  @@index([writeOffId, recoveredAt])
+}
+
+model CashFlow {
+  id             String   @id @default(cuid())
+  branchId       String
+  date           DateTime @db.Date
+  centreName     String
+  loanType       LoanType
+  loansIssued    Int      @default(0)
+  amountIssued   Decimal  @default(0) @db.Decimal(14, 2)
+  dcAmount       Decimal  @default(0) @db.Decimal(14, 2)
+  recoveryAmount Decimal  @default(0) @db.Decimal(14, 2)
+  totalRecovery  Decimal  @default(0) @db.Decimal(14, 2)
+  interestAmount Decimal? @db.Decimal(14, 2)
+  capitalAmount  Decimal? @db.Decimal(14, 2)
+  note           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  branch         Branch   @relation(fields: [branchId], references: [id])
+
+  @@unique([branchId, date, centreName, loanType])
+  @@index([branchId, date])
+}
+
+model ChartOfAccount {
+  id             String        @id @default(cuid())
+  organizationId String
+  code           String
+  name           String
+  type           AccountType
+  isActive       Boolean       @default(true)
+  branchId       String?
+  branch         Branch?       @relation(fields: [branchId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  lines          JournalLine[]
+
+  @@unique([organizationId, code])
+}
+
+model AccountingPeriod {
+  id             String                 @id @default(cuid())
+  organizationId String
+  startDate      DateTime               @db.Date
+  endDate        DateTime               @db.Date
+  status         AccountingPeriodStatus @default(OPEN)
+  organization   Organization           @relation(fields: [organizationId], references: [id])
+  entries        JournalEntry[]
+
+  @@unique([organizationId, startDate, endDate])
+}
+
+model JournalEntry {
+  id             String            @id @default(cuid())
+  organizationId String
+  periodId       String?
+  entryDate      DateTime          @db.Date
+  reference      String
+  description    String
+  sourceType     String
+  sourceId       String
+  branchId       String?
+  branch         Branch?           @relation(fields: [branchId], references: [id])
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  period         AccountingPeriod? @relation(fields: [periodId], references: [id])
+  lines          JournalLine[]
+
+  @@unique([organizationId, sourceType, sourceId])
+  @@index([organizationId, entryDate])
+}
+
+model JournalLine {
+  id             String         @id @default(cuid())
+  journalEntryId String
+  accountId      String
+  debit          Decimal        @default(0) @db.Decimal(14, 2)
+  credit         Decimal        @default(0) @db.Decimal(14, 2)
+  account        ChartOfAccount @relation(fields: [accountId], references: [id])
+  journalEntry   JournalEntry   @relation(fields: [journalEntryId], references: [id])
+}
+
+model SubscriptionPlan {
+  id              String         @id @default(cuid())
+  name            String
+  maxOfficerSeats Int
+  maxBranches     Int
+  storageQuotaMb  Int
+  monthlyPrice    Decimal        @db.Decimal(10, 2)
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  subscriptions   Subscription[]
+}
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String             @unique
+  planId           String
+  status           SubscriptionStatus @default(TRIAL)
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  paymentClaims    PaymentClaim[]
+  organization     Organization       @relation(fields: [organizationId], references: [id])
+  plan             SubscriptionPlan   @relation(fields: [planId], references: [id])
+}
+
+model PaymentClaim {
+  id                        String             @id @default(cuid())
+  subscriptionId            String
+  amount                    Decimal            @db.Decimal(10, 2)
+  bankReference             String
+  paidDate                  DateTime           @db.Date
+  proofUrl                  String?
+  status                    PaymentClaimStatus @default(PENDING)
+  reviewNote                String?
+  submittedAt               DateTime           @default(now())
+  verifiedAt                DateTime?
+  verifiedByPlatformAdminId String?
+  subscription              Subscription       @relation(fields: [subscriptionId], references: [id])
+  verifiedBy                PlatformAdmin?     @relation(fields: [verifiedByPlatformAdminId], references: [id])
+}
+
+model MemberDocument {
+  id             String                 @id @default(cuid())
+  organizationId String
+  memberId       String
+  type           MemberDocumentType
+  uploadedAt     DateTime               @default(now())
+  fileName       String
+  fileSize       Int
+  loanId         String?
+  mimeType       String
+  status         DocumentStatus         @default(PENDING)
+  storagePath    String
+  uploadedById   String
+  verifications  DocumentVerification[]
+  loan           Loan?                  @relation(fields: [loanId], references: [id])
+  member         Member                 @relation(fields: [memberId], references: [id])
+  organization   Organization           @relation(fields: [organizationId], references: [id])
+  uploadedBy     User                   @relation(fields: [uploadedById], references: [id])
+
+  @@index([organizationId, status])
+  @@index([memberId])
+  @@index([loanId])
+}
+
+model DocumentVerification {
+  id           String         @id @default(cuid())
+  documentId   String
+  status       DocumentStatus
+  reason       String?
+  verifiedById String
+  createdAt    DateTime       @default(now())
+  document     MemberDocument @relation(fields: [documentId], references: [id])
+  verifiedBy   User           @relation(fields: [verifiedById], references: [id])
+
+  @@index([documentId])
+}
+
+model PlatformAdmin {
+  id            String                  @id @default(cuid())
+  email         String                  @unique
+  password      String
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  totpEnabled   Boolean                 @default(false)
+  totpSecret    String?
+  paymentClaims PaymentClaim[]
+  auditLogs     PlatformAdminAuditLog[]
+}
+
+model PlatformAdminAuditLog {
+  id              String        @id @default(cuid())
+  platformAdminId String
+  action          String
+  targetType      String
+  targetId        String
+  note            String?
+  createdAt       DateTime      @default(now())
+  platformAdmin   PlatformAdmin @relation(fields: [platformAdminId], references: [id])
+
+  @@index([platformAdminId])
+  @@index([targetType, targetId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ip        String?
+  timestamp DateTime @default(now())
+
+  @@index([email, timestamp])
+  @@index([ip, timestamp])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String?
+  action         AuditAction
+  entityType     String
+  entityId       String
+  before         Json?
+  after          Json?
+  note           String?
+  ip             String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User?        @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
+}
+
+model SavingsProduct {
+  id             String           @id @default(cuid())
+  name           String
+  code           String
+  type           SavingsType
+  interestRate   Decimal          @default(0) @db.Decimal(5, 2)
+  minimumBalance Decimal          @default(0) @db.Decimal(14, 2)
+  isActive       Boolean          @default(true)
+  organizationId String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  accounts       SavingsAccount[]
+
+  @@unique([organizationId, code])
+}
+
+model SavingsAccount {
+  id               String               @id @default(cuid())
+  accountNumber    String
+  memberId         String
+  savingsProductId String
+  balance          Decimal              @default(0) @db.Decimal(14, 2)
+  status           SavingsStatus        @default(ACTIVE)
+  organizationId   String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  member           Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  product          SavingsProduct       @relation(fields: [savingsProductId], references: [id])
+  transactions     SavingsTransaction[]
+
+  @@unique([organizationId, accountNumber])
+  @@index([memberId])
+  @@index([savingsProductId])
+}
+
+model SavingsTransaction {
+  id               String                 @id @default(cuid())
+  savingsAccountId String
+  type             SavingsTransactionType
+  amount           Decimal                @db.Decimal(14, 2)
+  date             DateTime
+  reference        String?
+  notes            String?
+  organizationId   String
+  createdAt        DateTime               @default(now())
+  account          SavingsAccount         @relation(fields: [savingsAccountId], references: [id], onDelete: Cascade)
+
+  @@index([savingsAccountId])
+  @@index([date])
+}
+
+model UserNotificationPreference {
+  id                String                @id @default(cuid())
+  userId            String
+  organizationId    String
+  eventType         NotificationEventType
+  emailEnabled      Boolean               @default(true)
+  notificationEmail String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventType])
+  @@index([organizationId])
+}
+
+model NotificationLog {
+  id             String                @id @default(cuid())
+  organizationId String
+  userId         String?
+  memberId       String?
+  eventType      NotificationEventType
+  channel        NotificationChannel
+  recipientEmail String?
+  subject        String
+  status         NotificationStatus    @default(PENDING)
+  errorMessage   String?
+  sentAt         DateTime?
+  createdAt      DateTime              @default(now())
+
+  @@index([organizationId, eventType])
+  @@index([organizationId, createdAt])
+}
+
+model FinancialProfile {
+  id                  String             @id @default(cuid())
+  organizationId      String
+  memberId            String
+  assessmentDate      DateTime           @db.Date
+  monthlyIncome       Decimal            @db.Decimal(14, 2)
+  householdIncome     Decimal?           @db.Decimal(14, 2)
+  existingObligations Decimal            @default(0) @db.Decimal(14, 2)
+  incomeSource        IncomeSource       @default(EMPLOYMENT)
+  verificationStatus  VerificationStatus @default(PENDING)
+  verifiedById        String?
+  verifiedAt          DateTime?
+  notes               String?
+  createdById         String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  creditAssessments   CreditAssessment[]
+  member              Member             @relation(fields: [memberId], references: [id])
+
+  @@index([organizationId, memberId])
+  @@index([memberId, assessmentDate])
+}
+
+model CreditAssessment {
+  id                 String            @id @default(cuid())
+  organizationId     String
+  memberId           String
+  financialProfileId String?
+  loanId             String?
+  score              Int
+  grade              RiskGrade
+  factors            Json
+  inputs             Json
+  totalLoans         Int               @default(0)
+  activeLoans        Int               @default(0)
+  settledLoans       Int               @default(0)
+  defaultedLoans     Int               @default(0)
+  repaymentRate      Decimal?          @db.Decimal(5, 2)
+  averageDaysLate    Decimal?          @db.Decimal(5, 2)
+  currentOutstanding Decimal?          @db.Decimal(14, 2)
+  debtToIncomeRatio  Decimal?          @db.Decimal(5, 2)
+  createdById        String
+  createdAt          DateTime          @default(now())
+  financialProfile   FinancialProfile? @relation(fields: [financialProfileId], references: [id])
+  member             Member            @relation(fields: [memberId], references: [id])
+
+  @@index([organizationId, memberId])
+  @@index([memberId, createdAt])
+}
+
+model RiskAlert {
+  id             String            @id @default(cuid())
+  organizationId String
+  type           RiskAlertType
+  severity       RiskAlertSeverity
+  entityType     String
+  entityId       String
+  description    String
+  status         RiskAlertStatus   @default(OPEN)
+  assignedToId   String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+  resolutionNote String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([organizationId, entityId, type, status])
+  @@index([organizationId, status])
+  @@index([organizationId, severity])
+  @@index([organizationId, createdAt])
+}
+
+model CollectionAttempt {
+  id              String            @id @default(cuid())
+  organizationId  String
+  scheduleId      String
+  officerId       String
+  attemptedAt     DateTime          @default(now())
+  outcome         CollectionOutcome
+  reason          MissedReason?
+  notes           String?
+  amountCollected Decimal?          @db.Decimal(10, 2)
+  clientTxId      String?
+  officer         User              @relation(fields: [officerId], references: [id])
+  organization    Organization      @relation(fields: [organizationId], references: [id])
+  schedule        RepaymentSchedule @relation(fields: [scheduleId], references: [id])
+
+  @@index([organizationId, officerId, attemptedAt])
+  @@index([scheduleId])
+}
+
+model FieldOfficerAssignment {
+  id             String       @id @default(cuid())
+  organizationId String
+  branchId       String
+  officerId      String
+  centreId       String
+  startDate      DateTime     @db.Date
+  endDate        DateTime?    @db.Date
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  branch         Branch       @relation(fields: [branchId], references: [id])
+  centre         Centre       @relation(fields: [centreId], references: [id])
+  officer        User         @relation(fields: [officerId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([officerId, centreId, isActive])
+  @@index([organizationId])
+}
+
+model FieldOfficerReconciliation {
+  id             String       @id @default(cuid())
+  organizationId String
+  branchId       String
+  officerId      String
+  date           DateTime     @db.Date
+  expectedCash   Decimal      @db.Decimal(14, 2)
+  declaredCash   Decimal      @db.Decimal(14, 2)
+  expectedBank   Decimal      @db.Decimal(14, 2)
+  declaredBank   Decimal      @db.Decimal(14, 2)
+  difference     Decimal      @db.Decimal(14, 2)
+  status         String       @default("SUBMITTED")
+  createdAt      DateTime     @default(now())
+  branch         Branch       @relation(fields: [branchId], references: [id])
+  officer        User         @relation(fields: [officerId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([officerId, date])
+  @@index([organizationId, date])
+}
+
+model ApprovalRule {
+  id             String       @id @default(cuid())
+  organizationId String
+  minAmount      Decimal      @db.Decimal(12, 2)
+  maxAmount      Decimal      @db.Decimal(12, 2)
+  requiredRole   Role
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 enum Role {
@@ -24,59 +897,6 @@ enum AuditAction {
   DELETE
 }
 
-model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users             User[]
-  branches          Branch[]
-  loanProducts      LoanProduct[]
-  members           Member[]
-  subscription      Subscription?
-  memberDocuments   MemberDocument[]
-  auditLogs         AuditLog[]
-  groups            Group[]
-  chartOfAccounts   ChartOfAccount[]
-  journalEntries    JournalEntry[]
-  accountingPeriods AccountingPeriod[]
-  loanRepayments          LoanRepayment[]
-  collectionAttempts      CollectionAttempt[]
-  fieldOfficerAssignments FieldOfficerAssignment[]
-  reconciliations         FieldOfficerReconciliation[]
-  approvalRules           ApprovalRule[]
-}
-
-model User {
-  id             String       @id @default(cuid())
-  email          String       @unique
-  password       String?
-  name           String?
-  role           Role         @default(FIELD_OFFICER)
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  branchId       String?
-  branch         Branch?      @relation(fields: [branchId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  accounts                  Account[]
-  sessions                  Session[]
-  auditLogs                 AuditLog[]
-  requestedPaymentReversals PaymentReversal[]            @relation("ReversalRequestedBy")
-  approvedPaymentReversals  PaymentReversal[]            @relation("ReversalApprovedBy")
-  centres                   Centre[]
-  notificationPreferences   UserNotificationPreference[]
-  MemberDocument            MemberDocument[]
-  DocumentVerification      DocumentVerification[]
-
-  collectionAttempts      CollectionAttempt[]
-  fieldOfficerAssignments FieldOfficerAssignment[]
-  reconciliations         FieldOfficerReconciliation[]
-  @@index([organizationId])
-}
-
 enum LoanType {
   QUICK
   BUSINESS
@@ -84,18 +904,18 @@ enum LoanType {
 }
 
 enum LoanStatus {
+  ACTIVE
+  SETTLED
+  DEFAULTED
+  CANCELLED
+  PENDING
   DRAFT
   SUBMITTED
   UNDER_REVIEW
   VERIFIED
   APPROVED
   DISBURSED
-  PENDING
-  ACTIVE
   OVERDUE
-  SETTLED
-  DEFAULTED
-  CANCELLED
 }
 
 enum GroupStatus {
@@ -179,182 +999,6 @@ enum RepaymentMethod {
   ACCOUNT_TRANSFER
 }
 
-model Branch {
-  id             String       @id @default(cuid())
-  code           String       @unique
-  name           String
-  address        String?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  centres        Centre[]
-  cashFlows      CashFlow[]
-  users          User[]
-  groups         Group[]
-  ChartOfAccount ChartOfAccount[]
-  JournalEntry   JournalEntry[]
-  fieldOfficerAssignments FieldOfficerAssignment[]
-  reconciliations         FieldOfficerReconciliation[]
-}
-
-model Centre {
-  id           String   @id @default(cuid())
-  centreNumber Int
-  centreCode   String   @unique
-  name         String
-  isMicro      Boolean  @default(false)
-  branchId     String
-  officerId    String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  branch  Branch   @relation(fields: [branchId], references: [id])
-  officer User?    @relation(fields: [officerId], references: [id])
-  members Member[]
-  groups  Group[]
-
-  fieldOfficerAssignments FieldOfficerAssignment[]
-  @@index([branchId])
-  @@index([officerId])
-}
-
-model Member {
-  id             String   @id @default(cuid())
-  memberNumber   String
-  name           String
-  nic            String?
-  address        String?
-  contact1       String?
-  contact2       String?
-  groupNumber    Int?
-  centreId       String
-  organizationId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  centre            Centre             @relation(fields: [centreId], references: [id])
-  organization      Organization       @relation(fields: [organizationId], references: [id])
-  loans             Loan[]
-  savingsAccounts   SavingsAccount[]
-  guarantorFor      Guarantor[]
-  documents         MemberDocument[]
-  groupMemberships  GroupMembership[]
-  financialProfiles FinancialProfile[]
-  creditAssessments CreditAssessment[]
-
-  @@unique([memberNumber, organizationId])
-  @@index([centreId])
-  @@index([nic])
-  @@index([organizationId])
-}
-
-model LoanProduct {
-  id                 String                @id @default(cuid())
-  name               String
-  loanType           LoanType
-  numberOfWeeks      Int
-  multiplier         Decimal               @default(1.17) @db.Decimal(10, 4)
-  calculationMethod  LoanCalculationMethod @default(FLAT)
-  interestMethod     InterestMethod        @default(FLAT)
-  repaymentFrequency RepaymentFrequency    @default(WEEKLY)
-  term               Int?
-  gracePeriod        Int                   @default(0)
-  minimumAmount      Decimal?              @db.Decimal(12, 2)
-  maximumAmount      Decimal?              @db.Decimal(12, 2)
-  minimumTerm        Int?
-  maximumTerm        Int?
-  isActive           Boolean               @default(true)
-  organizationId     String
-  organization       Organization          @relation(fields: [organizationId], references: [id])
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-
-  loans Loan[]
-
-  @@unique([name, organizationId])
-  @@index([organizationId])
-}
-
-model Group {
-  id             String            @id @default(cuid())
-  organizationId String
-  branchId       String
-  centreId       String
-  groupNumber    Int
-  name           String
-  leaderMemberId String?
-  formationDate  DateTime?         @db.Date
-  meetingDay     String?
-  meetingTime    String?
-  status         GroupStatus       @default(ACTIVE)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  organization   Organization      @relation(fields: [organizationId], references: [id])
-  branch         Branch            @relation(fields: [branchId], references: [id])
-  centre         Centre            @relation(fields: [centreId], references: [id])
-  memberships    GroupMembership[]
-
-  @@unique([organizationId, centreId, groupNumber])
-  @@index([organizationId, branchId])
-  @@index([centreId, status])
-}
-
-  model GroupMembership {
-  id       String                @id @default(cuid())
-  groupId  String
-  memberId String
-  joinedAt DateTime              @default(now())
-  leftAt   DateTime?
-  status   GroupMembershipStatus @default(ACTIVE)
-  role     GroupMembershipRole   @default(MEMBER)
-  group    Group                 @relation(fields: [groupId], references: [id])
-  member   Member                @relation(fields: [memberId], references: [id])
-
-  @@unique([groupId, memberId])
-  @@index([memberId, status])
-  @@index([groupId, status])
-}
-
-model Loan {
-  id                 String             @id @default(cuid())
-  memberId           String
-  loanProductId      String?
-  loanType           LoanType
-  loanNumber         String?
-  loanAmount         Decimal            @db.Decimal(12, 2)
-  weeklyRental       Decimal            @db.Decimal(10, 2)
-  numberOfWeeks      Int
-  totalReceivable    Decimal            @db.Decimal(12, 2)
-  grantedDate        DateTime?          @db.Date
-  expireDate         DateTime?          @db.Date
-  status             LoanStatus         @default(ACTIVE)
-  verificationStatus VerificationStatus @default(PENDING)
-  verificationNote   String?
-  totalPaid          Decimal            @default(0) @db.Decimal(12, 2)
-  outstanding        Decimal            @db.Decimal(12, 2)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-
-  member            Member                @relation(fields: [memberId], references: [id])
-  loanProduct       LoanProduct?          @relation(fields: [loanProductId], references: [id])
-  repayments        LoanRepayment[]
-  guarantors        Guarantor[]
-  repaymentSchedule RepaymentSchedule[]
-  refinancesFrom    LoanRefinance[]       @relation("SourceLoan")
-  refinanceTo       LoanRefinance[]       @relation("NewLoan")
-  restructures      LoanRestructure[]
-  scheduleVersions  LoanScheduleVersion[]
-  writeOffs         LoanWriteOff[]
-  MemberDocument    MemberDocument[]
-
-  @@index([memberId])
-  @@index([loanType])
-  @@index([status])
-  @@index([grantedDate])
-}
-
 enum ScheduleStatus {
   PENDING
   DUE
@@ -362,280 +1006,6 @@ enum ScheduleStatus {
   PARTIALLY_PAID
   MISSED
   WAIVED
-}
-
-model LoanRepayment {
-  id                  String                   @id @default(cuid())
-  organizationId      String
-  loanId              String
-  instalmentNumber    Int?
-  scheduledDate       DateTime?                @db.Date
-  paidDate            DateTime                 @db.Date
-  amount              Decimal                  @db.Decimal(10, 2)
-  method              RepaymentMethod          @default(CASH)
-  note                String?
-  collectedBy         String?
-  transactionType     RepaymentTransactionType @default(PAYMENT)
-  reversalOfId        String?                  @unique
-  allocationMethod    String?
-  clientTransactionId String?
-  allocations         PaymentAllocation[]
-  reversalOf          LoanRepayment?           @relation("RepaymentReversal", fields: [reversalOfId], references: [id])
-  reversal            LoanRepayment?           @relation("RepaymentReversal")
-  paymentReversal     PaymentReversal?         @relation("OriginalPaymentReversal")
-  reversalRecord      PaymentReversal?         @relation("ReversalPaymentRecord")
-  createdAt           DateTime                 @default(now())
-
-  loan         Loan         @relation(fields: [loanId], references: [id])
-  organization Organization @relation(fields: [organizationId], references: [id])
-
-  @@unique([loanId, instalmentNumber, paidDate])
-  @@unique([organizationId, clientTransactionId])
-  @@index([loanId])
-  @@index([paidDate])
-}
-
-model PaymentAllocation {
-  id        String                     @id @default(cuid())
-  paymentId String
-  component PaymentAllocationComponent
-  amount    Decimal                    @db.Decimal(12, 2)
-  createdAt DateTime                   @default(now())
-  payment   LoanRepayment              @relation(fields: [paymentId], references: [id])
-
-  @@index([paymentId])
-}
-
-model PaymentReversal {
-  id                String                @id @default(cuid())
-  organizationId    String
-  repaymentId       String                @unique
-  reversalPaymentId String?               @unique
-  status            PaymentReversalStatus @default(REQUESTED)
-  reason            String
-  requestedById     String
-  approvedById      String?
-  requestedAt       DateTime              @default(now())
-  approvedAt        DateTime?
-  repayment         LoanRepayment         @relation("OriginalPaymentReversal", fields: [repaymentId], references: [id])
-  reversalPayment   LoanRepayment?        @relation("ReversalPaymentRecord", fields: [reversalPaymentId], references: [id])
-  requestedBy       User                  @relation("ReversalRequestedBy", fields: [requestedById], references: [id])
-  approvedBy        User?                 @relation("ReversalApprovedBy", fields: [approvedById], references: [id])
-
-  @@index([organizationId, status])
-}
-
-model Guarantor {
-  id           String   @id @default(cuid())
-  loanId       String
-  memberId     String?
-  name         String?
-  nic          String?
-  contact      String?
-  relationship String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  loan   Loan    @relation(fields: [loanId], references: [id])
-  member Member? @relation(fields: [memberId], references: [id])
-
-  @@index([loanId])
-  @@index([memberId])
-}
-
-model RepaymentSchedule {
-  id                String         @id @default(cuid())
-  loanId            String
-  instalmentNumber  Int
-  scheduledDate     DateTime       @db.Date
-  scheduledAmount   Decimal        @db.Decimal(10, 2)
-  isPaid            Boolean        @default(false)
-  status            ScheduleStatus @default(PENDING)
-  paidAmount        Decimal        @default(0) @db.Decimal(10, 2)
-  scheduleVersionId String?
-  supersededAt      DateTime?
-  createdAt         DateTime       @default(now())
-
-  loan            Loan                 @relation(fields: [loanId], references: [id])
-  scheduleVersion LoanScheduleVersion? @relation(fields: [scheduleVersionId], references: [id])
-
-  collectionAttempts      CollectionAttempt[]
-  @@index([loanId])
-  @@index([scheduledDate])
-}
-
-model LoanRefinance {
-  id                     String   @id @default(cuid())
-  organizationId         String
-  sourceLoanId           String
-  newLoanId              String
-  settlementAmount       Decimal  @db.Decimal(12, 2)
-  additionalDisbursement Decimal  @db.Decimal(12, 2)
-  createdById            String
-  createdAt              DateTime @default(now())
-  sourceLoan             Loan     @relation("SourceLoan", fields: [sourceLoanId], references: [id])
-  newLoan                Loan     @relation("NewLoan", fields: [newLoanId], references: [id])
-
-  @@unique([sourceLoanId])
-  @@unique([newLoanId])
-  @@index([organizationId])
-}
-
-model LoanScheduleVersion {
-  id            String              @id @default(cuid())
-  loanId        String
-  version       Int
-  reason        String
-  effectiveDate DateTime            @db.Date
-  schedule      Json
-  createdById   String
-  approvedById  String?
-  approvedAt    DateTime?
-  createdAt     DateTime            @default(now())
-  loan          Loan                @relation(fields: [loanId], references: [id])
-  schedules     RepaymentSchedule[]
-  restructure   LoanRestructure?
-
-  @@unique([loanId, version])
-  @@index([loanId, effectiveDate])
-}
-
-model LoanRestructure {
-  id                String              @id @default(cuid())
-  organizationId    String
-  loanId            String
-  scheduleVersionId String              @unique
-  reason            String
-  effectiveDate     DateTime            @db.Date
-  createdById       String
-  approvedById      String?
-  approvedAt        DateTime?
-  createdAt         DateTime            @default(now())
-  loan              Loan                @relation(fields: [loanId], references: [id])
-  scheduleVersion   LoanScheduleVersion @relation(fields: [scheduleVersionId], references: [id])
-
-  @@index([organizationId, loanId])
-}
-
-model LoanWriteOff {
-  id                  String             @id @default(cuid())
-  organizationId      String
-  loanId              String
-  writtenOffPrincipal Decimal            @db.Decimal(12, 2)
-  writtenOffInterest  Decimal            @db.Decimal(12, 2)
-  writtenOffPenalty   Decimal            @default(0) @db.Decimal(12, 2)
-  reason              String
-  approvedById        String
-  approvedAt          DateTime           @default(now())
-  loan                Loan               @relation(fields: [loanId], references: [id])
-  recoveries          WriteOffRecovery[]
-
-  @@index([organizationId, loanId])
-}
-
-model WriteOffRecovery {
-  id            String       @id @default(cuid())
-  writeOffId    String
-  amount        Decimal      @db.Decimal(12, 2)
-  recoveredAt   DateTime     @db.Date
-  note          String?
-  collectedById String
-  createdAt     DateTime     @default(now())
-  writeOff      LoanWriteOff @relation(fields: [writeOffId], references: [id])
-
-  @@index([writeOffId, recoveredAt])
-}
-
-model CashFlow {
-  id             String   @id @default(cuid())
-  branchId       String
-  date           DateTime @db.Date
-  centreName     String
-  loanType       LoanType
-  loansIssued    Int      @default(0)
-  amountIssued   Decimal  @default(0) @db.Decimal(14, 2)
-  dcAmount       Decimal  @default(0) @db.Decimal(14, 2)
-  recoveryAmount Decimal  @default(0) @db.Decimal(14, 2)
-  totalRecovery  Decimal  @default(0) @db.Decimal(14, 2)
-  interestAmount Decimal? @db.Decimal(14, 2)
-  capitalAmount  Decimal? @db.Decimal(14, 2)
-  note           String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  branch Branch @relation(fields: [branchId], references: [id])
-
-  @@unique([branchId, date, centreName, loanType])
-  @@index([branchId, date])
-}
-
-model ChartOfAccount {
-  id             String        @id @default(cuid())
-  organizationId String
-  code           String
-  name           String
-  type           AccountType
-  isActive       Boolean       @default(true)
-  branchId       String?
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  branch         Branch?       @relation(fields: [branchId], references: [id])
-  lines          JournalLine[]
-
-  @@unique([organizationId, code])
-}
-
-model AccountingPeriod {
-  id             String                 @id @default(cuid())
-  organizationId String
-  startDate      DateTime               @db.Date
-  endDate        DateTime               @db.Date
-  status         AccountingPeriodStatus @default(OPEN)
-  organization   Organization           @relation(fields: [organizationId], references: [id])
-  entries        JournalEntry[]
-
-  @@unique([organizationId, startDate, endDate])
-}
-
-model JournalEntry {
-  id             String            @id @default(cuid())
-  organizationId String
-  periodId       String?
-  entryDate      DateTime          @db.Date
-  reference      String
-  description    String
-  sourceType     String
-  sourceId       String
-  branchId       String?
-  organization   Organization      @relation(fields: [organizationId], references: [id])
-  branch         Branch?           @relation(fields: [branchId], references: [id])
-  period         AccountingPeriod? @relation(fields: [periodId], references: [id])
-  lines          JournalLine[]
-
-  @@unique([organizationId, sourceType, sourceId])
-  @@index([organizationId, entryDate])
-}
-
-model JournalLine {
-  id             String         @id @default(cuid())
-  journalEntryId String
-  accountId      String
-  debit          Decimal        @default(0) @db.Decimal(14, 2)
-  credit         Decimal        @default(0) @db.Decimal(14, 2)
-  journalEntry   JournalEntry   @relation(fields: [journalEntryId], references: [id])
-  account        ChartOfAccount @relation(fields: [accountId], references: [id])
-}
-
-model SubscriptionPlan {
-  id              String   @id @default(cuid())
-  name            String
-  maxOfficerSeats Int
-  maxBranches     Int
-  storageQuotaMb  Int
-  monthlyPrice    Decimal  @db.Decimal(10, 2)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-
-  subscriptions Subscription[]
 }
 
 enum SubscriptionStatus {
@@ -647,50 +1017,18 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
-model Subscription {
-  id               String             @id @default(cuid())
-  organizationId   String             @unique
-  planId           String
-  status           SubscriptionStatus @default(TRIAL)
-  trialEndsAt      DateTime?
-  currentPeriodEnd DateTime?
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-
-  organization  Organization     @relation(fields: [organizationId], references: [id])
-  plan          SubscriptionPlan @relation(fields: [planId], references: [id])
-  paymentClaims PaymentClaim[]
-}
-
 enum PaymentClaimStatus {
   PENDING
   VERIFIED
   REJECTED
 }
 
-model PaymentClaim {
-  id                        String             @id @default(cuid())
-  subscriptionId            String
-  amount                    Decimal            @db.Decimal(10, 2)
-  bankReference             String
-  paidDate                  DateTime           @db.Date
-  proofUrl                  String?
-  status                    PaymentClaimStatus @default(PENDING)
-  reviewNote                String?
-  submittedAt               DateTime           @default(now())
-  verifiedAt                DateTime?
-  verifiedByPlatformAdminId String?
-
-  subscription Subscription   @relation(fields: [subscriptionId], references: [id])
-  verifiedBy   PlatformAdmin? @relation(fields: [verifiedByPlatformAdminId], references: [id])
-}
-
 enum MemberDocumentType {
   NIC_PHOTO
   PAYSLIP
   BANK_BOOK
-  LOAN_APPLICATION
   OTHER
+  LOAN_APPLICATION
 }
 
 enum DocumentStatus {
@@ -698,145 +1036,6 @@ enum DocumentStatus {
   VERIFIED
   REJECTED
   ARCHIVED
-}
-
-model MemberDocument {
-  id             String  @id @default(cuid())
-  organizationId String
-  memberId       String
-  loanId         String? // Future-proofing for LOAN_APPLICATION
-
-  type   MemberDocumentType
-  status DocumentStatus     @default(PENDING)
-
-  fileName    String
-  storagePath String
-  mimeType    String
-  fileSize    Int
-
-  uploadedById String
-  uploadedAt   DateTime @default(now())
-
-  organization  Organization           @relation(fields: [organizationId], references: [id])
-  member        Member                 @relation(fields: [memberId], references: [id])
-  loan          Loan?                  @relation(fields: [loanId], references: [id])
-  uploadedBy    User                   @relation(fields: [uploadedById], references: [id])
-  verifications DocumentVerification[]
-
-  @@index([organizationId, status])
-  @@index([memberId])
-  @@index([loanId])
-}
-
-model DocumentVerification {
-  id           String         @id @default(cuid())
-  documentId   String
-  status       DocumentStatus // VERIFIED or REJECTED
-  reason       String?
-  verifiedById String
-  createdAt    DateTime       @default(now())
-
-  document   MemberDocument @relation(fields: [documentId], references: [id])
-  verifiedBy User           @relation(fields: [verifiedById], references: [id])
-
-  @@index([documentId])
-}
-
-model PlatformAdmin {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  totpSecret  String?
-  totpEnabled Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  auditLogs     PlatformAdminAuditLog[]
-  paymentClaims PaymentClaim[]
-}
-
-model PlatformAdminAuditLog {
-  id              String   @id @default(cuid())
-  platformAdminId String
-  action          String
-  targetType      String
-  targetId        String
-  note            String?
-  createdAt       DateTime @default(now())
-
-  platformAdmin PlatformAdmin @relation(fields: [platformAdminId], references: [id])
-
-  @@index([platformAdminId])
-  @@index([targetType, targetId])
-}
-
-// --- Auth.js Models (DB Sessions) ---
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model LoginAttempt {
-  id        String   @id @default(cuid())
-  email     String
-  ip        String?
-  timestamp DateTime @default(now())
-
-  @@index([email, timestamp])
-  @@index([ip, timestamp])
-}
-
-model AuditLog {
-  id             String      @id @default(cuid())
-  organizationId String
-  userId         String?
-  action         AuditAction
-  entityType     String // "Loan", "Member", "LoanRepayment", "LoanProduct", etc.
-  entityId       String
-  before         Json?
-  after          Json?
-  note           String?
-  ip             String?
-  createdAt      DateTime    @default(now())
-
-  organization Organization @relation(fields: [organizationId], references: [id])
-  user         User?        @relation(fields: [userId], references: [id])
-
-  @@index([organizationId, entityType, entityId])
-  @@index([organizationId, createdAt])
 }
 
 enum SavingsType {
@@ -857,57 +1056,6 @@ enum SavingsTransactionType {
   FEE_DEDUCTION
 }
 
-model SavingsProduct {
-  id             String           @id @default(cuid())
-  name           String
-  code           String
-  type           SavingsType
-  interestRate   Decimal          @default(0) @db.Decimal(5, 2)
-  minimumBalance Decimal          @default(0) @db.Decimal(14, 2)
-  isActive       Boolean          @default(true)
-  organizationId String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  accounts       SavingsAccount[]
-
-  @@unique([organizationId, code])
-}
-
-model SavingsAccount {
-  id               String               @id @default(cuid())
-  accountNumber    String
-  memberId         String
-  savingsProductId String
-  balance          Decimal              @default(0) @db.Decimal(14, 2)
-  status           SavingsStatus        @default(ACTIVE)
-  organizationId   String
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  member           Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  product          SavingsProduct       @relation(fields: [savingsProductId], references: [id])
-  transactions     SavingsTransaction[]
-
-  @@unique([organizationId, accountNumber])
-  @@index([memberId])
-  @@index([savingsProductId])
-}
-
-model SavingsTransaction {
-  id               String                 @id @default(cuid())
-  savingsAccountId String
-  type             SavingsTransactionType
-  amount           Decimal                @db.Decimal(14, 2)
-  date             DateTime
-  reference        String?
-  notes            String?
-  organizationId   String
-  createdAt        DateTime               @default(now())
-  account          SavingsAccount         @relation(fields: [savingsAccountId], references: [id], onDelete: Cascade)
-
-  @@index([savingsAccountId])
-  @@index([date])
-}
-
 enum NotificationEventType {
   LOAN_APPROVED
   LOAN_DISBURSED
@@ -925,41 +1073,6 @@ enum NotificationStatus {
   PENDING
   SENT
   FAILED
-}
-
-// Per-user, per-event preferences. notificationEmail defaults to user.email.
-model UserNotificationPreference {
-  id                String                @id @default(cuid())
-  userId            String
-  organizationId    String
-  eventType         NotificationEventType
-  emailEnabled      Boolean               @default(true)
-  notificationEmail String? // overrides user.email if set
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, eventType])
-  @@index([organizationId])
-}
-
-// Audit trail of every notification attempt
-model NotificationLog {
-  id             String                @id @default(cuid())
-  organizationId String
-  userId         String?
-  memberId       String?
-  eventType      NotificationEventType
-  channel        NotificationChannel
-  recipientEmail String?
-  subject        String
-  status         NotificationStatus    @default(PENDING)
-  errorMessage   String?
-  sentAt         DateTime?
-  createdAt      DateTime              @default(now())
-
-  @@index([organizationId, eventType])
-  @@index([organizationId, createdAt])
 }
 
 enum RiskGrade {
@@ -1003,81 +1116,6 @@ enum IncomeSource {
   OTHER
 }
 
-model FinancialProfile {
-  id                  String             @id @default(cuid())
-  organizationId      String
-  memberId            String
-  assessmentDate      DateTime           @db.Date
-  monthlyIncome       Decimal            @db.Decimal(14, 2)
-  householdIncome     Decimal?           @db.Decimal(14, 2)
-  existingObligations Decimal            @default(0) @db.Decimal(14, 2)
-  incomeSource        IncomeSource       @default(EMPLOYMENT)
-  verificationStatus  VerificationStatus @default(PENDING)
-  verifiedById        String?
-  verifiedAt          DateTime?
-  notes               String?
-  createdById         String
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-
-  member            Member             @relation(fields: [memberId], references: [id])
-  creditAssessments CreditAssessment[]
-
-  @@index([organizationId, memberId])
-  @@index([memberId, assessmentDate])
-}
-
-model CreditAssessment {
-  id                 String    @id @default(cuid())
-  organizationId     String
-  memberId           String
-  financialProfileId String?
-  loanId             String?
-  score              Int // 0-100
-  grade              RiskGrade
-  factors            Json
-  inputs             Json
-  totalLoans         Int       @default(0)
-  activeLoans        Int       @default(0)
-  settledLoans       Int       @default(0)
-  defaultedLoans     Int       @default(0)
-  repaymentRate      Decimal?  @db.Decimal(5, 2)
-  averageDaysLate    Decimal?  @db.Decimal(5, 2)
-  currentOutstanding Decimal?  @db.Decimal(14, 2)
-  debtToIncomeRatio  Decimal?  @db.Decimal(5, 2)
-  createdById        String
-  createdAt          DateTime  @default(now())
-
-  member           Member            @relation(fields: [memberId], references: [id])
-  financialProfile FinancialProfile? @relation(fields: [financialProfileId], references: [id])
-
-  @@index([organizationId, memberId])
-  @@index([memberId, createdAt])
-}
-
-model RiskAlert {
-  id             String            @id @default(cuid())
-  organizationId String
-  type           RiskAlertType
-  severity       RiskAlertSeverity
-  entityType     String // "Member" | "Loan" | "LoanRepayment"
-  entityId       String
-  description    String
-  status         RiskAlertStatus   @default(OPEN)
-  assignedToId   String?
-  resolvedById   String?
-  resolvedAt     DateTime?
-  resolutionNote String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  @@unique([organizationId, entityId, type, status])
-  @@index([organizationId, status])
-  @@index([organizationId, severity])
-  @@index([organizationId, createdAt])
-}
-
-
 enum CollectionOutcome {
   PAID
   PARTIAL
@@ -1091,83 +1129,4 @@ enum MissedReason {
   BUSINESS_CLOSED
   TRAVELING
   OTHER
-}
-
-model CollectionAttempt {
-  id              String            @id @default(cuid())
-  organizationId  String
-  scheduleId      String
-  officerId       String
-  attemptedAt     DateTime          @default(now())
-  outcome         CollectionOutcome
-  reason          MissedReason?
-  notes           String?
-  amountCollected Decimal?          @db.Decimal(10, 2)
-  clientTxId      String?
-
-  organization    Organization      @relation(fields: [organizationId], references: [id])
-  schedule        RepaymentSchedule @relation(fields: [scheduleId], references: [id])
-  officer         User              @relation(fields: [officerId], references: [id])
-
-  @@index([organizationId, officerId, attemptedAt])
-  @@index([scheduleId])
-}
-
-model FieldOfficerAssignment {
-  id             String       @id @default(cuid())
-  organizationId String
-  branchId       String
-  officerId      String
-  centreId       String
-  startDate      DateTime     @db.Date
-  endDate        DateTime?    @db.Date
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  branch         Branch       @relation(fields: [branchId], references: [id])
-  officer        User         @relation(fields: [officerId], references: [id])
-  centre         Centre       @relation(fields: [centreId], references: [id])
-
-  @@unique([officerId, centreId, isActive])
-  @@index([organizationId])
-}
-
-model FieldOfficerReconciliation {
-  id               String   @id @default(cuid())
-  organizationId   String
-  branchId         String
-  officerId        String
-  date             DateTime @db.Date
-  
-  expectedCash     Decimal  @db.Decimal(14,2)
-  declaredCash     Decimal  @db.Decimal(14,2)
-  expectedBank     Decimal  @db.Decimal(14,2)
-  declaredBank     Decimal  @db.Decimal(14,2)
-  difference       Decimal  @db.Decimal(14,2)
-  
-  status           String   @default("SUBMITTED") // SUBMITTED, VERIFIED, DISPUTED
-  createdAt        DateTime @default(now())
-
-  organization Organization @relation(fields: [organizationId], references: [id])
-  officer      User         @relation(fields: [officerId], references: [id])
-  branch       Branch       @relation(fields: [branchId], references: [id])
-
-  @@unique([officerId, date])
-  @@index([organizationId, date])
-}
-
-model ApprovalRule {
-  id             String       @id @default(cuid())
-  organizationId String
-  minAmount      Decimal      @db.Decimal(12, 2)
-  maxAmount      Decimal      @db.Decimal(12, 2)
-  requiredRole   Role
-
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  organization   Organization @relation(fields: [organizationId], references: [id])
-
-  @@index([organizationId])
 }

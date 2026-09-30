@@ -9,8 +9,11 @@ import {
   CircleDot,
   Landmark,
   UsersRound,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { triggerNavigationProgress } from "@/components/top-loading-bar";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -34,6 +37,14 @@ const navItems = [
 
 export function Hero() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+
+  const handleNavClick = (href: string) => {
+    setNavigatingTo(href);
+    triggerNavigationProgress("start");
+  };
 
   return (
     <div className="relative w-full overflow-hidden rounded-[28px] bg-[#10261c] text-[#f4efe6] font-sans">
@@ -64,18 +75,56 @@ export function Hero() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/app/login"
-            className="rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-[#f4efe6] transition-colors hover:bg-white/16"
-          >
-            Log In
-          </Link>
-          <Link
-            href="/app/signup"
-            className="rounded-full bg-[#166534] px-5 py-2.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(22,101,52,0.35)] transition-all hover:brightness-110"
-          >
-            Start free trial
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/app/dashboard"
+              onClick={() => handleNavClick("/app/dashboard")}
+              className="rounded-full bg-[#166534] px-5 py-2.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(22,101,52,0.35)] transition-all hover:brightness-110 inline-flex items-center gap-2"
+            >
+              {navigatingTo === "/app/dashboard" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  <span>Opening Dashboard...</span>
+                </>
+              ) : (
+                <>
+                  <span>Dashboard</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/app/login"
+                onClick={() => handleNavClick("/app/login")}
+                className="rounded-full bg-white/10 px-5 py-2.5 text-sm font-medium text-[#f4efe6] transition-colors hover:bg-white/16 inline-flex items-center gap-2"
+              >
+                {navigatingTo === "/app/login" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-[#f4efe6]" />
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  "Log In"
+                )}
+              </Link>
+              <Link
+                href="/app/signup"
+                onClick={() => handleNavClick("/app/signup")}
+                className="rounded-full bg-[#166534] px-5 py-2.5 text-sm font-medium text-white shadow-[0_4px_14px_rgba(22,101,52,0.35)] transition-all hover:brightness-110 inline-flex items-center gap-2"
+              >
+                {navigatingTo === "/app/signup" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  "Start free trial"
+                )}
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -137,11 +186,21 @@ export function Hero() {
             className="mt-8 flex flex-wrap items-center gap-3"
           >
             <Link
-              href="/app/signup"
+              href={isAuthenticated ? "/app/dashboard" : "/app/signup"}
+              onClick={() => handleNavClick(isAuthenticated ? "/app/dashboard" : "/app/signup")}
               className="inline-flex items-center gap-2 rounded-full bg-[#166534] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_28px_rgba(22,101,52,0.32)] transition-transform hover:scale-[1.03] active:scale-[0.98]"
             >
-              Run your first collection
-              <ArrowRight className="h-4 w-4" />
+              {navigatingTo === (isAuthenticated ? "/app/dashboard" : "/app/signup") ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                  <span>{isAuthenticated ? "Opening Dashboard..." : "Loading sign up..."}</span>
+                </>
+              ) : (
+                <>
+                  <span>{isAuthenticated ? "Go to Dashboard" : "Run your first collection"}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </Link>
             <Link
               href="#operations"
@@ -290,20 +349,65 @@ export function Hero() {
                 ))}
               </div>
               <div className="mt-auto flex flex-col gap-3 p-5">
-                <Link
-                  href="/app/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full rounded-full border border-[#10261c]/10 bg-white px-5 py-3 text-center text-sm font-medium"
-                >
-                  Log In
-                </Link>
-                <Link
-                  href="/app/signup"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full rounded-full bg-[#166534] px-5 py-3 text-center text-sm font-medium text-white"
-                >
-                  Start free trial
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/app/dashboard"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleNavClick("/app/dashboard");
+                    }}
+                    className="w-full rounded-full bg-[#166534] px-5 py-3 text-center text-sm font-medium text-white flex items-center justify-center gap-2"
+                  >
+                    {navigatingTo === "/app/dashboard" ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-white" />
+                        <span>Opening Dashboard...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Go to Dashboard</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/app/login"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleNavClick("/app/login");
+                      }}
+                      className="w-full rounded-full border border-[#10261c]/10 bg-white px-5 py-3 text-center text-sm font-medium flex items-center justify-center gap-2"
+                    >
+                      {navigatingTo === "/app/login" ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-[#10261c]" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        "Log In"
+                      )}
+                    </Link>
+                    <Link
+                      href="/app/signup"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleNavClick("/app/signup");
+                      }}
+                      className="w-full rounded-full bg-[#166534] px-5 py-3 text-center text-sm font-medium text-white flex items-center justify-center gap-2"
+                    >
+                      {navigatingTo === "/app/signup" ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-white" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        "Start free trial"
+                      )}
+                    </Link>
+                  </>
+                )}
               </div>
             </motion.div>
           </>

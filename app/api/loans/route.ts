@@ -44,6 +44,9 @@ export async function GET(request: Request) {
     
     
   } catch (error: any) {
+    if (error?.message === "ORG_SUSPENDED") {
+      return NextResponse.json({ error: "ORG_SUSPENDED", message: "Free trial or subscription has expired. Please upgrade in Settings." }, { status: 403 })
+    }
     return NextResponse.json({ error: error.message }, { status: 401 })
   }
 }
@@ -128,6 +131,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(loan, { status: 201 })
   } catch (error: any) {
+    if (error?.message === "ORG_SUSPENDED") {
+      return NextResponse.json({ error: "ORG_SUSPENDED", message: "Free trial or subscription has expired. Please upgrade in Settings." }, { status: 403 })
+    }
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 }

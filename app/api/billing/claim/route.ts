@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     const bankReference = formData.get("bankReference") as string
     const paidDate = formData.get("paidDate") as string
     const file = formData.get("proofFile") as File | null
+    const planId = formData.get("planId") as string | null
 
     let finalProofUrl = null
 
@@ -114,6 +115,19 @@ export async function POST(req: Request) {
         { error: "A payment claim is already currently under review." },
         { status: 409 }
       )
+    }
+
+    // If an upgrade or specific plan was chosen, update the subscription's target plan
+    if (planId) {
+      const targetPlan = await prisma.subscriptionPlan.findUnique({
+        where: { id: planId },
+      })
+      if (targetPlan && targetPlan.isActive && targetPlan.id !== subscription.planId) {
+        await prisma.subscription.update({
+          where: { id: subscription.id },
+          data: { planId: targetPlan.id },
+        })
+      }
     }
 
     // Create PaymentClaim

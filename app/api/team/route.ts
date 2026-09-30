@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { name, email, password, branchId } = await req.json()
+    const { name, email, password, branchId, role } = await req.json()
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -60,12 +60,15 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    const validRoles = ["SYSTEM_ADMIN", "HEAD_OFFICE", "ACCOUNTANT", "BRANCH_MANAGER", "FIELD_OFFICER"]
+    const assignedRole = role && validRoles.includes(role) ? role : "FIELD_OFFICER"
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "FIELD_OFFICER",
+        role: assignedRole,
         organizationId,
         branchId: branchId || null,
       },

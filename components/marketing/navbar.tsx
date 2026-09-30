@@ -2,8 +2,21 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { Loader2, ArrowRight } from "lucide-react";
+import { triggerNavigationProgress } from "@/components/top-loading-bar";
 
 export function Navbar() {
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+
+  const handleNavClick = (href: string) => {
+    setNavigatingTo(href);
+    triggerNavigationProgress("start");
+  };
+
   return (
     <motion.nav 
       initial={{ y: -20, opacity: 0 }}
@@ -30,18 +43,50 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-5">
-          <Link 
-            href="/app/login" 
-            className="hidden sm:block text-sm font-medium text-white/50 hover:text-white transition-colors"
-          >
-            Log in
-          </Link>
-          <Link 
-            href="/app/signup"
-            className="inline-flex h-8 items-center justify-center rounded-full bg-white px-4 text-xs font-semibold text-black transition-all hover:bg-white/90 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-          >
-            Get Started
-          </Link>
+          {isAuthenticated ? (
+            <Link 
+              href="/app/dashboard"
+              onClick={() => handleNavClick("/app/dashboard")}
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-[#166534] px-4 text-xs font-semibold text-white transition-all hover:bg-[#166534]/90 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(22,101,52,0.2)]"
+            >
+              {navigatingTo === "/app/dashboard" ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <>
+                  <span>Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </Link>
+          ) : (
+            <>
+              <Link 
+                href="/app/login" 
+                onClick={() => handleNavClick("/app/login")}
+                className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-white/50 hover:text-white transition-colors"
+              >
+                {navigatingTo === "/app/login" && <Loader2 className="w-3.5 h-3.5 animate-spin text-white/70" />}
+                <span>Log in</span>
+              </Link>
+              <Link 
+                href="/app/signup"
+                onClick={() => handleNavClick("/app/signup")}
+                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-4 text-xs font-semibold text-black transition-all hover:bg-white/90 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+              >
+                {navigatingTo === "/app/signup" ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  <span>Get Started</span>
+                )}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </motion.nav>

@@ -5,10 +5,12 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { SavingsType, SavingsTransactionType } from "@prisma/client"
 import { postJournalEntry } from "@/lib/accounting"
+import { ensureActiveSubscription } from "@/lib/subscription"
 
 async function getSession() {
   const session = await auth()
   if (!session?.user?.organizationId) throw new Error("Unauthorized")
+  await ensureActiveSubscription(session.user.organizationId)
   return session
 }
 
@@ -244,4 +246,86 @@ async function _postSavingsTransaction(data: {
   } catch (error: any) {
     return { error: error.message || "Transaction failed" }
   }
+}
+export async function updateSavingsProduct(id: string, data: {
+  name: string
+  code: string
+  type: SavingsType
+  interestRate: number
+  minimumBalance: number
+  isActive: boolean
+}) {
+  const session = await getSession()
+  const role = session.user.role as string
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE") throw new Error("Forbidden: requires admin or head office")
+  // @ts-ignore
+  return _updateSavingsProduct(id, data)
+}
+
+async function _updateSavingsProduct(id: string, data: {
+  name: string
+  code: string
+  type: SavingsType
+  interestRate: number
+  minimumBalance: number
+  isActive: boolean
+}) {
+  const session = await getSession()
+  const orgId = session.user.organizationId!
+
+  const existingCode = await prisma.savingsProduct.findFirst({
+    where: { organizationId: orgId, code: data.code, id: { not: id } },
+  })
+  if (existingCode) return { error: "Savings product with code  already exists" }
+
+  const product = await prisma.savingsProduct.update({
+    where: { id, organizationId: orgId },
+    data: {
+      name: data.name,
+      code: data.code,
+      type: data.type,
+      interestRate: data.interestRate,
+      minimumBalance: data.minimumBalance,
+      isActive: data.isActive,
+    },
+  })
+
+  await prisma.auditLog.create({
+    data: { organizationId: orgId, userId: session.user.id, action: "UPDATE", entityType: "SavingsProduct", entityId: product.id, after: JSON.stringify(product) },
+  })
+
+  revalidatePath("/app/savings-products")
+  return { success: true, product }
+}
+
+export async function deleteSavingsProduct(id: string) {
+  const session = await getSession()
+  const role = session.user.role as string
+  if (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE") throw new Error("Forbidden: requires admin or head office")
+  // @ts-ignore
+  return _deleteSavingsProduct(id)
+}
+
+async function _deleteSavingsProduct(id: string) {
+  const session = await getSession()
+  const orgId = session.user.organizationId!
+
+  // check if any accounts are using it
+  const accounts = await prisma.savingsAccount.count({
+    where: { savingsProductId: id }
+  })
+  if (accounts > 0) {
+    return { error: "Cannot delete product.  accounts are currently using it." }
+  }
+
+  await prisma.savingsProduct.delete({
+    where: { id, organizationId: orgId }
+  })
+
+  await prisma.auditLog.create({
+    data: { organizationId: orgId, userId: session.user.id, action: "DELETE", entityType: "SavingsProduct", entityId: id },
+  })
+
+  revalidatePath("/app/savings-products")
+  return { success: true }
 }

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma"
 import Link from "next/link"
 import { ArrowRight, TrendingUp, Users, DollarSign, Wallet, FileText, Activity } from "lucide-react"
 import { FinancialChart } from "@/components/financial-chart"
+import { getFinancialFlowData } from "@/lib/financial-flow"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -57,7 +58,7 @@ export default async function DashboardPage() {
     }
 
     return (
-      <div className="flex flex-col gap-8 max-w-5xl mx-auto w-full">
+      <div className="flex flex-col gap-8 w-full">
         <div>
           <h1 className="text-[28px] font-serif font-medium tracking-tight text-ink-black mb-1">
             Officer Dashboard
@@ -114,7 +115,8 @@ export default async function DashboardPage() {
     todaysRepayments,
     membersCount,
     savingsAccounts,
-    recentAuditLogs
+    recentAuditLogs,
+    financialFlow
   ] = await Promise.all([
     prisma.loan.findMany({ where: { member: { organizationId: orgId }, status: 'ACTIVE' }, select: { outstanding: true } }),
     prisma.loanRepayment.findMany({ 
@@ -126,7 +128,8 @@ export default async function DashboardPage() {
     }),
     prisma.member.count({ where: { organizationId: orgId } }),
     prisma.savingsAccount.findMany({ where: { organizationId: orgId, status: 'ACTIVE' }, select: { balance: true } }),
-    prisma.auditLog.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: 'desc' }, take: 5, include: { user: true } })
+    prisma.auditLog.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: 'desc' }, take: 5, include: { user: true } }),
+    getFinancialFlowData(orgId)
   ]);
 
   const activeCapital = activeLoans.reduce((sum, loan) => sum + Number(loan.outstanding), 0);
@@ -154,7 +157,10 @@ export default async function DashboardPage() {
 
       {/* Full Width Chart */}
       <div className="bg-paper-white border border-[#ececec] rounded-[24px] p-8 shadow-subtle-3">
-        <FinancialChart />
+        <FinancialChart 
+          data6Months={financialFlow.data6Months} 
+          dataThisYear={financialFlow.dataThisYear} 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

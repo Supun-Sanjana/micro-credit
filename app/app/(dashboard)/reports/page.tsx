@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useTransition } from "react"
+import { useState, useTransition } from "react"
 import { format } from "date-fns"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
 import { 
   getPortfolioAtRisk, 
   getCollectionEfficiency, 
@@ -18,53 +19,58 @@ type Tab = "reconciliation" | "outstanding" | "member-search" | "par" | "efficie
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("reconciliation")
   const [isPending, startTransition] = useTransition()
-  
-  // Tab Data States
-  const [reconData, setReconData] = useState<any>(null)
-  const [reconDate, setReconDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
-  
-  const [outstandingData, setOutstandingData] = useState<any[]>([])
-  const [parData, setParData] = useState<any>(null)
-  const [efficiencyData, setEfficiencyData] = useState<any[]>([])
-  const [agingData, setAgingData] = useState<any[]>([])
+  const [reconDate, setReconDate] = useState<string>(format(new Date(), "yyyy-MM-dd"))
   
   // Member Search State
   const [searchNic, setSearchNic] = useState("")
   const [searchedMember, setSearchedMember] = useState<any>(null)
 
-  const loadTabData = (tab: Tab) => {
-    startTransition(async () => {
-      try {
-        if (tab === "reconciliation") {
-          const data = await getDailyReconciliation(reconDate)
-          setReconData(data)
-        } else if (tab === "outstanding") {
-          const data = await getOutstandingByCentre()
-          setOutstandingData(data)
-        } else if (tab === "par") {
-          const data = await getPortfolioAtRisk()
-          setParData(data)
-        } else if (tab === "efficiency") {
-          const end = new Date()
-          const start = new Date()
-          start.setDate(start.getDate() - 30)
-          const data = await getCollectionEfficiency(start.toISOString(), end.toISOString())
-          setEfficiencyData(data)
-        } else if (tab === "aging") {
-          const data = await getAgingReport()
-          setAgingData(data)
-        }
-      } catch (err) {
-        console.error("Failed to load report data:", err)
-      }
-    })
-  }
+  // 1. Daily Reconciliation Query (cached per date)
+  const { data: reconData, isLoading: isReconLoading } = useQuery({
+    queryKey: ["reports", "reconciliation", reconDate],
+    queryFn: () => getDailyReconciliation(reconDate),
+    enabled: activeTab === "reconciliation",
+  })
 
-  useEffect(() => {
-    if (activeTab !== "member-search") {
-      loadTabData(activeTab)
-    }
-  }, [activeTab, reconDate])
+  // 2. Outstanding by Centre Query
+  const { data: outstandingData = [], isLoading: isOutstandingLoading } = useQuery({
+    queryKey: ["reports", "outstanding"],
+    queryFn: () => getOutstandingByCentre(),
+    enabled: activeTab === "outstanding",
+  })
+
+  // 3. Portfolio At Risk (PAR) Query
+  const { data: parData, isLoading: isParLoading } = useQuery({
+    queryKey: ["reports", "par"],
+    queryFn: () => getPortfolioAtRisk(),
+    enabled: activeTab === "par",
+  })
+
+  // 4. Collection Efficiency Query
+  const { data: efficiencyData = [], isLoading: isEfficiencyLoading } = useQuery({
+    queryKey: ["reports", "efficiency"],
+    queryFn: async () => {
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 30)
+      return getCollectionEfficiency(start.toISOString(), end.toISOString())
+    },
+    enabled: activeTab === "efficiency",
+  })
+
+  // 5. Aging Report Query
+  const { data: agingData = [], isLoading: isAgingLoading } = useQuery({
+    queryKey: ["reports", "aging"],
+    queryFn: () => getAgingReport(),
+    enabled: activeTab === "aging",
+  })
+
+  const isTabLoading =
+    (activeTab === "reconciliation" && isReconLoading) ||
+    (activeTab === "outstanding" && isOutstandingLoading) ||
+    (activeTab === "par" && isParLoading) ||
+    (activeTab === "efficiency" && isEfficiencyLoading) ||
+    (activeTab === "aging" && isAgingLoading)
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -96,38 +102,84 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-[40px]">
         
         <div className="flex flex-wrap items-center gap-4 border-b border-border/40 pb-4">
-          <TabButton active={activeTab === "reconciliation"} onClick={() => setActiveTab("reconciliation")}>
+          <TabButton 
+            active={activeTab === "reconciliation"} 
+            loading={isTabLoading && activeTab === "reconciliation"}
+            onClick={() => setActiveTab("reconciliation")}
+          >
             Daily Reconciliation
           </TabButton>
-          <TabButton active={activeTab === "outstanding"} onClick={() => setActiveTab("outstanding")}>
+          <TabButton 
+            active={activeTab === "outstanding"} 
+            loading={isTabLoading && activeTab === "outstanding"}
+            onClick={() => setActiveTab("outstanding")}
+          >
             Outstanding by Centre
           </TabButton>
-          <TabButton active={activeTab === "par"} onClick={() => setActiveTab("par")}>
+          <TabButton 
+            active={activeTab === "par"} 
+            loading={isTabLoading && activeTab === "par"}
+            onClick={() => setActiveTab("par")}
+          >
             Portfolio at Risk (PAR)
           </TabButton>
-          <TabButton active={activeTab === "efficiency"} onClick={() => setActiveTab("efficiency")}>
+          <TabButton 
+            active={activeTab === "efficiency"} 
+            loading={isTabLoading && activeTab === "efficiency"}
+            onClick={() => setActiveTab("efficiency")}
+          >
             Collection Efficiency
           </TabButton>
-          <TabButton active={activeTab === "aging"} onClick={() => setActiveTab("aging")}>
+          <TabButton 
+            active={activeTab === "aging"} 
+            loading={isTabLoading && activeTab === "aging"}
+            onClick={() => setActiveTab("aging")}
+          >
             Aging Report
           </TabButton>
-          <TabButton active={activeTab === "member-search"} onClick={() => setActiveTab("member-search")}>
+          <TabButton 
+            active={activeTab === "member-search"} 
+            onClick={() => setActiveTab("member-search")}
+          >
             Member History
           </TabButton>
         </div>
 
-        {/* Loading Indicator */}
-        {isPending && (
-          <div className="flex items-center gap-2 text-slate-500">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Loading report data...</span>
+        {/* Loading Skeleton during Tab Switching */}
+        {isTabLoading && (
+          <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px] space-y-6 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200/60">
+              <div className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-brand-600" />
+                <span className="font-medium text-slate-700 text-[15px]">Loading tab data...</span>
+              </div>
+              <div className="h-8 w-28 bg-slate-200 rounded-lg animate-pulse" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-xl border border-border/40 h-36 animate-pulse space-y-3">
+                <div className="h-4 w-32 bg-slate-200 rounded" />
+                <div className="h-8 w-44 bg-slate-200 rounded" />
+                <div className="h-4 w-24 bg-slate-100 rounded" />
+              </div>
+              <div className="bg-white p-6 rounded-xl border border-border/40 h-36 animate-pulse space-y-3">
+                <div className="h-4 w-32 bg-slate-200 rounded" />
+                <div className="h-8 w-44 bg-slate-200 rounded" />
+                <div className="h-4 w-24 bg-slate-100 rounded" />
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-border/40 h-64 animate-pulse space-y-4">
+              <div className="h-5 w-40 bg-slate-200 rounded" />
+              <div className="h-10 bg-slate-100 rounded" />
+              <div className="h-10 bg-slate-100 rounded" />
+              <div className="h-10 bg-slate-100 rounded" />
+            </div>
           </div>
         )}
 
         {/* Tab Content */}
         <div className="w-full">
           
-          {activeTab === "reconciliation" && reconData && !isPending && (
+          {activeTab === "reconciliation" && reconData && !isTabLoading && (
             <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
               <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
                 <h2 className="text-[20px] font-sans font-medium text-navy-900">Daily Collection vs Ledger Cash</h2>
@@ -196,7 +248,7 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {activeTab === "outstanding" && outstandingData && !isPending && (
+          {activeTab === "outstanding" && outstandingData && !isTabLoading && (
             <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
               <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">Aggregated Outstanding Balances</h2>
               <div className="w-full overflow-x-auto">
@@ -224,7 +276,7 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {activeTab === "par" && parData && !isPending && (
+          {activeTab === "par" && parData && !isTabLoading && (
             <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
               <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">Portfolio at Risk (PAR)</h2>
               <div className="flex flex-col gap-6">
@@ -254,7 +306,7 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {activeTab === "efficiency" && efficiencyData && !isPending && (
+          {activeTab === "efficiency" && efficiencyData && !isTabLoading && (
             <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
               <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">Collection Efficiency (Last 30 Days)</h2>
               <div className="w-full overflow-x-auto">
@@ -291,7 +343,7 @@ export default function ReportsPage() {
             </div>
           )}
 
-          {activeTab === "aging" && agingData && !isPending && (
+          {activeTab === "aging" && agingData && !isTabLoading && (
             <div className="bg-slate-50 rounded-[24px] p-[32px] md:p-[40px]">
               <h2 className="text-[20px] font-sans font-medium text-navy-900 mb-6">Aging Report</h2>
               <div className="w-full overflow-x-auto">
@@ -455,16 +507,27 @@ export default function ReportsPage() {
   )
 }
 
-function TabButton({ active, onClick, children }: { active: boolean, onClick: () => void, children: React.ReactNode }) {
+function TabButton({ 
+  active, 
+  loading, 
+  onClick, 
+  children 
+}: { 
+  active: boolean
+  loading?: boolean
+  onClick: () => void
+  children: React.ReactNode 
+}) {
   return (
     <button
       onClick={onClick}
-      className={`px-[20px] py-[10px] rounded-full text-[15px] font-sans transition-colors ${
+      className={`inline-flex items-center gap-2 px-[20px] py-[10px] rounded-full text-[15px] font-sans transition-all ${
         active 
-          ? "bg-navy-900 text-white font-medium" 
-          : "bg-transparent text-slate-500 hover:bg-slate-50 hover:text-navy-900"
+          ? "bg-navy-900 text-white font-medium shadow-sm" 
+          : "bg-transparent text-slate-500 hover:bg-slate-100 hover:text-navy-900"
       }`}
     >
+      {loading && <Loader2 className="w-4 h-4 animate-spin text-brand-300" />}
       {children}
     </button>
   )

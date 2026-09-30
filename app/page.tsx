@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 
@@ -14,10 +14,13 @@ import {
   MapPinned,
   Wallet,
   UsersRound,
+  Loader2,
 } from "lucide-react";
 import { Hero } from "@/components/marketing/hero";
 import { Footer } from "@/components/marketing/footer";
 import { submitContactForm } from "./actions/contact";
+import { triggerNavigationProgress } from "@/components/top-loading-bar";
+import { SUBSCRIPTION_PLANS } from "@/lib/plans";
 
 const operations = [
   {
@@ -79,6 +82,7 @@ const features = [
 export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -275,94 +279,114 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="pricing" className="relative w-full py-20 sm:py-24">
-          <div className="container relative z-10 mx-auto max-w-6xl px-4 md:px-6">
-            <div className="mx-auto mb-14 max-w-3xl text-center">
+        <section id="pricing" className="relative w-full py-20 sm:py-28 bg-[#fdfbf7]">
+          <div className="container relative z-10 mx-auto max-w-7xl px-4 md:px-6">
+            <div className="mx-auto mb-16 max-w-3xl text-center">
+              <span className="inline-block px-3.5 py-1 rounded-full text-xs font-semibold bg-[#166534]/10 text-[#166534] uppercase tracking-wider mb-4">
+                Institutional Microfinance Plans
+              </span>
               <h2
-                className="text-4xl tracking-tight sm:text-5xl"
+                className="text-4xl tracking-tight sm:text-5xl text-navy-950 font-normal"
                 style={{ fontFamily: "var(--font-instrument), Georgia, serif", fontStyle: "italic" }}
               >
-                Pricing that scales with branches, not buzzwords.
+                Plans that scale with your loan book, not hidden surprises.
               </h2>
+              <p className="mt-4 text-[16px] text-[#5d6b63] max-w-2xl mx-auto">
+                Every plan includes a 14-day full-access free trial. No credit card required upfront. Offline bank deposit claims supported.
+              </p>
             </div>
 
-            <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-4 md:grid-cols-3">
-              <div className="flex h-full flex-col rounded-3xl border border-[#d9cfc0] bg-[#f7f1e8] p-8 shadow-sm">
-                <h3 className="text-lg font-semibold tracking-tight">Pilot</h3>
-                <p className="mt-2 text-[13px] font-medium text-[#5d6b63]">Prove it on one branch first.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-5xl font-semibold tracking-tighter">$0</span>
-                  <span className="text-sm font-medium text-[#8a948e]">/mo</span>
-                </div>
-                <ul className="mt-8 flex-1 space-y-4">
-                  {["1 Branch", "10 Staff", "20 Members", "100MB Storage"].map((item) => (
-                    <li key={item} className="flex items-center gap-3">
-                      <Check className="h-4 w-4 shrink-0 text-[#c9c0b2]" />
-                      <span className="text-[14px] font-medium tracking-tight text-[#3d4a44]">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/app/signup"
-                  className="mt-8 flex h-11 w-full items-center justify-center rounded-xl border border-[#d9cfc0] bg-white text-[14px] font-semibold text-[#3d4a44] transition-colors hover:bg-[#efe8dc]"
-                >
-                  Start a pilot
-                </Link>
-              </div>
+            <div className="mx-auto grid max-w-7xl grid-cols-1 items-stretch gap-8 lg:grid-cols-3">
+              {SUBSCRIPTION_PLANS.map((plan) => {
+                const isGrowth = plan.name === "Growth";
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative flex flex-col rounded-3xl p-8 transition-all ${
+                      isGrowth
+                        ? "border-2 border-[#166534] bg-[#f7f2ea] shadow-xl ring-4 ring-[#166534]/10"
+                        : "border border-[#d9cfc0] bg-[#fbf7f0] shadow-sm hover:border-[#166534]/40"
+                    }`}
+                  >
+                    {plan.badge && (
+                      <div className="absolute right-6 top-6 rounded-full bg-[#166534] px-3.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow-sm">
+                        {plan.badge}
+                      </div>
+                    )}
 
-              <div className="relative flex h-full flex-col overflow-hidden rounded-3xl border border-[#166534]/25 bg-[#f7f1e8] p-8 shadow-xl ring-4 ring-[#166534]/5">
-                <div className="absolute right-5 top-5 rounded-full bg-[#166534]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-[#166534]">
-                  For growing MFIs
-                </div>
-                <h3 className="text-lg font-semibold tracking-tight">Institution</h3>
-                <p className="mt-2 text-[13px] font-medium text-[#5d6b63]">Multi-center operations, weekly grids included.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-5xl font-semibold tracking-tighter">$49</span>
-                  <span className="text-sm font-medium text-[#8a948e]">/mo</span>
-                </div>
-                <ul className="mt-8 flex-1 space-y-4">
-                  {[
-                    "Unlimited members & centers",
-                    "Up to 5 branches",
-                    "Guarantor tracking",
-                    "Weekly collection grids",
-                    "Email support",
-                  ].map((item) => (
-                    <li key={item} className="flex items-center gap-3">
-                      <Check className="h-4 w-4 shrink-0 text-[#166534]" />
-                      <span className="text-[14px] font-medium tracking-tight text-[#3d4a44]">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/app/signup"
-                  className="mt-8 flex h-11 w-full items-center justify-center rounded-xl bg-[#10261c] text-[14px] font-semibold text-[#f4efe6] shadow-md transition-all hover:scale-[1.02] hover:bg-[#0c1c15] active:scale-[0.98]"
-                >
-                  Start free trial
-                </Link>
-              </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-navy-950 tracking-tight">{plan.name}</h3>
+                      <p className="mt-2 text-[14px] text-[#5d6b63] min-h-[44px] leading-relaxed">
+                        {plan.tagline}
+                      </p>
+                    </div>
 
-              <div className="flex h-full flex-col rounded-3xl border border-[#d9cfc0] bg-[#f7f1e8] p-8 shadow-sm">
-                <h3 className="text-lg font-semibold tracking-tight">Network</h3>
-                <p className="mt-2 text-[13px] font-medium text-[#5d6b63]">Multi-branch networks and custom workflows.</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-5xl font-semibold tracking-tighter">Custom</span>
-                </div>
-                <ul className="mt-8 flex-1 space-y-4">
-                  {["Unlimited branches", "Unlimited storage", "Custom workflows", "Dedicated manager"].map((item) => (
-                    <li key={item} className="flex items-center gap-3">
-                      <Check className="h-4 w-4 shrink-0 text-[#c9c0b2]" />
-                      <span className="text-[14px] font-medium tracking-tight text-[#3d4a44]">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="#contact"
-                  className="mt-8 flex h-11 w-full items-center justify-center rounded-xl border border-[#d9cfc0] bg-transparent text-[14px] font-semibold text-[#3d4a44] transition-colors hover:bg-white"
-                >
-                  Talk to us
-                </Link>
-              </div>
+                    <div className="mt-6 pb-6 border-b border-[#d9cfc0]/60">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl sm:text-4xl font-bold text-navy-950 tracking-tight">
+                          LKR {plan.monthlyPrice.toLocaleString()}
+                        </span>
+                        <span className="text-[14px] font-medium text-[#7c8880]">/ month</span>
+                      </div>
+                      <div className="mt-3 inline-flex flex-wrap items-center gap-2 text-xs font-semibold text-[#166534] bg-[#166534]/10 px-3 py-1.5 rounded-lg">
+                        <span>{plan.maxOfficerSeats} Officer Seats</span>
+                        <span>•</span>
+                        <span>{plan.maxBranches} {plan.maxBranches === 1 ? "Branch" : "Branches"}</span>
+                        <span>•</span>
+                        <span>{plan.storageDisplay} Storage</span>
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div className="mt-6 mb-8">
+                      <Link
+                        href={plan.name === "Enterprise" ? "#contact" : "/app/signup"}
+                        onClick={() => {
+                          if (plan.name !== "Enterprise") {
+                            setNavigatingHref(plan.id);
+                            triggerNavigationProgress("start");
+                          }
+                        }}
+                        className={`flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-semibold transition-all ${
+                          isGrowth
+                            ? "bg-[#10261c] text-[#f4efe6] shadow-md hover:bg-[#0c1c15] hover:scale-[1.01]"
+                            : "border border-[#d9cfc0] bg-white text-navy-900 hover:bg-[#efe8dc]"
+                        }`}
+                      >
+                        {navigatingHref === plan.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin text-current" />
+                            <span>Loading...</span>
+                          </>
+                        ) : plan.name === "Enterprise" ? (
+                          "Contact Enterprise Sales"
+                        ) : (
+                          "Start 14-Day Free Trial"
+                        )}
+                      </Link>
+                    </div>
+
+                    {/* Feature Groups */}
+                    <div className="flex-1 space-y-6">
+                      {plan.featureGroups.map((group) => (
+                        <div key={group.category} className="space-y-2.5">
+                          <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#166534]/90">
+                            {group.category}
+                          </h4>
+                          <ul className="space-y-2">
+                            {group.features.map((feature) => (
+                              <li key={feature} className="flex items-start gap-2.5 text-[13px] text-[#3d4a44] leading-snug">
+                                <Check className="h-4 w-4 shrink-0 text-[#166534] mt-0.5" />
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>

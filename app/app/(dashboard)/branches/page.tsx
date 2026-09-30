@@ -4,27 +4,36 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { Branch } from "@/lib/types"
-import { Search, Plus, X, Building, MapPin } from "lucide-react"
+import { Search, Plus, X, Building, MapPin, Edit2, Trash2 } from "lucide-react"
 
-function AddBranchDrawer({ open, onClose, onSuccess }: any) {
+function BranchDrawer({ open, onClose, onSuccess, initialData }: any) {
   const [form, setForm] = useState({ code: "", name: "", address: "" })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (open) { setForm({ code: "", name: "", address: "" }); setError("") }
-  }, [open])
+    if (open) { 
+      if (initialData) {
+        setForm({ code: initialData.code || "", name: initialData.name || "", address: initialData.address || "" })
+      } else {
+        setForm({ code: "", name: "", address: "" })
+      }
+      setError("") 
+    }
+  }, [open, initialData])
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
     try {
       setSubmitting(true); setError("")
-      const res = await fetch("/api/branches", {
-        method: "POST",
+      const url = initialData ? `/api/branches/${initialData.id}` : "/api/branches"
+      const method = initialData ? "PUT" : "POST"
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to create branch") }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || `Failed to ${initialData ? 'update' : 'create'} branch`) }
       onSuccess(); onClose()
     } catch (err: any) { setError(err.message) }
     finally { setSubmitting(false) }
@@ -37,7 +46,7 @@ function AddBranchDrawer({ open, onClose, onSuccess }: any) {
       <div className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
       <aside className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <div><h2 className="text-[17px] font-semibold text-navy-900">Create Branch</h2><p className="text-[13px] text-slate-500 mt-0.5">Add a new regional branch</p></div>
+          <div><h2 className="text-[17px] font-semibold text-navy-900">{initialData ? "Edit Branch" : "Create Branch"}</h2><p className="text-[13px] text-slate-500 mt-0.5">{initialData ? "Update branch details" : "Add a new regional branch"}</p></div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
@@ -60,7 +69,7 @@ function AddBranchDrawer({ open, onClose, onSuccess }: any) {
 
           <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-200 text-[14px] font-medium text-slate-600 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? "Creating..." : "Create Branch"}</button>
+            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? (initialData ? "Updating..." : "Creating...") : (initialData ? "Update Branch" : "Create Branch")}</button>
           </div>
         </form>
       </aside>
@@ -70,6 +79,7 @@ function AddBranchDrawer({ open, onClose, onSuccess }: any) {
 
 export default function BranchesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingBranch, setEditingBranch] = useState<any>(null)
   const [search, setSearch] = useState("")
 
   const queryClient = useQueryClient()
@@ -85,6 +95,22 @@ export default function BranchesPage() {
     return !q || (b.name || "").toLowerCase().includes(q) || (b.code || "").toLowerCase().includes(q)
   })
 
+  const openDrawer = (branch?: any) => {
+    setEditingBranch(branch || null)
+    setDrawerOpen(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this branch?")) return;
+    try {
+      const res = await fetch(`/api/branches/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error("Failed to delete branch")
+      queryClient.invalidateQueries({ queryKey: ['branches'] })
+    } catch (err) {
+      alert("Error deleting branch")
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-start justify-between mb-6">
@@ -92,7 +118,7 @@ export default function BranchesPage() {
           <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Branches</h1>
           <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${branches.length} registered branches`}</p>
         </div>
-        <button onClick={() => setDrawerOpen(true)} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
+        <button onClick={() => openDrawer()} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
           <Plus className="w-4 h-4" /> Create Branch
         </button>
       </div>
@@ -112,13 +138,14 @@ export default function BranchesPage() {
                 <th className="text-left py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Branch</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Code</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Location</th>
+                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={3} className="py-20 text-center text-slate-400">Loading branches...</td></tr>
+                <tr><td colSpan={4} className="py-20 text-center text-slate-400">Loading branches...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={3} className="py-20 text-center text-slate-400">No branches found</td></tr>
+                <tr><td colSpan={4} className="py-20 text-center text-slate-400">No branches found</td></tr>
               ) : filtered.map((b: any) => (
                 <tr key={b.id} className="hover:bg-gray-50/70 transition-colors group">
                   <td className="py-3.5 px-5">
@@ -137,13 +164,24 @@ export default function BranchesPage() {
                       <span className="inline-flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400" />{b.address}</span>
                     ) : "—"}
                   </td>
+                  <td className="py-3.5 px-5 text-right">
+                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => openDrawer(b)} className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-slate-400 hover:text-brand-600 transition-colors" title="Edit branch">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(b.id)} className="w-8 h-8 rounded-lg hover:bg-danger-50 flex items-center justify-center text-slate-400 hover:text-danger-600 transition-colors" title="Delete branch">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      <AddBranchDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['branches'] })} />
+      <BranchDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['branches'] })} initialData={editingBranch} />
     </div>
   )
 }
+

@@ -1,43 +1,43 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ShieldAlert } from "lucide-react"
 
 export default function RiskPage() {
-  const [alerts, setAlerts] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
 
-  const fetchAlerts = async () => {
-    try {
+  // 1. Fetch & cache risk alerts
+  const { data: alerts = [], isLoading: loading } = useQuery<any[]>({
+    queryKey: ["risk-alerts"],
+    queryFn: async () => {
       const res = await fetch("/api/intelligence/risk-alerts")
-      if (res.ok) {
-        const data = await res.json()
-        setAlerts(data)
-      }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
-    }
-  }
+      if (!res.ok) return []
+      return res.json()
+    },
+  })
 
-  useEffect(() => {
-    fetchAlerts()
-  }, [])
-
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    try {
+  // 2. Mutation for updating risk alert status
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, newStatus }: { id: string; newStatus: string }) => {
       const res = await fetch(`/api/intelligence/risk-alerts/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus }),
       })
-      if (res.ok) {
-        fetchAlerts()
-      }
-    } catch (e) {
+      if (!res.ok) throw new Error("Failed to update status")
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["risk-alerts"] })
+    },
+    onError: (e) => {
       console.error(e)
-    }
+    },
+  })
+
+  const handleStatusChange = (id: string, newStatus: string) => {
+    statusMutation.mutate({ id, newStatus })
   }
 
   const getSeverityBadge = (severity: string) => {

@@ -4,7 +4,17 @@ import withSerwistInit from "@serwist/next";
 const nextConfig = {
   // output: 'standalone', // Temporarily disabled to prevent Windows copyfile ENOENT errors during build
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true }
+  typescript: { ignoreBuildErrors: true },
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@tanstack/react-query",
+      "next-auth",
+      "recharts",
+      "framer-motion",
+      "@base-ui/react",
+    ],
+  },
 };
 
 const withSerwist = withSerwistInit({
@@ -13,4 +23,4 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === "development",
 });
 
-export default withSerwist(nextConfig);
+export default process.env.NODE_ENV === "development" ? nextConfig : withSerwist(nextConfig);

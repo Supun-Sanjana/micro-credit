@@ -9,20 +9,7 @@ export default async function SavingsProductsPage() {
   const products = await getSavingsProducts()
 
   return (
-    <div className="flex flex-col gap-8 lg:gap-[48px]">
-      {/* Hero Section */}
-      <div className="flex flex-col gap-4">
-        <h1 
-          className="text-[44px] leading-[1.3] text-navy-900 font-serif font-normal"
-          style={{ letterSpacing: '-0.66px' }}
-        >
-          Savings Products
-        </h1>
-        <p className="text-[17px] text-slate-500 max-w-[600px] leading-[1.35]">
-          Configure savings products and their parameters.
-        </p>
-      </div>
-
+    <div className="h-full">
       <SavingsProductsClient initialProducts={products} />
     </div>
   )

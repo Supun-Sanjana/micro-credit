@@ -1,47 +1,47 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import Link from "next/link"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 
 export function DocumentsClient() {
-  const [documents, setDocuments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
 
-  const fetchDocs = async () => {
-    setLoading(true)
-    try {
+  // 1. Fetch & cache documents
+  const { data: documents = [], isLoading: loading } = useQuery<any[]>({
+    queryKey: ["documents"],
+    queryFn: async () => {
       const res = await fetch("/api/documents")
-      if (res.ok) {
-        setDocuments(await res.json())
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
+      if (!res.ok) return []
+      return res.json()
+    },
+  })
 
-  useEffect(() => {
-    fetchDocs()
-  }, [])
-
-  const handleVerify = async (id: string, status: string, reason?: string) => {
-    try {
+  // 2. Mutation for document verification
+  const verifyMutation = useMutation({
+    mutationFn: async ({ id, status, reason }: { id: string; status: string; reason?: string }) => {
       const res = await fetch(`/api/documents/${id}/verify`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, reason })
+        body: JSON.stringify({ status, reason }),
       })
-      if (res.ok) {
-        fetchDocs()
-      } else {
-        alert("Failed to update status")
-      }
-    } catch (e) {
+      if (!res.ok) throw new Error("Failed to update status")
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] })
+    },
+    onError: () => {
       alert("Error updating status")
-    }
+    },
+  })
+
+  const handleVerify = (id: string, status: string, reason?: string) => {
+    verifyMutation.mutate({ id, status, reason })
   }
 
   const handleView = async (id: string) => {

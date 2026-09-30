@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     })
 
     if (!member) {
-      return new NextResponse("Member not found", { status: 404 })
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
     }
 
     const formData = await req.formData()
@@ -43,14 +43,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const type = formData.get("type") as MemberDocumentType | null
 
     if (!file || !type) {
-      return new NextResponse("Missing file or document type", { status: 400 })
+      return NextResponse.json({ error: "Missing file or document type" }, { status: 400 })
     }
 
     let uploadResult
     try {
-      uploadResult = await uploadDocument(file, organizationId, memberId)
+      uploadResult = await uploadDocument(file, organizationId, memberId, member.name)
     } catch (e: any) {
-      return new NextResponse(e.message, { status: 400 })
+      return NextResponse.json({ error: e.message }, { status: 400 })
     }
 
     const document = await prisma.memberDocument.create({
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         organizationId,
         memberId,
         type,
-        status: "PENDING",
+        status: "VERIFIED",
         fileName: uploadResult.fileName,
         storagePath: uploadResult.storagePath,
         mimeType: uploadResult.mimeType,
@@ -80,8 +80,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json(document)
   } catch (error: any) {
-    if (error.message === "ORG_SUSPENDED") return new NextResponse("Organization Suspended", { status: 403 })
+    if (error.message === "ORG_SUSPENDED") return NextResponse.json({ error: "Organization Suspended" }, { status: 403 })
     console.error("Error uploading document:", error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }

@@ -13,7 +13,7 @@ export default async function DocumentsVerificationPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Document Verification</h1>
       </div>

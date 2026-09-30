@@ -68,7 +68,7 @@ export default function MigrationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="w-full space-y-8">
       
       <div className="flex flex-col gap-4">
         <h1 className="text-[32px] leading-[1.3] text-navy-900 font-serif font-normal" style={{ letterSpacing: '-0.66px' }}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 interface Centre {
   id: string
@@ -40,59 +41,64 @@ interface CollectionEntry {
 }
 
 export default function CollectionPage() {
+  const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"))
   const [selectedCentre, setSelectedCentre] = useState<string>("")
-  const [centres, setCentres] = useState<Centre[]>([])
-  const [dueList, setDueList] = useState<CollectionItem[]>([])
   const [collections, setCollections] = useState<Record<string, CollectionEntry>>({})
-  const [isLoadingCentres, setIsLoadingCentres] = useState(true)
-  const [isLoadingDueList, setIsLoadingDueList] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
+  // 1. Fetch & cache centres (shared with Members, Groups, Centres pages)
+  const { data: centresData, isLoading: isLoadingCentres } = useQuery<Centre[]>({
+    queryKey: ["centres"],
+    queryFn: async () => {
+      const res = await fetch("/api/centres")
+      const data = await res.json()
+      return Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+    },
+  })
+  const centres: Centre[] = Array.isArray(centresData) ? centresData : Array.isArray((centresData as any)?.data) ? (centresData as any).data : []
+
+  // Auto-select first centre once loaded
   useEffect(() => {
-    fetch("/api/centres")
-      .then(res => res.json())
-      .then(data => {
-        const arr = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
-        setCentres(arr)
-        if (arr.length > 0) {
-          setSelectedCentre(arr[0].id)
+    if (centres.length > 0 && !selectedCentre) {
+      setSelectedCentre(centres[0].id)
+    }
+  }, [centres, selectedCentre])
+
+  // 2. Fetch & cache collection due list for selectedCentre + selectedDate
+  const {
+    data: dueListData,
+    isLoading: isLoadingDueList,
+    refetch: refetchDueList,
+  } = useQuery<CollectionItem[]>({
+    queryKey: ["collection", selectedCentre, selectedDate],
+    queryFn: async () => {
+      if (!selectedCentre) return []
+      const res = await fetch(`/api/collection?centreId=${selectedCentre}&date=${selectedDate}`)
+      if (!res.ok) throw new Error("Failed to fetch due list")
+      return res.json()
+    },
+    enabled: !!selectedCentre && !!selectedDate,
+  })
+
+  const dueList: CollectionItem[] = dueListData || []
+
+  // Synchronize local form collections when due list changes
+  useEffect(() => {
+    if (dueListData) {
+      const initialCollections: Record<string, CollectionEntry> = {}
+      dueListData.forEach((item) => {
+        initialCollections[item.memberId] = {
+          amount: item.totalDue,
+          compulsorySavingsDeposit: item.compulsorySavingsId ? 0 : "",
+          voluntarySavingsDeposit: item.voluntarySavingsId ? 0 : "",
+          status: item.totalDue > 0 ? "FULL" : "NP",
+          note: "",
         }
       })
-      .finally(() => setIsLoadingCentres(false))
-  }, [])
-
-  const fetchDueList = () => {
-    if (!selectedCentre) return
-    setIsLoadingDueList(true)
-    fetch(`/api/collection?centreId=${selectedCentre}&date=${selectedDate}`)
-      .then(res => res.json())
-      .then((data: CollectionItem[]) => {
-        setDueList(data)
-        const initialCollections: Record<string, CollectionEntry> = {}
-        data.forEach(item => {
-          initialCollections[item.memberId] = {
-            amount: item.totalDue,
-            compulsorySavingsDeposit: item.compulsorySavingsId ? 0 : "",
-            voluntarySavingsDeposit: item.voluntarySavingsId ? 0 : "",
-            status: item.totalDue > 0 ? "FULL" : "NP",
-            note: ""
-          }
-        })
-        setCollections(initialCollections)
-      })
-      .catch(err => {
-        console.error(err)
-        alert("Failed to fetch due list")
-      })
-      .finally(() => setIsLoadingDueList(false))
-  }
-
-  useEffect(() => {
-    if (selectedCentre && selectedDate) {
-      fetchDueList()
+      setCollections(initialCollections)
     }
-  }, [selectedCentre, selectedDate])
+  }, [dueListData])
 
   const handleAmountChange = (memberId: string, val: string, field: "amount" | "compulsory" | "voluntary") => {
     setCollections(prev => {
@@ -173,7 +179,8 @@ export default function CollectionPage() {
       }
 
       alert("Saved successfully!")
-      fetchDueList()
+      queryClient.invalidateQueries({ queryKey: ["collection"] })
+      refetchDueList()
     } catch (error) {
       console.error(error)
       alert("Failed to save")

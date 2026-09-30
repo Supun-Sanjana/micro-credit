@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { logAudit } from "@/lib/audit";
 import { checkSuspiciousActivity } from "@/lib/intelligence/anomaly-detector";
+import { ensureActiveSubscription } from "@/lib/subscription";
 
 export async function getReversalRequests() {
   const session = await auth();
@@ -13,6 +14,7 @@ export async function getReversalRequests() {
   if (!session?.user?.id || (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") || !session.user.organizationId) {
     throw new Error("Unauthorized");
   }
+  await ensureActiveSubscription(session.user.organizationId as string);
 
   const requests = await prisma.paymentReversal.findMany({
     where: { organizationId: session.user.organizationId as string },
@@ -40,6 +42,7 @@ export async function approveReversal(reversalId: string) {
   if (!session?.user?.id || (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") || !session.user.organizationId) {
     return { error: "Unauthorized" };
   }
+  await ensureActiveSubscription(session.user.organizationId as string);
 
   const { organizationId, id: userId } = session.user as { organizationId: string, id: string };
   
@@ -215,6 +218,7 @@ export async function rejectReversal(reversalId: string, note: string) {
   if (!session?.user?.id || (role !== "SYSTEM_ADMIN" && role !== "HEAD_OFFICE" && role !== "BRANCH_MANAGER") || !session.user.organizationId) {
     return { error: "Unauthorized" };
   }
+  await ensureActiveSubscription(session.user.organizationId as string);
 
   const { organizationId, id: userId } = session.user as { organizationId: string, id: string };
 

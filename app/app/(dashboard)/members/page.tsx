@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import Link from "next/link"
 import { Member, Centre } from "@/lib/types"
-import { Search, Plus, X, ChevronDown, Users, MapPin, Hash } from "lucide-react"
+import { Search, Plus, X, ChevronDown, Users, MapPin, Hash, Pencil, Trash2 } from "lucide-react"
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 function initials(name: string) {
@@ -27,13 +27,14 @@ function avatarColor(seed: string) {
 }
 
 // ─── Drawer ───────────────────────────────────────────────────────────────────
-function AddMemberDrawer({
-  open, onClose, centres, onSuccess
+function MemberDrawer({
+  open, onClose, centres, onSuccess, member
 }: {
   open: boolean
   onClose: () => void
   centres: Centre[]
   onSuccess: () => void
+  member?: Member | null
 }) {
   const [form, setForm] = useState({ centreId: "", name: "", nic: "", contact1: "", groupNumber: "" })
   const [submitting, setSubmitting] = useState(false)
@@ -41,20 +42,33 @@ function AddMemberDrawer({
   const nameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (open) { setForm({ centreId: "", name: "", nic: "", contact1: "", groupNumber: "" }); setError("") }
-    if (open) setTimeout(() => nameRef.current?.focus(), 120)
-  }, [open])
+    if (open) {
+      if (member) {
+        setForm({
+          centreId: member.centreId || "",
+          name: member.name,
+          nic: member.nic || "",
+          contact1: member.contact1 || "",
+          groupNumber: member.groupNumber ? String(member.groupNumber) : ""
+        })
+      } else {
+        setForm({ centreId: "", name: "", nic: "", contact1: "", groupNumber: "" })
+      }
+      setError("")
+      setTimeout(() => nameRef.current?.focus(), 120)
+    }
+  }, [open, member])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       setSubmitting(true); setError("")
-      const res = await fetch("/api/members", {
-        method: "POST",
+      const res = await fetch(member ? `/api/members/${member.id}` : "/api/members", {
+        method: member ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, groupNumber: form.groupNumber ? parseInt(form.groupNumber) : undefined }),
       })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to register") }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || (member ? "Failed to update" : "Failed to register")) }
       onSuccess(); onClose()
     } catch (err: any) {
       setError(err.message)
@@ -77,8 +91,8 @@ function AddMemberDrawer({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div>
-            <h2 className="text-[17px] font-semibold text-navy-900">Register Member</h2>
-            <p className="text-[13px] text-slate-500 mt-0.5">Add a new community member</p>
+            <h2 className="text-[17px] font-semibold text-navy-900">{member ? "Edit Member" : "Register Member"}</h2>
+            <p className="text-[13px] text-slate-500 mt-0.5">{member ? "Update member details" : "Add a new community member"}</p>
           </div>
           <button
             onClick={onClose}
@@ -169,7 +183,7 @@ function AddMemberDrawer({
               disabled={submitting}
               className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60"
             >
-              {submitting ? "Registering…" : "Register Member"}
+              {submitting ? "Saving..." : (member ? "Update Member" : "Register Member")}
             </button>
           </div>
         </form>
@@ -194,6 +208,7 @@ function Field({ label, children, required }: { label: string; children: React.R
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function MembersPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editingMember, setEditingMember] = useState<Member | null>(null)
   const [search, setSearch] = useState("")
   const [centreFilter, setCentreFilter] = useState("")
   const [groupFilter, setGroupFilter] = useState("")
@@ -226,6 +241,20 @@ export default function MembersPage() {
   const total = membersRes?.meta?.total || 0
   const totalPages = membersRes?.meta?.totalPages || 1
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this member?")) return
+    try {
+      const res = await fetch(`/api/members/${id}`, { method: "DELETE" })
+      if (!res.ok) {
+        const d = await res.json()
+        throw new Error(d.error || "Failed to delete")
+      }
+      queryClient.invalidateQueries({ queryKey: ["members"] })
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   // Client side filtering for search & group (in a real app, these should also go to backend if total is large)
   const filtered = members.filter((m) => {
     const q = search.toLowerCase()
@@ -252,7 +281,7 @@ export default function MembersPage() {
           </p>
         </div>
         <button
-          onClick={() => setDrawerOpen(true)}
+          onClick={() => { setEditingMember(null); setDrawerOpen(true); }}
           className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -311,12 +340,13 @@ export default function MembersPage() {
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Group</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">NIC</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
+                  <td colSpan={7} className="py-20 text-center">
                     <div className="inline-flex flex-col items-center gap-3 text-slate-400">
                       <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
                       <span className="text-[14px]">Loading members-</span>
@@ -325,7 +355,7 @@ export default function MembersPage() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center">
+                  <td colSpan={7} className="py-20 text-center">
                     <div className="inline-flex flex-col items-center gap-3 text-slate-400">
                       <Users className="w-10 h-10 text-slate-200" />
                       <div>
@@ -402,6 +432,24 @@ export default function MembersPage() {
                           Active
                         </span>
                       </td>
+                      <td className="py-3.5 px-5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => { setEditingMember(m); setDrawerOpen(true); }}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600 transition-colors"
+                            title="Edit Member"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(m.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-danger-50 text-slate-400 hover:text-danger-600 transition-colors"
+                            title="Delete Member"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   )
                 })
@@ -435,10 +483,11 @@ export default function MembersPage() {
         </div>
       </div>
 
-      <AddMemberDrawer
+      <MemberDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => { setDrawerOpen(false); setEditingMember(null); }}
         centres={centres}
+        member={editingMember}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['members'] })}
       />
     </div>

@@ -1,29 +1,38 @@
 import { supabase } from "./supabase"
 import crypto from "crypto"
 
-const BUCKET_NAME = "member-documents"
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
-const MAX_PDF_SIZE = 10 * 1024 * 1024 // 10MB
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"]
+const BUCKET_NAME = "documents"
+/** Maximum size allowed per individual document file: 1 MB */
+const MAX_FILE_SIZE = 1 * 1024 * 1024 // 1 MB
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
 
-export async function uploadDocument(file: File, orgId: string, memberId: string) {
+export async function uploadDocument(file: File, orgId: string, memberId: string, memberName?: string) {
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    throw new Error(`Invalid file type: ${file.type}. Allowed types: ${ALLOWED_MIME_TYPES.join(", ")}`)
+    throw new Error(`Invalid file type: ${file.type}. Allowed types: JPEG, PNG, WEBP, PDF.`)
   }
 
-  const maxSize = file.type === "application/pdf" ? MAX_PDF_SIZE : MAX_IMAGE_SIZE
-  if (file.size > maxSize) {
-    throw new Error(`File size exceeds limit: ${file.size} > ${maxSize}`)
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(
+      `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed per document is 1 MB.`
+    )
   }
 
   const uuid = crypto.randomUUID()
-  const storagePath = `${orgId}/${memberId}/${uuid}`
+  
+  // Format member name to be folder-safe if provided
+  let folderName = memberId
+  if (memberName) {
+    const safeName = memberName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+    folderName = `${safeName}_${memberId.substring(0, 8)}`
+  }
+  
+  const storagePath = `${orgId}/${folderName}/${uuid}`
 
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
     .upload(storagePath, file, {
       contentType: file.type,
-      upsert: false
+      upsert: false,
     })
 
   if (error) {

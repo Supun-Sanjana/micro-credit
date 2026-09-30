@@ -1,6 +1,7 @@
 import NextAuth from "next-auth"
 import { authConfig } from "./auth.config"
 import { jwtVerify } from "jose"
+import { NextResponse } from "next/server"
 
 const nextAuthMiddleware = NextAuth(authConfig).auth
 
@@ -28,7 +29,19 @@ export default async function middleware(req: any) {
   }
 
   // Fallback to NextAuth for everything else
-  return nextAuthMiddleware(req)
+  const res: any = await nextAuthMiddleware(req)
+  if (res && (res.status === 302 || res.status === 307 || res.headers?.get?.("location"))) {
+    return res
+  }
+
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set("x-pathname", nextUrl.pathname)
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
 }
 
 export const config = {

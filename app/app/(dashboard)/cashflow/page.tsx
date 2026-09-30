@@ -1,15 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getCashFlows, upsertCashFlow } from "@/app/actions/cashflow"
 
 export default function CashFlowPage() {
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [flows, setFlows] = useState<any[]>([])
-  const [branches, setBranches] = useState<any[]>([])
-  const [centres, setCentres] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  
+  const queryClient = useQueryClient()
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0])
   const [isModalOpen, setModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     branchId: "",
@@ -20,61 +17,77 @@ export default function CashFlowPage() {
     dcAmount: 0,
     recoveryAmount: 0,
     totalRecovery: 0,
-    note: ""
+    note: "",
   })
 
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true)
-      try {
-        const [bRes, cRes] = await Promise.all([
-          fetch('/api/branches'),
-          fetch('/api/centres')
-        ])
-        if (bRes.ok) setBranches(await bRes.json())
-        if (cRes.ok) setCentres(await cRes.json())
-        
-        await loadFlows(date)
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadData()
-  }, [])
+  // 1. Fetch & cache branches (shared with Branches page)
+  const { data: branches = [] } = useQuery<any[]>({
+    queryKey: ["branches"],
+    queryFn: async () => {
+      const res = await fetch("/api/branches")
+      if (!res.ok) return []
+      return res.json()
+    },
+  })
 
-  async function loadFlows(d: string) {
-    const data = await getCashFlows(d)
-    setFlows(data)
-  }
+  // 2. Fetch & cache centres (shared with Centres, Groups, Members, Collection pages)
+  const { data: centresData } = useQuery<any>({
+    queryKey: ["centres"],
+    queryFn: async () => {
+      const res = await fetch("/api/centres")
+      if (!res.ok) return []
+      const data = await res.json()
+      return Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+    },
+  })
+  const centres: any[] = Array.isArray(centresData) ? centresData : Array.isArray(centresData?.data) ? centresData.data : []
 
-  const handleDateChange = async (newDate: string) => {
+  // 3. Fetch & cache daily cash flows for the selected date
+  const { data: flows = [], isLoading: loading } = useQuery<any[]>({
+    queryKey: ["cashflows", date],
+    queryFn: () => getCashFlows(date),
+  })
+
+  // 4. Mutation for adding/upserting a cash flow record
+  const saveMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      await upsertCashFlow(payload)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cashflows"] })
+      setModalOpen(false)
+      setFormData({
+        branchId: "",
+        centreName: "",
+        loanType: "QUICK",
+        loansIssued: 0,
+        amountIssued: 0,
+        dcAmount: 0,
+        recoveryAmount: 0,
+        totalRecovery: 0,
+        note: "",
+      })
+    },
+    onError: (err) => {
+      console.error(err)
+      alert("Failed to save cash flow record")
+    },
+  })
+
+  const handleDateChange = (newDate: string) => {
     setDate(newDate)
-    setLoading(true)
-    await loadFlows(newDate)
-    setLoading(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      await upsertCashFlow({
-        ...formData,
-        date
-      })
-      setModalOpen(false)
-      setLoading(true)
-      await loadFlows(date)
-      setLoading(false)
-    } catch (err) {
-      console.error(err)
-      alert("Failed to save cash flow record")
-    }
+    saveMutation.mutate({
+      ...formData,
+      date,
+    })
   }
 
   return (
-    <div className="flex flex-col gap-8 max-w-5xl mx-auto w-full">
+    <div className="flex flex-col gap-8 w-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-[28px] font-serif font-medium tracking-tight text-navy-900 mb-1">

@@ -5,17 +5,20 @@ import { usePathname, useRouter } from "next/navigation"
 
 interface AccessGateProps {
   status: string
+  isRestricted?: boolean
 }
 
-export function AccessGate({ status }: AccessGateProps) {
+export function AccessGate({ status, isRestricted }: AccessGateProps) {
   const pathname = usePathname()
   const router = useRouter()
 
+  const shouldBlock = isRestricted || status === "SUSPENDED" || status === "CANCELLED"
+
   useEffect(() => {
-    if (status === "SUSPENDED" && !pathname.startsWith("/app/settings/billing")) {
-      router.push("/app/settings/billing")
+    if (shouldBlock && !pathname.startsWith("/app/settings/billing")) {
+      router.replace("/app/settings/billing")
     }
-  }, [status, pathname, router])
+  }, [shouldBlock, pathname, router])
 
   return null
 }

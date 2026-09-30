@@ -4,27 +4,44 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Centre, Branch } from "@/lib/types"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Search, Plus, X, ChevronDown, MapPin, Building2, UserCircle2 } from "lucide-react"
+import { Search, Plus, X, ChevronDown, MapPin, Building2, UserCircle2, Edit2, Trash2 } from "lucide-react"
 
-function AddCentreDrawer({ open, onClose, branches, officers, onSuccess }: any) {
+function CentreDrawer({ open, onClose, branches, officers, onSuccess, editItem }: any) {
   const [form, setForm] = useState({ branchId: "", officerId: "", centreNumber: 1, centreCode: "", name: "", isMicro: false })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (open) { setForm({ branchId: "", officerId: "", centreNumber: 1, centreCode: "", name: "", isMicro: false }); setError("") }
-  }, [open])
+    if (open) {
+      if (editItem) {
+        setForm({
+          branchId: editItem.branchId || "",
+          officerId: editItem.officerId || "",
+          centreNumber: editItem.centreNumber || 1,
+          centreCode: editItem.centreCode || "",
+          name: editItem.name || "",
+          isMicro: editItem.isMicro || false
+        })
+      } else {
+        setForm({ branchId: "", officerId: "", centreNumber: 1, centreCode: "", name: "", isMicro: false })
+      }
+      setError("")
+    }
+  }, [open, editItem])
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
     try {
       setSubmitting(true); setError("")
-      const res = await fetch("/api/centres", {
-        method: "POST",
+      const url = editItem ? `/api/centres/${editItem.id}` : "/api/centres"
+      const method = editItem ? "PUT" : "POST"
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, officerId: form.officerId || undefined }),
       })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to create centre") }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || `Failed to ${editItem ? "update" : "create"} centre`) }
       onSuccess(); onClose()
     } catch (err: any) { setError(err.message) }
     finally { setSubmitting(false) }
@@ -37,7 +54,7 @@ function AddCentreDrawer({ open, onClose, branches, officers, onSuccess }: any) 
       <div className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
       <aside className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <div><h2 className="text-[17px] font-semibold text-navy-900">Create Centre</h2><p className="text-[13px] text-slate-500 mt-0.5">Add a new operational centre</p></div>
+          <div><h2 className="text-[17px] font-semibold text-navy-900">{editItem ? "Edit Centre" : "Create Centre"}</h2><p className="text-[13px] text-slate-500 mt-0.5">{editItem ? "Update operational centre" : "Add a new operational centre"}</p></div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
@@ -90,7 +107,7 @@ function AddCentreDrawer({ open, onClose, branches, officers, onSuccess }: any) 
 
           <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-200 text-[14px] font-medium text-slate-600 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? "Creating..." : "Create Centre"}</button>
+            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? (editItem ? "Updating..." : "Creating...") : (editItem ? "Update Centre" : "Create Centre")}</button>
           </div>
         </form>
       </aside>
@@ -98,8 +115,32 @@ function AddCentreDrawer({ open, onClose, branches, officers, onSuccess }: any) 
   )
 }
 
+function DeleteDialog({ open, onClose, onConfirm, centre, deleting }: any) {
+  if (!open) return null;
+  return (
+    <>
+      <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 z-[70] w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-6 bg-white rounded-2xl shadow-xl">
+        <h3 className="text-lg font-semibold text-navy-900 mb-2">Delete Centre</h3>
+        <p className="text-[14px] text-slate-600 mb-6">
+          Are you sure you want to delete <strong>{centre?.name}</strong>? This action cannot be undone.
+        </p>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onClose} disabled={deleting} className="px-4 py-2 text-[14px] font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancel</button>
+          <button onClick={onConfirm} disabled={deleting} className="px-4 py-2 text-[14px] font-medium text-white bg-danger-600 hover:bg-danger-700 rounded-lg transition-colors disabled:opacity-60">
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function CentresPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editItem, setEditItem] = useState<any>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; centre: any }>({ open: false, centre: null })
+  const [deleting, setDeleting] = useState(false)
   const [search, setSearch] = useState("")
   const [branchFilter, setBranchFilter] = useState("")
   const [page, setPage] = useState(1)
@@ -124,6 +165,27 @@ export default function CentresPage() {
     return matchSearch && matchBranch
   })
 
+  const handleEdit = (centre: any) => {
+    setEditItem(centre)
+    setDrawerOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.centre) return;
+    try {
+      setDeleting(true)
+      const res = await fetch(`/api/centres/${deleteDialog.centre.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error("Failed to delete")
+      queryClient.invalidateQueries({ queryKey: ['centres'] })
+      setDeleteDialog({ open: false, centre: null })
+    } catch (err) {
+      console.error(err)
+      alert("Failed to delete centre")
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-start justify-between mb-6">
@@ -131,7 +193,7 @@ export default function CentresPage() {
           <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Centres</h1>
           <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${centres.length} centres active in ${branches.length} branches`}</p>
         </div>
-        <button onClick={() => setDrawerOpen(true)} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
+        <button onClick={() => { setEditItem(null); setDrawerOpen(true) }} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
           <Plus className="w-4 h-4" /> Create Centre
         </button>
       </div>
@@ -161,13 +223,14 @@ export default function CentresPage() {
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Branch</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Officer</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Type</th>
+                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading centres...</td></tr>
+                <tr><td colSpan={6} className="py-20 text-center text-slate-400">Loading centres...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="py-20 text-center text-slate-400">No centres found</td></tr>
+                <tr><td colSpan={6} className="py-20 text-center text-slate-400">No centres found</td></tr>
               ) : filtered.map((c: any) => {
                 const branch = branches.find((b: any) => b.id === c.branchId)
                 return (
@@ -202,6 +265,16 @@ export default function CentresPage() {
                         <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full">Regular</span>
                       )}
                     </td>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleEdit(c)} className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors" title="Edit Centre">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setDeleteDialog({ open: true, centre: c })} className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded-md transition-colors" title="Delete Centre">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 )
               })}
@@ -209,7 +282,8 @@ export default function CentresPage() {
           </table>
         </div>
       </div>
-      <AddCentreDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} branches={branches} officers={officers} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['centres'] })} />
+      <CentreDrawer open={drawerOpen} onClose={() => { setDrawerOpen(false); setEditItem(null); }} editItem={editItem} branches={branches} officers={officers} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['centres'] })} />
+      <DeleteDialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, centre: null })} onConfirm={handleDeleteConfirm} centre={deleteDialog.centre} deleting={deleting} />
     </div>
   )
 }

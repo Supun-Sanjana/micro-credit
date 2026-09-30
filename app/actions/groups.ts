@@ -4,10 +4,12 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { GroupMembershipRole, GroupStatus } from "@prisma/client"
+import { ensureActiveSubscription } from "@/lib/subscription"
 
 async function getSession() {
   const session = await auth()
   if (!session?.user?.organizationId) throw new Error("Unauthorized")
+  await ensureActiveSubscription(session.user.organizationId)
   return session
 }
 

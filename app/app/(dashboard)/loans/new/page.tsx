@@ -74,7 +74,7 @@ export default function NewLoanPage() {
   }
 
   return (
-    <div className="flex flex-col gap-10 max-w-[800px] mx-auto">
+    <div className="flex flex-col gap-10 w-full">
       
       {/* Hero Section */}
       <div className="flex flex-col gap-4">

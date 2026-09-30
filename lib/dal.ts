@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import prisma, { withOrgScope } from "@/lib/prisma"
+import { ensureActiveSubscription } from "@/lib/subscription"
 
 /**
  * Data Access Layer (DAL) helper to enforce organization isolation.
@@ -14,15 +15,8 @@ export async function getScopedDal() {
 
   const organizationId = session.user.organizationId
 
-  // Issue 6: Enforce Subscription Gate at API layer
-  const org = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    include: { subscription: true }
-  })
-
-  if (org?.subscription?.status === 'SUSPENDED') {
-    throw new Error("ORG_SUSPENDED")
-  }
+  // Enforce Subscription / Trial Gate at API layer
+  await ensureActiveSubscription(organizationId)
 
   const role = (session.user as any).role
   const branchId = (session.user as any).branchId

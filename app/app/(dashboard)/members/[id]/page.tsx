@@ -37,7 +37,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<any
   const guarantorFor = member.guarantorFor
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">{member.name}</h1>

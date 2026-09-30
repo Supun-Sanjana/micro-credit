@@ -157,20 +157,26 @@ async function main() {
     }
   })
 
-  // 5. Create Placeholder Subscription Plan
-  const plan = await prisma.subscriptionPlan.upsert({
-    where: { id: 'plan_placeholder' },
-    update: {},
-    create: {
-      id: 'plan_placeholder',
-      name: 'Standard Tier (Placeholder)',
-      maxOfficerSeats: 10,
-      maxBranches: 3,
-      storageQuotaMb: 5000,
-      monthlyPrice: 15000.00
-    }
-  })
-  console.log(`Upserted Subscription Plan: ${plan.name}`)
+  // 5. Create Subscription Plans (all three tiers – keep in sync with lib/plans.ts)
+  const plansToSeed = [
+    { id: 'plan_starter',     name: 'Starter',    maxOfficerSeats: 3,  maxBranches: 1,  storageQuotaMb: 512,   monthlyPrice: 7500 },
+    { id: 'plan_placeholder', name: 'Growth',     maxOfficerSeats: 10, maxBranches: 3,  storageQuotaMb: 3072,  monthlyPrice: 15000 },
+    { id: 'plan_enterprise',  name: 'Enterprise', maxOfficerSeats: 30, maxBranches: 10, storageQuotaMb: 10240, monthlyPrice: 35000 },
+  ]
+  for (const p of plansToSeed) {
+    const seededPlan = await prisma.subscriptionPlan.upsert({
+      where: { id: p.id },
+      update: {
+        name: p.name,
+        maxOfficerSeats: p.maxOfficerSeats,
+        maxBranches: p.maxBranches,
+        storageQuotaMb: p.storageQuotaMb,
+        monthlyPrice: p.monthlyPrice,
+      },
+      create: p,
+    })
+    console.log(`Upserted Subscription Plan: ${seededPlan.name} (${seededPlan.storageQuotaMb} MB storage)`)
+  }
 
   // 6. Create Platform Admin
   const platformAdminPassword = await bcrypt.hash('supersecret123', 10)

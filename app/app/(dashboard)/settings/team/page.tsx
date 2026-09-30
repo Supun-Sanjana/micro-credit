@@ -27,6 +27,7 @@ export default async function TeamSettingsPage() {
       createdAt: true,
       branch: {
         select: {
+          id: true,
           name: true,
         }
       }
@@ -54,7 +55,7 @@ export default async function TeamSettingsPage() {
   }
 
   return (
-    <div className="max-w-[1000px] mx-auto">
+    <div className="flex flex-col h-full">
       <TeamManagement 
         users={users} 
         branches={branches}

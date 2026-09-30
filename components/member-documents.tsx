@@ -13,6 +13,7 @@ import {
   X,
   FileCheck,
   Check,
+  ZapIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -69,6 +70,65 @@ function formatDate(dateStr: string): string {
   }
 }
 
+/**
+ * Compress an image file using canvas so it fits within `limitBytes`.
+ * Tries JPEG quality levels 0.85 → 0.70 → 0.55 → 0.40 → 0.25.
+ * Returns a new File with the compressed data. Throws if none fit.
+ */
+async function compressImageToLimit(file: File, limitBytes: number): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      const canvas = document.createElement("canvas")
+      // Scale down if image is very large (> 2000px on longest side)
+      const MAX_SIDE = 2000
+      let { naturalWidth: w, naturalHeight: h } = img
+      if (w > MAX_SIDE || h > MAX_SIDE) {
+        const ratio = Math.min(MAX_SIDE / w, MAX_SIDE / h)
+        w = Math.round(w * ratio)
+        h = Math.round(h * ratio)
+      }
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext("2d")!
+      ctx.drawImage(img, 0, 0, w, h)
+
+      const qualities = [0.85, 0.70, 0.55, 0.40, 0.25]
+      const tryNext = (idx: number) => {
+        if (idx >= qualities.length) {
+          reject(new Error("Could not compress image below 1 MB"))
+          return
+        }
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { reject(new Error("Canvas toBlob failed")); return }
+            if (blob.size <= limitBytes || idx === qualities.length - 1) {
+              const compressed = new File(
+                [blob],
+                file.name.replace(/\.[^.]+$/, ".jpg"),
+                { type: "image/jpeg" }
+              )
+              resolve(compressed)
+            } else {
+              tryNext(idx + 1)
+            }
+          },
+          "image/jpeg",
+          qualities[idx]
+        )
+      }
+      tryNext(0)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("Failed to load image for compression"))
+    }
+    img.src = objectUrl
+  })
+}
+
 export function MemberDocuments({ memberId }: MemberDocumentsProps) {
   const [documents, setDocuments] = useState<MemberDocumentItem[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -80,6 +140,9 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
   const [isUploading, setIsUploading] = useState<boolean>(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
+  /** File awaiting user compression decision (image > 1 MB) */
+  const [compressOffer, setCompressOffer] = useState<File | null>(null)
+  const [isCompressing, setIsCompressing] = useState<boolean>(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -114,9 +177,21 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
     }
   }, [previewUrl])
 
+  const MAX_FILE_BYTES = 1 * 1024 * 1024 // 1 MB per document
+
+  const applyPreview = (file: File) => {
+    if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+    } else {
+      setPreviewUrl(null)
+    }
+  }
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError(null)
     setUploadSuccess(null)
+    setCompressOffer(null)
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -127,23 +202,48 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
       return
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError("File size exceeds 10MB limit.")
-      if (fileInputRef.current) fileInputRef.current.value = ""
+    if (file.size > MAX_FILE_BYTES) {
+      if (file.type === "application/pdf") {
+        // PDFs can't be losslessly compressed in the browser — instruct user
+        setUploadError(
+          `This PDF is ${(file.size / 1024 / 1024).toFixed(1)} MB. Maximum per file is 1 MB. ` +
+          `Please compress it using a tool like ilovepdf.com or Adobe Acrobat before uploading.`
+        )
+        if (fileInputRef.current) fileInputRef.current.value = ""
+        return
+      }
+      // For images, offer auto-compression
+      setCompressOffer(file)
+      applyPreview(file)
       return
     }
 
     setSelectedFile(file)
-    if (file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-    } else {
-      setPreviewUrl(null)
+    applyPreview(file)
+  }
+
+  /** Compress an image using canvas until it's under 1 MB, then accept it */
+  const handleCompressAndAccept = async () => {
+    if (!compressOffer) return
+    setIsCompressing(true)
+    setUploadError(null)
+    try {
+      const compressed = await compressImageToLimit(compressOffer, MAX_FILE_BYTES)
+      setCompressOffer(null)
+      setSelectedFile(compressed)
+      applyPreview(compressed)
+    } catch {
+      setUploadError("Auto-compression failed. Please manually reduce the file size below 1 MB.")
+      setCompressOffer(null)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    } finally {
+      setIsCompressing(false)
     }
   }
 
   const handleClearSelectedFile = () => {
     setSelectedFile(null)
+    setCompressOffer(null)
     if (previewUrl && previewUrl.startsWith("blob:")) {
       URL.revokeObjectURL(previewUrl)
     }
@@ -223,6 +323,9 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                 key={type}
                 type="button"
                 onClick={() => {
+                  if (selectedType !== type) {
+                    handleClearSelectedFile()
+                  }
                   setSelectedType(type)
                   setUploadError(null)
                   setUploadSuccess(null)
@@ -274,7 +377,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
         />
 
         {/* File Dropzone / Selection Box */}
-        {!selectedFile ? (
+        {!selectedFile && !compressOffer ? (
           <div
             onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed border-[#d1d5db] hover:border-slate-500/60 rounded-xl p-6 text-center cursor-pointer transition-colors bg-[#fafafa] hover:bg-white"
@@ -287,7 +390,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
               {DOCUMENT_TYPES.find((t) => t.type === selectedType)?.label}
             </p>
             <p className="text-xs text-slate-500 mb-3">
-              Direct camera capture supported on mobile. Max 10MB (JPEG, PNG, WEBP, PDF)
+              Camera capture supported on mobile · Max <strong>1 MB</strong> per file (JPEG, PNG, WEBP, PDF)
             </p>
             <Button
               type="button"
@@ -301,6 +404,65 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
               <Camera className="w-3.5 h-3.5 mr-1.5" />
               Choose File or Photo
             </Button>
+          </div>
+        ) : compressOffer ? (
+          /* ── Compression offer banner ── */
+          <div className="border border-amber-200 rounded-xl p-4 bg-amber-50">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-14 h-14 object-cover rounded-lg border border-amber-200 shadow-sm bg-white"
+                  />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg border border-amber-200 bg-amber-100 flex items-center justify-center">
+                    <ZapIcon className="w-6 h-6 text-amber-600" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">
+                    Image too large ({formatBytes(compressOffer.size)})
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5 max-w-sm">
+                    This image exceeds the 1 MB limit. We can automatically compress it for you — image content will remain readable but file quality may reduce slightly.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearSelectedFile}
+                  disabled={isCompressing}
+                  className="text-amber-700 hover:text-amber-900"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleCompressAndAccept}
+                  disabled={isCompressing}
+                  className="bg-amber-600 text-white hover:bg-amber-700 min-w-[130px]"
+                >
+                  {isCompressing ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Compressing...
+                    </>
+                  ) : (
+                    <>
+                      <ZapIcon className="w-3.5 h-3.5 mr-1.5" />
+                      Auto-Compress & Use
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="border border-[#e5e7eb] rounded-xl p-4 bg-[#fafafa]">
@@ -321,14 +483,14 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-navy-900 max-w-xs sm:max-w-md truncate">
-                      {selectedFile.name}
+                      {selectedFile!.name}
                     </p>
                     <Badge variant="outline" className="text-[10px] py-0 px-1.5">
                       {DOCUMENT_TYPES.find((t) => t.type === selectedType)?.label}
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {formatBytes(selectedFile.size)} • {selectedFile.type || "Document"}
+                    {formatBytes(selectedFile!.size)} • {selectedFile!.type || "Document"}
                   </p>
                 </div>
               </div>
@@ -372,8 +534,8 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
 
         {/* Upload Status Alerts */}
         {uploadError && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{uploadError}</span>
           </div>
         )}
@@ -385,6 +547,7 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
           </div>
         )}
       </div>
+
 
       {/* Uploaded Documents List */}
       <div className="rounded-xl border border-[#e5e7eb] bg-white p-6 shadow-sm">

@@ -49,7 +49,7 @@ export default async function RestructurePage({ params }: { params: Promise<{ id
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto pb-12">
+    <div className="flex flex-col gap-6 w-full pb-12">
       <div className="bg-white shadow-subtle p-8 rounded-[20px] flex flex-col gap-2">
         <h1 className="font-serif text-3xl text-navy-900">Restructure Schedule Editor</h1>
         <p className="text-slate-400">Create a new repayment schedule to supersede the remaining unpaid terms.</p>

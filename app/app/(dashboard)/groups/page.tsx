@@ -3,27 +3,43 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Search, Plus, X, ChevronDown, MapPin } from "lucide-react"
+import { Search, Plus, X, ChevronDown, MapPin, Edit2, Trash2 } from "lucide-react"
 
-function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
+function GroupDrawer({ open, onClose, centres, onSuccess, groupToEdit }: any) {
   const [form, setForm] = useState({ centreId: "", groupNumber: "", name: "", meetingDay: "", meetingTime: "" })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    if (open) { setForm({ centreId: "", groupNumber: "", name: "", meetingDay: "", meetingTime: "" }); setError("") }
-  }, [open])
+    if (open) {
+      if (groupToEdit) {
+        setForm({
+          centreId: groupToEdit.centreId || "",
+          groupNumber: groupToEdit.groupNumber || "",
+          name: groupToEdit.name || "",
+          meetingDay: groupToEdit.meetingDay || "",
+          meetingTime: groupToEdit.meetingTime || ""
+        })
+      } else {
+        setForm({ centreId: "", groupNumber: "", name: "", meetingDay: "", meetingTime: "" })
+      }
+      setError("")
+    }
+  }, [open, groupToEdit])
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
     try {
       setSubmitting(true); setError("")
-      const res = await fetch("/api/groups", {
-        method: "POST",
+      const url = groupToEdit ? `/api/groups/${groupToEdit.id}` : "/api/groups"
+      const method = groupToEdit ? "PUT" : "POST"
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       })
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to create group") }
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || `Failed to ${groupToEdit ? "update" : "create"} group`) }
       onSuccess(); onClose()
     } catch (err: any) { setError(err.message) }
     finally { setSubmitting(false) }
@@ -36,7 +52,10 @@ function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
       <div className={`fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={onClose} />
       <aside className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <div><h2 className="text-[17px] font-semibold text-navy-900">Create Group</h2><p className="text-[13px] text-slate-500 mt-0.5">Add a new member group</p></div>
+          <div>
+            <h2 className="text-[17px] font-semibold text-navy-900">{groupToEdit ? "Edit Group" : "Create Group"}</h2>
+            <p className="text-[13px] text-slate-500 mt-0.5">{groupToEdit ? "Update member group details" : "Add a new member group"}</p>
+          </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
         </div>
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
@@ -79,7 +98,7 @@ function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
 
           <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-gray-200 text-[14px] font-medium text-slate-600 hover:bg-gray-50 transition-colors">Cancel</button>
-            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? "Creating..." : "Create Group"}</button>
+            <button type="submit" disabled={submitting} className="flex-1 py-2.5 rounded-lg bg-brand-600 text-white text-[14px] font-medium hover:bg-brand-700 transition-colors disabled:opacity-60">{submitting ? (groupToEdit ? "Updating..." : "Creating...") : (groupToEdit ? "Update Group" : "Create Group")}</button>
           </div>
         </form>
       </aside>
@@ -89,6 +108,7 @@ function AddGroupDrawer({ open, onClose, centres, onSuccess }: any) {
 
 export default function GroupsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [groupToEdit, setGroupToEdit] = useState<any>(null)
   const [search, setSearch] = useState("")
   const [centreFilter, setCentreFilter] = useState("")
 
@@ -106,6 +126,31 @@ export default function GroupsPage() {
     return matchSearch && matchCentre
   })
 
+  const openAddDrawer = () => {
+    setGroupToEdit(null)
+    setDrawerOpen(true)
+  }
+
+  const openEditDrawer = (group: any) => {
+    setGroupToEdit(group)
+    setDrawerOpen(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this group?")) {
+      try {
+        const res = await fetch(`/api/groups/${id}`, { method: "DELETE" })
+        if (!res.ok) {
+          const d = await res.json()
+          throw new Error(d.error || "Failed to delete group")
+        }
+        queryClient.invalidateQueries({ queryKey: ['groups'] })
+      } catch (error: any) {
+        alert(error.message)
+      }
+    }
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-start justify-between mb-6">
@@ -113,7 +158,7 @@ export default function GroupsPage() {
           <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Groups</h1>
           <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${groups.length} groups across ${centres.length} centres`}</p>
         </div>
-        <button onClick={() => setDrawerOpen(true)} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
+        <button onClick={openAddDrawer} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
           <Plus className="w-4 h-4" /> Create Group
         </button>
       </div>
@@ -142,13 +187,14 @@ export default function GroupsPage() {
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Centre</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Schedule</th>
                 <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Members</th>
+                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={4} className="py-20 text-center text-slate-400">Loading groups...</td></tr>
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading groups...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={4} className="py-20 text-center text-slate-400">No groups found</td></tr>
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400">No groups found</td></tr>
               ) : filtered.map((g: any) => (
                 <tr key={g.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-3.5 px-5">
@@ -166,13 +212,29 @@ export default function GroupsPage() {
                       {g.memberships?.length || 0} Members
                     </span>
                   </td>
+                  <td className="py-3.5 px-5 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => openEditDrawer(g)} className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded transition-colors" title="Edit Group">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(g.id)} className="p-1.5 text-slate-400 hover:text-danger-600 hover:bg-danger-50 rounded transition-colors" title="Delete Group">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-      <AddGroupDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} centres={centres} onSuccess={() => queryClient.invalidateQueries({ queryKey: ['groups'] })} />
+      <GroupDrawer 
+        open={drawerOpen} 
+        onClose={() => { setDrawerOpen(false); setGroupToEdit(null); }} 
+        centres={centres} 
+        groupToEdit={groupToEdit}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['groups'] })} 
+      />
     </div>
   )
 }

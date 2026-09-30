@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
-import { ClaimForm } from "./claim-form"
+import { BillingPlansManager } from "./billing-plans-manager"
 import { ShieldCheck, HardDrive, Users, Building2, Calendar, CreditCard, Clock } from "lucide-react"
+import { getPlanConfig } from "@/lib/plans"
 
 export default async function BillingSettingsPage() {
   const session = await auth()
@@ -17,6 +18,7 @@ export default async function BillingSettingsPage() {
     where: { organizationId },
     include: {
       plan: true,
+      organization: true,
       paymentClaims: {
         orderBy: { submittedAt: "desc" },
       },
@@ -42,6 +44,7 @@ export default async function BillingSettingsPage() {
         },
         include: {
           plan: true,
+          organization: true,
           paymentClaims: {
             orderBy: { submittedAt: "desc" },
           },
@@ -53,7 +56,19 @@ export default async function BillingSettingsPage() {
   const hasPendingClaim =
     subscription?.paymentClaims.some((c) => c.status === "PENDING") ?? false
 
+  const isTrialExpired =
+    subscription?.status === "TRIAL" &&
+    !!subscription.trialEndsAt &&
+    new Date(subscription.trialEndsAt) <= new Date()
+
   const getStatusBadge = (status: string) => {
+    if (isTrialExpired) {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#fce8e6] text-[#c5221f] border border-[#c5221f]/15">
+          TRIAL EXPIRED
+        </span>
+      )
+    }
     switch (status) {
       case "ACTIVE":
         return (
@@ -128,7 +143,7 @@ export default async function BillingSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col gap-10 max-w-[1000px] mx-auto pb-16 font-sans">
+    <div className="flex flex-col gap-10 w-full pb-16 font-sans">
       {/* Header */}
       <div>
         <h1
@@ -195,9 +210,14 @@ export default async function BillingSettingsPage() {
                   <span className="text-[13px] font-medium uppercase tracking-wider">Storage Quota</span>
                 </div>
                 <div className="text-[22px] font-medium text-navy-900">
-                  {subscription.plan.storageQuotaMb >= 1024
-                    ? `${(subscription.plan.storageQuotaMb / 1024).toFixed(1)} GB`
-                    : `${subscription.plan.storageQuotaMb} MB`}
+                  {(() => {
+                    // Always derive storage from canonical plans.ts config; fall back to DB value only if unknown plan
+                    const planCfg = getPlanConfig(subscription.plan.id) ?? getPlanConfig(subscription.plan.name)
+                    const quotaMb = planCfg?.storageQuotaMb ?? subscription.plan.storageQuotaMb
+                    return quotaMb >= 1024
+                      ? `${(quotaMb / 1024).toFixed(1)} GB`
+                      : `${quotaMb} MB`
+                  })()}
                 </div>
               </div>
 
@@ -229,10 +249,13 @@ export default async function BillingSettingsPage() {
             </div>
           </div>
 
-          {/* B3 Payment Claim Form Component */}
-          <ClaimForm
+          {/* Plans Grouped by Features & Payment Claim Section */}
+          <BillingPlansManager
+            currentPlanId={subscription.plan.id}
+            currentPlanName={subscription.plan.name}
+            currentPlanPrice={Number(subscription.plan.monthlyPrice)}
             hasPendingClaim={hasPendingClaim}
-            defaultAmount={Number(subscription.plan.monthlyPrice)}
+            orgName={(subscription as any).organization?.name}
           />
 
           {/* Past Payment Claims Table */}
