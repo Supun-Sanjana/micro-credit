@@ -230,7 +230,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {reconData.cashFlows.map((cf: any) => (
+                    {Array.isArray(reconData?.cashFlows) && reconData.cashFlows.map((cf: any) => (
                       <tr key={cf.id} className="border-b border-border/40 last:border-0">
                         <td className="py-5 pr-4 text-[16px] font-sans text-navy-900 font-medium">{cf.centreName}</td>
                         <td className="py-5 pr-4 text-[16px] font-sans text-slate-500">{cf.loanType}</td>
@@ -262,7 +262,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {outstandingData.map((d: any) => (
+                    {Array.isArray(outstandingData) && outstandingData.map((d: any) => (
                       <tr key={d.centre.id} className="border-b border-border/40 last:border-0">
                         <td className="py-5 pr-4 text-[16px] font-sans text-slate-500">{d.centre.branch.name}</td>
                         <td className="py-5 pr-4 text-[16px] font-sans text-navy-900 font-medium">{d.centre.name}</td>
@@ -321,7 +321,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {efficiencyData.map((d: any) => (
+                    {Array.isArray(efficiencyData) && efficiencyData.map((d: any) => (
                       <tr key={d.centreName} className="border-b border-border/40 last:border-0">
                         <td className="py-5 pr-4 text-[16px] font-sans text-slate-500">{d.branchName}</td>
                         <td className="py-5 pr-4 text-[16px] font-sans text-navy-900 font-medium">{d.centreName}</td>
@@ -358,7 +358,7 @@ export default function ReportsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {agingData.map((d: any) => (
+                    {Array.isArray(agingData) && agingData.map((d: any) => (
                       <tr key={d.loanId} className="border-b border-border/40 last:border-0">
                         <td className="py-5 pr-4 text-[16px] font-sans text-navy-900 font-medium">
                           <Link href={`/app/loans/${d.loanId}`} className="hover:underline">{d.loanNumber || d.loanId.slice(0,8)}</Link>
@@ -449,7 +449,7 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {searchedMember.loans?.map((l: any) => (
+                          {Array.isArray(searchedMember.loans) && searchedMember.loans.map((l: any) => (
                             <tr key={l.id} className="border-b border-border/40 last:border-0">
                               <td className="p-4 text-[15px] font-medium text-navy-900">
                                 <Link href={`/app/loans/${l.id}`} className="hover:underline">{l.loanNumber || l.id.slice(0,8)}</Link>
@@ -481,7 +481,7 @@ export default function ReportsPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {searchedMember.savingsAccounts?.map((sa: any) => (
+                          {Array.isArray(searchedMember.savingsAccounts) && searchedMember.savingsAccounts.map((sa: any) => (
                             <tr key={sa.id} className="border-b border-border/40 last:border-0">
                               <td className="p-4 text-[15px] font-medium text-navy-900">{sa.accountNumber}</td>
                               <td className="p-4 text-[15px] text-slate-500">{sa.product?.name}</td>

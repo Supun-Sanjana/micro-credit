@@ -24,6 +24,7 @@ export default async function TeamSettingsPage() {
       name: true,
       email: true,
       role: true,
+      isActive: true,
       createdAt: true,
       branch: {
         select: {

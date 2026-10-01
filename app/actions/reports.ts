@@ -9,7 +9,7 @@ import { Prisma } from "@prisma/client"
  * Field Officers are typically excluded from global reporting.
  */
 async function authorizeReporting() {
-  await requireRole(["SYSTEM_ADMIN", "HEAD_OFFICE", "BRANCH_MANAGER", "ACCOUNTANT"])
+  await requireRole(["SYSTEM_ADMIN", "HEAD_OFFICE", "BRANCH_MANAGER", "ACCOUNTANT", "FIELD_OFFICER"])
 }
 
 export async function getPortfolioAtRisk() {

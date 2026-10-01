@@ -1,10 +1,20 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { 
   Search, Plus, X, ChevronDown, Users, Building, 
   Shield, Eye, EyeOff, Loader2 
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function initials(name: string) {
@@ -503,6 +513,7 @@ interface TeamUser {
   name: string | null
   email: string | null
   role: string
+  isActive?: boolean
   createdAt: Date | string
   branch?: { id?: string; name: string } | null
 }
@@ -516,13 +527,56 @@ export function TeamManagement({
   branches: { id: string; name: string }[]
   quota: { current: number; max: number }
 }) {
+  const router = useRouter()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<TeamUser | null>(null)
   const [search, setSearch] = useState("")
   const [branchFilter, setBranchFilter] = useState("")
   const [roleFilter, setRoleFilter] = useState("")
   const [page, setPage] = useState(1)
+  const [userToDelete, setUserToDelete] = useState<TeamUser | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
   const limit = 10
+
+  const handleToggleStatus = async (user: TeamUser) => {
+    try {
+      setTogglingId(user.id)
+      const newStatus = user.isActive !== false ? 'INACTIVE' : 'ACTIVE'
+      const res = await fetch(`/api/team/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Failed to update status.")
+      }
+      router.refresh()
+    } catch (err: any) {
+      window.alert(err.message)
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/team/${userToDelete.id}`, { method: "DELETE" })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || "Failed to delete user.")
+      }
+      setUserToDelete(null)
+      router.refresh()
+    } catch (err: any) {
+      window.alert(err.message)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const filtered = initialUsers.filter((u) => {
     const q = search.toLowerCase()
@@ -667,12 +721,15 @@ export function TeamManagement({
                   return (
                     <tr key={user.id} className="hover:bg-gray-50/70 transition-colors group">
                       <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-3">
+                        <div 
+                          className="flex items-center gap-3 cursor-pointer group/name"
+                          onClick={() => setEditingUser(user)}
+                        >
                           <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center flex-shrink-0`}>
                             <span className="text-[12px] font-bold text-white">{initials(user.name || "")}</span>
                           </div>
                           <div>
-                            <span className="text-[14px] font-semibold text-navy-900">
+                            <span className="text-[14px] font-semibold text-navy-900 group-hover/name:text-brand-600 transition-colors">
                               {user.name || "Unnamed User"}
                             </span>
                             <p className="text-[12px] text-slate-400 mt-0.5">{user.email}</p>
@@ -698,18 +755,41 @@ export function TeamManagement({
                         </span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-success-50 text-success-700 px-2.5 py-1 rounded-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-success-500" />
-                          Active
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            disabled={togglingId === user.id}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+                              user.isActive !== false ? "bg-success-500" : "bg-slate-300"
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                user.isActive !== false ? "translate-x-4" : "translate-x-0"
+                              }`}
+                            />
+                          </button>
+                          <span className={`flex items-center gap-1.5 text-[12px] font-medium ${user.isActive !== false ? "text-success-700" : "text-slate-500"}`}>
+                            {togglingId === user.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            {user.isActive !== false ? "Active" : "Inactive"}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => setEditingUser(user)}
-                          className="px-3 py-1.5 text-[13px] font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-md transition-colors"
-                        >
-                          Edit
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setEditingUser(user)}
+                            className="px-3 py-1.5 text-[13px] font-medium text-brand-600 hover:text-brand-700 hover:bg-brand-50 rounded-md transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => setUserToDelete(user)}
+                            className="px-3 py-1.5 text-[13px] font-medium text-danger-600 hover:text-danger-700 hover:bg-danger-50 rounded-md transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -749,7 +829,7 @@ export function TeamManagement({
         onClose={() => setDrawerOpen(false)}
         branches={branches}
         onSuccess={() => {
-          window.location.reload()
+          router.refresh()
         }}
       />
       <EditTeamMemberDrawer
@@ -758,9 +838,28 @@ export function TeamManagement({
         onClose={() => setEditingUser(null)}
         branches={branches}
         onSuccess={() => {
-          window.location.reload()
+          router.refresh()
         }}
       />
+
+      <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Team Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUserToDelete(null)} disabled={isDeleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete Member"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

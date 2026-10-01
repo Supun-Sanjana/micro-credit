@@ -19,19 +19,29 @@ export async function getNotifications(): Promise<{ notifications: NotificationI
   const organizationId = (session?.user as any)?.organizationId
   const userId = session?.user?.id
 
+  const userRole = (session?.user as any)?.role
+
   if (!organizationId) {
     return { notifications: [] }
   }
 
+  const isAdmin = userRole === "SYSTEM_ADMIN" || userRole === "HEAD_OFFICE"
+  const whereClause: any = { organizationId }
+
+  if (isAdmin) {
+    // Admins see their own + global/system notifications (userId = null)
+    whereClause.OR = [
+      { userId },
+      { userId: null }
+    ]
+  } else {
+    // Officers / Branch Managers ONLY see notifications specifically addressed to them
+    whereClause.userId = userId
+  }
+
   // Fetch recent notification logs
   let logs = await prisma.notificationLog.findMany({
-    where: {
-      organizationId,
-      OR: [
-        { userId: userId || undefined },
-        { userId: null }
-      ]
-    },
+    where: whereClause,
     orderBy: { createdAt: "desc" },
     take: 25
   })
@@ -84,13 +94,14 @@ export async function getNotifications(): Promise<{ notifications: NotificationI
       }
 
       // Add a welcoming system notification
+      // Add a welcoming system notification for Admins
       seededData.push({
         organizationId,
-        userId: userId || null,
+        userId: null, // Force null so it's a global/admin notification, not assigned to whoever triggered seeding
         memberId: null,
         eventType: "LOAN_DISBURSED" as any,
         channel: "EMAIL" as any,
-        recipientEmail: session?.user?.email || "system@solida.local",
+        recipientEmail: "admin@solida.local",
         subject: "Daily Portfolio Summary Ready for Review",
         status: "SENT" as any,
         sentAt: new Date(),

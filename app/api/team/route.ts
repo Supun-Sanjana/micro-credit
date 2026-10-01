@@ -74,6 +74,58 @@ export async function POST(req: Request) {
       },
     })
 
+    if (process.env.RESEND_API_KEY) {
+      const { Resend } = require("resend")
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      
+      const organization = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { name: true }
+      })
+      const orgName = organization?.name || "Our Organization"
+      
+      try {
+        await resend.emails.send({
+          from: `${orgName} <solida@cylvox.com>`,
+          to: email,
+          subject: `Welcome to ${orgName} - Your Login Details`,
+          html: `
+            <div style="font-family: 'Inter', system-ui, sans-serif; color: #1E293B; background-color: #F1F5F9; padding: 40px 20px;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);">
+                <div style="background-color: #0B2439; padding: 30px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">${orgName}</h1>
+                </div>
+                <div style="padding: 40px 30px;">
+                  <h2 style="margin-top: 0; color: #0F172A; font-size: 20px;">Welcome, ${name}!</h2>
+                  <p style="color: #475569; line-height: 1.6; font-size: 15px;">An account has been created for you on the <strong>${orgName}</strong> platform.</p>
+                  
+                  <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 10px; margin: 25px 0;">
+                    <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Your Email (Login ID)</p>
+                    <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #0F172A;">${email}</p>
+                    
+                    <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
+                    <p style="margin: 0; font-size: 18px; font-weight: 600; color: #0F766E; font-family: monospace;">${password}</p>
+                  </div>
+                  
+                  <div style="text-align: center; margin-top: 35px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/app/login" style="display: inline-block; background-color: #0F766E; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 15px;">Sign In to Your Account</a>
+                  </div>
+                  
+                  <p style="color: #94A3B8; font-size: 13px; text-align: center; margin-top: 40px;">
+                    Please log in and keep these credentials safe. We recommend changing your temporary password after your first login.
+                    <br><br>
+                    <span style="color: #CBD5E1; font-size: 12px;">Powered by Solida</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          `
+        })
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError)
+      }
+    }
+
     return NextResponse.json({ success: true, user: { id: user.id, email: user.email, name: user.name } })
   } catch (error: any) {
     console.error("Team creation error:", error)

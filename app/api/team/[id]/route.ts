@@ -58,9 +58,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       dataToUpdate.branchId = branchId || null
     }
 
-    // Optional status update if you have it in your schema
     if (status !== undefined) {
-      // e.g. dataToUpdate.isActive = status === 'ACTIVE'
+      dataToUpdate.isActive = status === 'ACTIVE'
     }
 
     const updatedUser = await prisma.user.update({
@@ -74,3 +73,49 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 })
   }
 }
+
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: userIdToDelete } = await params
+    const session = await auth()
+    
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    const organizationId = (session.user as any)?.organizationId
+    const userRole = (session.user as any).role
+    
+    if (!organizationId || (userRole !== "SYSTEM_ADMIN" && userRole !== "HEAD_OFFICE")) {
+      return NextResponse.json(
+        { error: "Unauthorized. Only organization admins can delete team members." },
+        { status: 401 }
+      )
+    }
+
+    // Verify user belongs to same org
+    const userToDelete = await prisma.user.findFirst({
+      where: { id: userIdToDelete, organizationId }
+    })
+
+    if (!userToDelete) {
+      return NextResponse.json({ error: "User not found or unauthorized." }, { status: 404 })
+    }
+
+    await prisma.user.delete({
+      where: { id: userIdToDelete }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error("Team delete error:", error)
+    // If it's a foreign key constraint error from Prisma
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: "Cannot delete user because they are referenced in other records (e.g. loans, collections)." }, 
+        { status: 400 }
+      )
+    }
+    return NextResponse.json({ error: "An unexpected error occurred." }, { status: 500 })
+  }
+}
+

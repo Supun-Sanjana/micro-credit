@@ -43,6 +43,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
+        if (user.isActive === false) {
+          throw new Error("Your account has been suspended. Please contact your administrator.")
+        }
+
         await clearFailedLogins(email)
         const { password, ...safeUser } = user
         return safeUser

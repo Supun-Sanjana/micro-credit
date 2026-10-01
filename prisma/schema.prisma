@@ -39,6 +39,7 @@ model User {
   organizationId            String
   createdAt                 DateTime                     @default(now())
   updatedAt                 DateTime                     @updatedAt
+  isActive                  Boolean                      @default(true)
   branchId                  String?
   accounts                  Account[]
   auditLogs                 AuditLog[]
