@@ -256,6 +256,7 @@ export default function MembersPage() {
   }
 
   // Client side filtering for search & group (in a real app, these should also go to backend if total is large)
+  // TODO: Move this to a server-side query parameter (e.g., ?search=...) for proper full-database searching
   const filtered = members.filter((m) => {
     const q = search.toLowerCase()
     const matchSearch =

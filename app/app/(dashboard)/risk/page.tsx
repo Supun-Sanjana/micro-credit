@@ -32,7 +32,7 @@ export default function RiskPage() {
       queryClient.invalidateQueries({ queryKey: ["risk-alerts"] })
     },
     onError: (e) => {
-      console.error(e)
+      console.error("An error occurred during fetch")
     },
   })
 

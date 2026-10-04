@@ -18,7 +18,7 @@ export default async function middleware(req: any) {
     try {
       const secret = process.env.AUTH_SECRET
       if (!secret) throw new Error("AUTH_SECRET is not set in environment variables")
-      await jwtVerify(cookie, new TextEncoder().encode(secret), {
+      await jwtVerify(cookie, new TextEncoder().encode(secret + "::platform-admin"), {
         algorithms: ["HS256"],
       })
     } catch (err: any) {

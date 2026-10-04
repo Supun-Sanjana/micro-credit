@@ -11,6 +11,7 @@ const geistFallback = Inter({ variable: "--font-geist-sans", subsets: ["latin"] 
 const geistMonoFallback = Inter({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: {
     template: "%s | Solida",
     default: "Solida | Core Banking for Microfinance",
@@ -35,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased scroll-smooth", inter.variable, outfit.variable, instrumentSerif.variable, geistFallback.variable, geistMonoFallback.variable)}>
+    <html lang="en" className={cn("h-full antialiased scroll-smooth", inter.variable, outfit.variable, instrumentSerif.variable, playfair.variable, geistFallback.variable, geistMonoFallback.variable)}>
       <body className="min-h-full flex flex-col">
         <ClientShell>
           {children}

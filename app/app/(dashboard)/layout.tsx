@@ -13,6 +13,9 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
+  if (!session?.user) {
+    redirect('/app/login')
+  }
   const organizationId = (session?.user as any)?.organizationId
 
   let orgName = "Solida"

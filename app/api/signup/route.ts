@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import bcrypt from "bcrypt"
+import { checkMemoryRateLimit } from "@/lib/rate-limit"
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "unknown"
+    try {
+      checkMemoryRateLimit(`signup-${ip}`, 5, 10)
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 429 })
+    }
+
     const body = await req.json()
     const { orgName, adminName, email, password } = body
 
@@ -21,9 +29,21 @@ export async function POST(req: Request) {
       )
     }
 
-    if (typeof password !== "string" || password.length < 6) {
+    if (typeof password !== "string" || password.length < 8) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters long." },
+        { error: "Password must be at least 8 characters long." },
+        { status: 400 }
+      )
+    }
+    if (!/[A-Z]/.test(password)) {
+      return NextResponse.json(
+        { error: "Password must contain at least one uppercase letter." },
+        { status: 400 }
+      )
+    }
+    if (!/[0-9]/.test(password)) {
+      return NextResponse.json(
+        { error: "Password must contain at least one number." },
         { status: 400 }
       )
     }

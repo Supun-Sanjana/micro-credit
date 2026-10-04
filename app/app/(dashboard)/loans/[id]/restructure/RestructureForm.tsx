@@ -108,7 +108,7 @@ export default function RestructureForm({ loan }: { loan: any }) {
         throw new Error(body.error || "Failed to restructure loan")
       }
       
-      router.push(`/loans/${loan.id}`)
+      router.push(`/app/loans/${loan.id}`)
       router.refresh()
     } catch (err: any) {
       setError(err.message)

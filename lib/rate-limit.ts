@@ -29,3 +29,24 @@ export async function clearFailedLogins(email: string) {
     where: { email }
   })
 }
+
+
+const rateLimitMap = new Map<string, { count: number, resetTime: number }>();
+
+export function checkMemoryRateLimit(identifier: string, limit: number = 5, windowMinutes: number = 10) {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+
+  if (record) {
+    if (now > record.resetTime) {
+      rateLimitMap.set(identifier, { count: 1, resetTime: now + windowMinutes * 60 * 1000 });
+    } else {
+      record.count += 1;
+      if (record.count > limit) {
+        throw new Error(`Too many requests. Please try again in ${windowMinutes} minutes.`);
+      }
+    }
+  } else {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + windowMinutes * 60 * 1000 });
+  }
+}

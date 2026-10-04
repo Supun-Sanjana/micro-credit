@@ -32,7 +32,8 @@ export const mockUsers: User[] = [
     createdAt: new Date("2026-09-01"),
     updatedAt: new Date("2026-09-01"),
     password: "hashed_password",
-    branchId: null
+    branchId: null,
+    isActive: true,
   },
   {
     id: "usr_2",
@@ -43,7 +44,8 @@ export const mockUsers: User[] = [
     createdAt: new Date("2026-09-01"),
     updatedAt: new Date("2026-09-01"),
     password: "hashed_password",
-    branchId: "brn_1"
+    branchId: "brn_1",
+    isActive: true,
   },
 ];
 

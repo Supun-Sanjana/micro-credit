@@ -14,8 +14,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  try {
-    const dal = await getScopedDal()
+  try {    const dal = await getScopedDal()
+    if (dal.role !== 'SYSTEM_ADMIN' && dal.role !== 'HEAD_OFFICE') {
+      return NextResponse.json({ error: "Only admins can create branches" }, { status: 403 })
+    }
     const json = await request.json()
     
     const branch = await dal.prisma.branch.create({

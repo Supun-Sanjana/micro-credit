@@ -61,7 +61,7 @@ model User {
 
 model Branch {
   id                      String                       @id @default(cuid())
-  code                    String                       @unique
+  code                    String
   name                    String
   address                 String?
   organizationId          String
@@ -76,12 +76,14 @@ model Branch {
   groups                  Group[]
   JournalEntry            JournalEntry[]
   users                   User[]
+
+  @@unique([organizationId, code])
 }
 
 model Centre {
   id                      String                   @id @default(cuid())
   centreNumber            Int
-  centreCode              String                   @unique
+  centreCode              String
   name                    String
   isMicro                 Boolean                  @default(false)
   branchId                String
@@ -94,6 +96,7 @@ model Centre {
   groups                  Group[]
   members                 Member[]
 
+  @@unique([branchId, centreCode])
   @@index([branchId])
   @@index([officerId])
 }

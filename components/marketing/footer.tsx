@@ -33,8 +33,8 @@ export function Footer() {
             &copy; 2026 Cylvox. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <Link href="#" className="text-[13px] font-medium text-neutral-400 hover:text-neutral-700 transition-colors">Privacy Policy</Link>
-            <Link href="#" className="text-[13px] font-medium text-neutral-400 hover:text-neutral-700 transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="text-[13px] font-medium text-neutral-400 hover:text-neutral-700 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-[13px] font-medium text-neutral-400 hover:text-neutral-700 transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>

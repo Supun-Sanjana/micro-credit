@@ -91,11 +91,30 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
         { status: 401 }
       )
     }
-
     // Verify user belongs to same org
     const userToDelete = await prisma.user.findFirst({
-      where: { id: userIdToDelete, organizationId }
+      where: { id: userIdToDelete, organizationId },
+      select: { id: true, role: true } // Make sure role is selected
     })
+
+    if (!userToDelete) {
+      return NextResponse.json({ error: "User not found or unauthorized." }, { status: 404 })
+    }
+
+    // Prevent self-deletion
+    if (userIdToDelete === session.user.id) {
+      return NextResponse.json({ error: "You cannot delete your own account." }, { status: 400 })
+    }
+
+    // Prevent deleting the last admin
+    if (userToDelete.role === 'SYSTEM_ADMIN') {
+      const adminCount = await prisma.user.count({
+        where: { organizationId, role: 'SYSTEM_ADMIN' }
+      })
+      if (adminCount <= 1) {
+        return NextResponse.json({ error: "Cannot delete the last administrator." }, { status: 400 })
+      }
+    }
 
     if (!userToDelete) {
       return NextResponse.json({ error: "User not found or unauthorized." }, { status: 404 })

@@ -6,17 +6,12 @@ export const dynamic = "force-dynamic"
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
-
   // Enforce Authorization: Bearer <CRON_SECRET>
-  if (cronSecret) {
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-  } else {
-    // If CRON_SECRET is not set in environment, still require Bearer header
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  if (!cronSecret) {
+    return NextResponse.json({ error: "CRON_SECRET is not configured" }, { status: 500 })
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {

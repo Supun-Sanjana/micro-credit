@@ -26,12 +26,12 @@ const operations = [
   {
     step: "01",
     title: "Branch",
-    copy: "The institutionâ€™s local book. Managers see disbursements, cash in vault, and officer performance.",
+    copy: "The institution's local book. Managers see disbursements, cash in vault, and officer performance.",
   },
   {
     step: "02",
     title: "Center",
-    copy: "The weekly meeting point. Attendance, installments, and peer pressure sit in one grid â€” not a notebook.",
+    copy: "The weekly meeting point. Attendance, installments, and peer pressure sit in one grid — not a notebook.",
   },
   {
     step: "03",
@@ -75,7 +75,7 @@ const features = [
     icon: Shield,
     title: "Roles that match the field",
     description:
-      "Field officers, branch managers, and head office each see only what they should â€” including cash.",
+      "Field officers, branch managers, and head office each see only what they should — including cash.",
   },
 ];
 
@@ -83,17 +83,19 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [navigatingHref, setNavigatingHref] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError(null);
     
     const formData = new FormData(e.currentTarget);
     const result = await submitContactForm(formData);
     
     setIsSubmitting(false);
     if (result?.error) {
-      alert("Failed to send: " + result.error);
+      setSubmitError(result.error);
     } else {
       setIsSubmitted(true);
     }
@@ -173,7 +175,7 @@ export default function Home() {
                 </h3>
                 <ol className="mt-8 space-y-5 text-[14px] font-medium">
                   {[
-                    "Officer opens the center grid â€” names in the order they sit.",
+                    "Officer opens the center grid — names in the order they sit.",
                     "Installments marked paid, partial, or skipped with a reason.",
                     "Guarantor notified when a member slips into arrears.",
                     "Cash counted against the grid before returning to branch.",
@@ -189,7 +191,7 @@ export default function Home() {
               </div>
               <div className="flex min-h-[280px] flex-col justify-center border-t border-white/10 bg-[#0c1c15] p-6 sm:p-8 lg:border-l lg:border-t-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#e6c27a]">
-                  End of day Â· Branch Kandy
+                  End of day · Branch Kandy
                 </p>
                 <div className="mt-5 space-y-3">
                   {[
@@ -222,8 +224,8 @@ export default function Home() {
                 Operations the industry already lives.
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-[15px] font-medium leading-relaxed text-[#5d6b63]">
-                Not another CRM. The daily work of an MFI â€” collections, groups, cash, and
-                control â€” without inventing a new way of doing business.
+                Not another CRM. The daily work of an MFI — collections, groups, cash, and
+                control — without inventing a new way of doing business.
               </p>
             </div>
 
@@ -253,7 +255,7 @@ export default function Home() {
                 {
                   icon: Landmark,
                   title: "Institutional, not startup-flavored",
-                  copy: "Designed for MFIs, cooperatives, and last-mile lenders â€” the vocabulary of centers, not â€˜usersâ€™.",
+                  copy: "Designed for MFIs, cooperatives, and last-mile lenders — the vocabulary of centers, not 'users'.",
                 },
                 {
                   icon: UsersRound,
@@ -402,7 +404,7 @@ export default function Home() {
                   Bring your centers onto one book.
                 </h2>
                 <p className="mb-10 max-w-sm text-[15px] font-medium leading-relaxed text-[#5d6b63]">
-                  Ask for a walkthrough with your own branch structure â€” or talk through
+                  Ask for a walkthrough with your own branch structure — or talk through
                   migrating members, loans, and historical collections.
                 </p>
                 <div className="space-y-6 text-[14px] font-medium text-[#3d4a44]">
@@ -465,6 +467,11 @@ export default function Home() {
                     <button disabled={isSubmitting} type="submit" className="mt-2 w-full rounded-xl bg-[#10261c] px-4 py-3 text-[14px] font-semibold text-[#f4efe6] shadow-md transition-all hover:bg-[#0c1c15] active:scale-[0.98] disabled:opacity-70 disabled:pointer-events-none">
                       {isSubmitting ? "Sending request..." : "Request a walkthrough"}
                     </button>
+                    {submitError && (
+                      <div className="mt-4 text-[13px] font-medium text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                        {submitError}
+                      </div>
+                    )}
                   </form>
                 )}
               </div>

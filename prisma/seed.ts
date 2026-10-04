@@ -32,7 +32,7 @@ async function main() {
 
   for (const b of branches) {
     const branch = await prisma.branch.upsert({
-      where: { code: b.code },
+      where: { organizationId_code: { organizationId: org.id, code: b.code } },
       update: { organizationId: org.id },
       create: b,
     })
@@ -78,9 +78,9 @@ async function main() {
   console.log('Seed completed successfully.')
 
   // Create a Centre for testing
-  const galleBranch = await prisma.branch.findUnique({ where: { code: 'SA01' } })
+  const galleBranch = await prisma.branch.findFirst({ where: { code: 'SA01', organizationId: org.id } })
   const testCentre = await prisma.centre.upsert({
-    where: { centreCode: 'PAR-TEST' },
+    where: { branchId_centreCode: { branchId: galleBranch!.id, centreCode: 'PAR-TEST' } },
     update: {},
     create: {
       centreNumber: 999,

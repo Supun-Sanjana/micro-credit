@@ -102,9 +102,8 @@ export async function POST(req: Request) {
                   <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 20px; border-radius: 10px; margin: 25px 0;">
                     <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Your Email (Login ID)</p>
                     <p style="margin: 0 0 20px 0; font-size: 16px; font-weight: 600; color: #0F172A;">${email}</p>
-                    
-                    <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
-                    <p style="margin: 0; font-size: 18px; font-weight: 600; color: #0F766E; font-family: monospace;">${password}</p>
+                                        <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Getting Started</p>
+                    <p style="margin: 0; font-size: 15px; color: #475569; line-height: 1.6;">Your temporary password has been set by your administrator. Please contact them directly to receive it securely.</p>
                   </div>
                   
                   <div style="text-align: center; margin-top: 35px;">

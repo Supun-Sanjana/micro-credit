@@ -179,7 +179,7 @@ export default function CentresPage() {
       queryClient.invalidateQueries({ queryKey: ['centres'] })
       setDeleteDialog({ open: false, centre: null })
     } catch (err) {
-      console.error(err)
+      console.error("An error occurred during fetch")
       alert("Failed to delete centre")
     } finally {
       setDeleting(false)

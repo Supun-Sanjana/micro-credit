@@ -34,6 +34,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const dal = await getScopedDal()
+    if (dal.role !== 'SYSTEM_ADMIN' && dal.role !== 'HEAD_OFFICE' && dal.role !== 'BRANCH_MANAGER') { return NextResponse.json({ error: "Insufficient permissions to create centres" }, { status: 403 }) }
     const json = await request.json()
     
     // Verify the branch belongs to the org

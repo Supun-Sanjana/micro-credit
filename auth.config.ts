@@ -10,15 +10,25 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const protectedPaths = ['/app/dashboard', '/app/branches', '/app/centres', '/app/members', '/app/loans', '/app/collection', '/app/reports', '/app/loan-products', '/app/settings']
-      const isProtected = protectedPaths.some(p => nextUrl.pathname.startsWith(p))
+      const pathname = nextUrl.pathname
       
-      if (isProtected) {
+      // Public paths that don't require authentication
+      const publicPaths = ['/app/login', '/app/signup', '/app/admin']
+      const isPublic = publicPaths.some(p => pathname === p || pathname.startsWith(p + '/'))
+      
+      // All /app/* routes are protected by default except public paths
+      const isAppRoute = pathname.startsWith('/app')
+      
+      if (isAppRoute && !isPublic) {
         if (isLoggedIn) return true
         return Response.redirect(new URL('/app/login', nextUrl))
-      } else if (isLoggedIn && (nextUrl.pathname === '/app/login' || nextUrl.pathname === '/app/signup')) {
+      }
+      
+      // Redirect logged-in users away from login/signup
+      if (isLoggedIn && (pathname === '/app/login' || pathname === '/app/signup')) {
         return Response.redirect(new URL('/app/dashboard', nextUrl))
       }
+      
       return true
     },
     async jwt({ token, user }) {

@@ -15,7 +15,7 @@ export default function HistoryPage() {
           setHistory(await res.json())
         }
       } catch (err) {
-        console.error(err)
+        console.error("An error occurred during fetch")
       } finally {
         setLoading(false)
       }

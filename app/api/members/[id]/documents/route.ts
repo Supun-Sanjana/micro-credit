@@ -8,6 +8,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id: memberId } = await params
     const { prisma, organizationId } = await getScopedDal()
 
+    const member = await prisma.member.findFirst({
+      where: { id: memberId, organizationId }
+    })
+    if (!member) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    }
+
     const documents = await prisma.memberDocument.findMany({
       where: { memberId },
       orderBy: { uploadedAt: "desc" },

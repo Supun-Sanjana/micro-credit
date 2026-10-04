@@ -69,7 +69,7 @@ export default function CashFlowPage() {
       })
     },
     onError: (err) => {
-      console.error(err)
+      console.error("An error occurred during fetch")
       alert("Failed to save cash flow record")
     },
   })

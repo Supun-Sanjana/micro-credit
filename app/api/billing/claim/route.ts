@@ -21,8 +21,25 @@ export async function POST(req: Request) {
     const planId = formData.get("planId") as string | null
 
     let finalProofUrl = null
-
     if (file && file.size > 0) {
+      // Validate file size (max 5MB)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: "File size must not exceed 5MB." },
+          { status: 400 }
+        )
+      }
+
+      // Validate file type
+      const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: "Only JPEG, PNG, WebP images and PDF files are allowed." },
+          { status: 400 }
+        )
+      }
+
       const { supabase } = await import("@/lib/supabase")
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)

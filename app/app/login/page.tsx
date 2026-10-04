@@ -47,7 +47,6 @@ export default function LoginPage() {
               type="email"
               autoComplete="email"
               required
-              placeholder="admin@micro.local"
               className="bg-[#ffffff] border border-[#ececec] rounded-[16px] p-[16px] text-[16px] text-[#17191c] placeholder:text-[#a3a6af] outline-none focus:border-[#17191c] transition-colors"
             />
           </div>

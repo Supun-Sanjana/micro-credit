@@ -242,6 +242,8 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
                           <img
                             src={claim.proofUrl}
                             alt="Deposit Proof"
+                            loading="lazy"
+                            decoding="async"
                             className="max-h-[400px] w-auto object-contain"
                           />
                         </div>

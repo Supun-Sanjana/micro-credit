@@ -80,7 +80,7 @@ export default function ReportsPage() {
         const member = await getMemberHistory(searchNic)
         setSearchedMember(member || "NOT_FOUND")
       } catch (err) {
-        console.error(err)
+        console.error("An error occurred during fetch")
       }
     })
   }

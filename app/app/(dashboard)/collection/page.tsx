@@ -182,7 +182,7 @@ export default function CollectionPage() {
       queryClient.invalidateQueries({ queryKey: ["collection"] })
       refetchDueList()
     } catch (error) {
-      console.error(error)
+      console.error("An error occurred during fetch")
       alert("Failed to save")
     } finally {
       setIsSaving(false)

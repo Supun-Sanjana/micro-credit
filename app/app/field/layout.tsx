@@ -2,8 +2,15 @@ import { ReactNode } from "react";
 import { Home, MapPin, History, FileText } from "lucide-react";
 import Link from "next/link";
 import { OfflineIndicator } from "./OfflineIndicator";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-export default function FieldLayout({ children }: { children: ReactNode }) {
+export default async function FieldLayout({ children }: { children: ReactNode }) {
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/app/login')
+  }
+
   return (
     <div className="max-w-md mx-auto bg-gray-50 min-h-screen flex flex-col relative pb-16">
       <OfflineIndicator />

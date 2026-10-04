@@ -414,6 +414,8 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                   <img
                     src={previewUrl}
                     alt="Preview"
+                    loading="lazy"
+                    decoding="async"
                     className="w-14 h-14 object-cover rounded-lg border border-amber-200 shadow-sm bg-white"
                   />
                 ) : (
@@ -472,6 +474,8 @@ export function MemberDocuments({ memberId }: MemberDocumentsProps) {
                   <img
                     src={previewUrl}
                     alt="Preview"
+                    loading="lazy"
+                    decoding="async"
                     className="w-14 h-14 object-cover rounded-lg border border-[#e5e7eb] shadow-sm bg-white"
                   />
                 ) : (

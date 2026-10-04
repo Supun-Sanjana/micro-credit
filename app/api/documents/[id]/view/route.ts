@@ -7,8 +7,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const { id } = await params
     const { prisma, organizationId, userId } = await getScopedDal()
 
-    const document = await prisma.memberDocument.findUnique({
-      where: { id }
+    const document = await prisma.memberDocument.findFirst({
+      where: { id, member: { organizationId } }
     })
 
     if (!document) {

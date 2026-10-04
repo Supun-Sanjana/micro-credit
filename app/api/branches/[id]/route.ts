@@ -25,8 +25,10 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const dal = await getScopedDal()
+  try {    const dal = await getScopedDal()
+    if (dal.role !== 'SYSTEM_ADMIN' && dal.role !== 'HEAD_OFFICE') {
+      return NextResponse.json({ error: "Only admins can modify branches" }, { status: 403 })
+    }
     const { id } = await params
     const json = await request.json()
     
@@ -51,6 +53,9 @@ export async function DELETE(
 ) {
   try {
     const dal = await getScopedDal()
+    if (dal.role !== 'SYSTEM_ADMIN' && dal.role !== 'HEAD_OFFICE') {
+      return NextResponse.json({ error: "Only admins can delete branches" }, { status: 403 })
+    }
     const { id } = await params
     
     await dal.prisma.branch.delete({

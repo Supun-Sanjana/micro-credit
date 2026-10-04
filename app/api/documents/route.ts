@@ -4,8 +4,8 @@ import { DocumentStatus } from "@prisma/client"
 
 export async function GET(req: NextRequest) {
   try {
-    const { prisma, role } = await getScopedDal()
-
+    const { prisma, role, organizationId } = await getScopedDal()
+    
     if (role !== "BRANCH_MANAGER" && role !== "HEAD_OFFICE" && role !== "SYSTEM_ADMIN") {
       return new NextResponse("Forbidden", { status: 403 })
     }
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") as DocumentStatus | null
     const type = searchParams.get("type")
 
-    const where: any = {}
+    const where: any = { member: { organizationId } }
     if (status) where.status = status
     if (type) where.type = type
 

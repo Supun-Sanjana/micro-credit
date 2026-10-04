@@ -18,8 +18,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return new NextResponse("Invalid status", { status: 400 })
     }
 
-    const document = await prisma.memberDocument.findUnique({
-      where: { id }
+    const document = await prisma.memberDocument.findFirst({
+      where: { id, member: { organizationId } }
     })
 
     if (!document) {

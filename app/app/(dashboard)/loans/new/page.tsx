@@ -40,7 +40,7 @@ export default function NewLoanPage() {
         if (membersRes.ok) setMembers(await membersRes.json())
         if (productsRes.ok) setProducts(await productsRes.json())
       } catch (err) {
-        console.error(err)
+        console.error("An error occurred during fetch")
       } finally {
         setIsLoading(false)
       }
@@ -67,7 +67,7 @@ export default function NewLoanPage() {
         alert("Failed to submit application")
       }
     } catch (err) {
-      console.error(err)
+      console.error("An error occurred during fetch")
     } finally {
       setIsSubmitting(false)
     }

@@ -1,16 +1,19 @@
 import { SignJWT, jwtVerify } from "jose"
 import { cookies } from "next/headers"
 
-const secretKey = process.env.AUTH_SECRET
-if (!secretKey) throw new Error("AUTH_SECRET is not set in environment variables")
-const key = new TextEncoder().encode(secretKey)
+function getAdminKey() {
+  const secretKey = process.env.AUTH_SECRET
+  if (!secretKey) throw new Error("AUTH_SECRET is not set in environment variables")
+  // Use a distinct key for admin sessions to prevent cross-context privilege escalation
+  return new TextEncoder().encode(secretKey + "::platform-admin")
+}
 
 export async function createAdminSession(adminId: string, email: string) {
   const expires = new Date(Date.now() + 10 * 60 * 60 * 1000) // 10 hours
   const session = await new SignJWT({ adminId, email })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("10h")
-    .sign(key)
+    .sign(getAdminKey())
 
   ;(await cookies()).set("admin_session", session, {
     httpOnly: true,
@@ -26,7 +29,7 @@ export async function verifyAdminSession() {
   if (!cookie) return null
 
   try {
-    const { payload } = await jwtVerify(cookie, key, {
+    const { payload } = await jwtVerify(cookie, getAdminKey(), {
       algorithms: ["HS256"],
     })
     return payload as { adminId: string; email: string }
@@ -44,5 +47,3 @@ export async function clearAdminSession() {
     path: "/",
   })
 }
-
-
