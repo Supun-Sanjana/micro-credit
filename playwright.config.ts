@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: process.env.TEST_URL || 'https://solida.cylvox.com',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -22,9 +22,9 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
+  /* webServer: {
     command: 'npx next dev -p 3001',
     port: 3001,
     reuseExistingServer: !process.env.CI,
-  },
+  }, */
 });

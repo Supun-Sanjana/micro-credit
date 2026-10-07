@@ -12,6 +12,7 @@ export default function SignupPage() {
     adminName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,15 +28,27 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.")
+      return
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long.")
+      return
+    }
+
     setLoading(true)
 
     try {
+      const { confirmPassword, ...submitData } = formData
       const res = await fetch("/api/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       })
 
       const data = await res.json()
@@ -150,7 +163,7 @@ export default function SignupPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 className="w-full bg-[#ffffff] border border-[#ececec] rounded-[16px] pl-[16px] pr-[48px] py-[16px] text-[16px] text-[#17191c] placeholder:text-[#a3a6af] outline-none focus:border-[#17191c] transition-colors tracking-widest placeholder:tracking-normal"
               />
               <button
@@ -161,6 +174,28 @@ export default function SignupPage() {
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col space-y-2">
+            <label
+              htmlFor="confirmPassword"
+              className="text-[15px] text-[#17191c] font-medium ml-1"
+            >
+              Confirm Password
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="At least 8 characters"
+                className="w-full bg-[#ffffff] border border-[#ececec] rounded-[16px] pl-[16px] pr-[48px] py-[16px] text-[16px] text-[#17191c] placeholder:text-[#a3a6af] outline-none focus:border-[#17191c] transition-colors tracking-widest placeholder:tracking-normal"
+              />
             </div>
           </div>
 
