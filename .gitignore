@@ -51,3 +51,6 @@ next-env.d.ts
 playwright-report/
 test-results/
 playwright/.cache/
+
+/public/allow.jpg
+/public/4k.jpg

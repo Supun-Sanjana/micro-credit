@@ -22,11 +22,11 @@ export async function POST(req: Request) {
 
     let finalProofUrl = null
     if (file && file.size > 0) {
-      // Validate file size (max 5MB)
-      const MAX_FILE_SIZE = 5 * 1024 * 1024
+      // Validate file size (max 1MB)
+      const MAX_FILE_SIZE = 1 * 1024 * 1024
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
-          { error: "File size must not exceed 5MB." },
+          { error: "File size must not exceed 1MB." },
           { status: 400 }
         )
       }
@@ -40,29 +40,35 @@ export async function POST(req: Request) {
         )
       }
 
-      const { supabase } = await import("@/lib/supabase")
+      const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3")
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
 
-      const fileName = `claims/${organizationId}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
-      
-      const { data, error } = await supabase.storage
-        .from("claims")
-        .upload(fileName, buffer, {
-          contentType: file.type || "application/octet-stream",
-          upsert: true,
-        })
+      const s3 = new S3Client({
+        region: process.env.AWS_REGION || "us-east-1",
+        endpoint: process.env.AWS_ENDPOINT_URL_S3,
+        forcePathStyle: true,
+      })
 
-      if (error) {
-        console.error("Supabase upload error:", error)
+      const fileName = `${organizationId}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`
+      
+      try {
+        await s3.send(
+          new PutObjectCommand({
+            Bucket: "claims",
+            Key: fileName,
+            Body: buffer,
+            ContentType: file.type || "application/octet-stream",
+          })
+        )
+      } catch (error: any) {
+        console.error("Neon S3 upload error:", error)
         throw new Error("Failed to upload document to storage")
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("claims")
-        .getPublicUrl(fileName)
-
-      finalProofUrl = publicUrlData.publicUrl
+      // Neon uses path-style for public URLs if an endpoint is provided
+      const endpoint = process.env.AWS_ENDPOINT_URL_S3?.replace(/\/$/, "") || ""
+      finalProofUrl = `${endpoint}/claims/${fileName}`
     }
 
     if (!amount || !bankReference || !paidDate) {
