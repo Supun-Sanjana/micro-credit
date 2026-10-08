@@ -229,11 +229,11 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
       {/* Dropdown Popover */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[340px] sm:w-[400px] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-[-70px] sm:right-0 mt-2 w-[320px] sm:w-[400px] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           {/* Header */}
-          <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-900 text-[15px]">Notifications</span>
+              <span className="font-semibold text-slate-900 text-[14px] sm:text-[15px]">Notifications</span>
               {unreadCount > 0 ? (
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 text-rose-700">
                   {unreadCount} new
@@ -265,7 +265,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           </div>
 
           {/* Filter Bar */}
-          <div className="px-4 pt-2.5 pb-2 flex items-center justify-between border-b border-slate-100 text-xs">
+          <div className="px-3 sm:px-4 pt-2 pb-2 flex items-center justify-between border-b border-slate-100 text-xs">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setActiveFilter("all")}
@@ -303,7 +303,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-100 overscroll-contain">
+          <div className="max-h-[320px] sm:max-h-[400px] overflow-y-auto divide-y divide-slate-100 overscroll-contain">
             {isLoading ? (
               <div className="p-4 space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -334,7 +334,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                     key={item.id}
                     onClick={() => handleNotificationClick(item)}
                     className={cn(
-                      "px-4 py-3 flex gap-3 items-start hover:bg-slate-50 cursor-pointer transition-colors relative group",
+                      "px-3 sm:px-4 py-2.5 sm:py-3 flex gap-2 sm:gap-3 items-start hover:bg-slate-50 cursor-pointer transition-colors relative group",
                       isUnread && "bg-brand-50/20"
                     )}
                   >
@@ -386,7 +386,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           </div>
 
           {/* Footer */}
-          <div className="p-2.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 px-4">
+          <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
             <span className="text-[11px]">Solida Notification Center</span>
             <Link
               href="/app/settings/notifications"

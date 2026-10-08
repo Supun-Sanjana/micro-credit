@@ -147,7 +147,7 @@ export const SUBSCRIPTION_PLANS: PlanConfig[] = [
       {
         category: "Field & Mobile Operations",
         features: [
-          "Advanced field route optimization & officer check-in logs",
+          "GPS officer check-in logs",
           "QR-code digital receipt verification for borrowers",
           "Custom field collection rules & grace period overrides",
         ],

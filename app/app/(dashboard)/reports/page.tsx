@@ -12,7 +12,7 @@ import {
   getMemberHistory, 
   getDailyReconciliation 
 } from "@/app/actions/reports"
-import { Loader2 } from "lucide-react"
+import { Loader2, Download } from "lucide-react"
 
 type Tab = "reconciliation" | "outstanding" | "member-search" | "par" | "efficiency" | "aging"
 
@@ -85,6 +85,87 @@ export default function ReportsPage() {
     })
   }
 
+  const handleExportCSV = () => {
+    let dataToExport: any[] = []
+    let filename = `report_${activeTab}_${format(new Date(), "yyyy-MM-dd")}.csv`
+    let headers: string[] = []
+
+    if (activeTab === "reconciliation" && reconData?.cashFlows) {
+      dataToExport = reconData.cashFlows
+      headers = ["Date", "Description", "Method", "Inflow", "Outflow", "Balance"]
+    } else if (activeTab === "outstanding" && outstandingData) {
+      dataToExport = outstandingData
+      headers = ["Centre ID", "Centre Name", "Active Loans", "Total Principal", "Total Interest", "Total Outstanding"]
+    } else if (activeTab === "par" && parData) {
+      dataToExport = parData
+      headers = ["Centre ID", "Centre Name", "Active Portfolio", "PAR Amount", "PAR Ratio", "High Risk Loans"]
+    } else if (activeTab === "efficiency" && efficiencyData) {
+      dataToExport = efficiencyData
+      headers = ["Officer ID", "Officer Name", "Assigned Centres", "Expected Collection", "Actual Collected", "Collection Rate"]
+    } else if (activeTab === "aging" && agingData) {
+      dataToExport = agingData
+      headers = ["Bucket", "Loan Count", "Total Amount"]
+    }
+
+    if (!dataToExport || dataToExport.length === 0) {
+      alert("No data available to export.")
+      return
+    }
+
+    const csvContent = [
+      headers.join(","),
+      ...dataToExport.map(row => 
+        headers.map(header => {
+          let val = ""
+          if (activeTab === "reconciliation") {
+            if (header === "Date") val = row.date || ""
+            if (header === "Description") val = row.description || ""
+            if (header === "Method") val = row.method || ""
+            if (header === "Inflow") val = row.inflow || "0"
+            if (header === "Outflow") val = row.outflow || "0"
+            if (header === "Balance") val = row.balance || "0"
+          } else if (activeTab === "outstanding") {
+            if (header === "Centre ID") val = row.centreId || ""
+            if (header === "Centre Name") val = row.name || "" // changed from centreName to name based on typical naming
+            if (header === "Active Loans") val = row.activeLoans || "0"
+            if (header === "Total Principal") val = row.totalPrincipal || "0"
+            if (header === "Total Interest") val = row.totalInterest || "0"
+            if (header === "Total Outstanding") val = row.totalOutstanding || "0"
+          } else if (activeTab === "par") {
+            if (header === "Centre ID") val = row.centreId || ""
+            if (header === "Centre Name") val = row.name || ""
+            if (header === "Active Portfolio") val = row.activePortfolio || "0"
+            if (header === "PAR Amount") val = row.parAmount || "0"
+            if (header === "PAR Ratio") val = row.parRatio || "0"
+            if (header === "High Risk Loans") val = row.highRiskLoans || "0"
+          } else if (activeTab === "efficiency") {
+            if (header === "Officer ID") val = row.officerId || ""
+            if (header === "Officer Name") val = row.name || ""
+            if (header === "Assigned Centres") val = row.assignedCentres || "0"
+            if (header === "Expected Collection") val = row.expectedCollection || "0"
+            if (header === "Actual Collected") val = row.actualCollected || "0"
+            if (header === "Collection Rate") val = row.collectionRate || "0"
+          } else if (activeTab === "aging") {
+            if (header === "Bucket") val = row.bucket || ""
+            if (header === "Loan Count") val = row.loanCount || "0"
+            if (header === "Total Amount") val = row.totalAmount || "0"
+          }
+          return `"${String(val).replace(/"/g, '""')}"`
+        }).join(",")
+      )
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+    link.setAttribute("href", url)
+    link.setAttribute("download", filename)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="flex flex-col gap-8 lg:gap-[48px]">
       
@@ -143,6 +224,18 @@ export default function ReportsPage() {
           >
             Member History
           </TabButton>
+          
+          <div className="ml-auto flex items-center gap-2">
+            {activeTab !== "member-search" && (
+              <button 
+                onClick={handleExportCSV}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#ececec] bg-white text-navy-900 text-[14px] font-medium shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Loading Skeleton during Tab Switching */}

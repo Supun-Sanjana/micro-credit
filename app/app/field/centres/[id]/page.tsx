@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { cacheCollectionSheet, getCachedCollectionSheet, saveRepaymentOffline } from "@/lib/indexed-db"
-import { CheckCircle2, CloudOff, Loader2, ChevronDown, X } from "lucide-react"
+import { CheckCircle2, CloudOff, Loader2, ChevronDown, X, MapPin } from "lucide-react"
+import { logFieldCheckIn } from "@/app/actions/field"
 
 export default function CollectionSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const [centreId, setCentreId] = useState<string | null>(null)
@@ -19,6 +20,30 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
   const [missedReason, setMissedReason] = useState("NO_CASH")
   const [missedNotes, setMissedNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
+
+  const [checkingIn, setCheckingIn] = useState(false)
+  const [checkedIn, setCheckedIn] = useState(false)
+  
+  const handleCheckIn = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.")
+      return
+    }
+    setCheckingIn(true)
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        await logFieldCheckIn(centreId!, pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy)
+        setCheckedIn(true)
+      } catch (e) {
+        alert("Failed to log check in.")
+      } finally {
+        setCheckingIn(false)
+      }
+    }, (err) => {
+      alert(`Error fetching location: ${err.message}`)
+      setCheckingIn(false)
+    })
+  }
 
   useEffect(() => {
     params.then(p => setCentreId(p.id))
@@ -160,6 +185,17 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
           Today's scheduled collections.
         </p>
       </div>
+
+      {!checkedIn ? (
+        <button onClick={handleCheckIn} disabled={checkingIn} className="w-full bg-slate-50 border border-slate-200 text-slate-700 py-3 rounded-xl text-[14px] font-medium flex items-center justify-center gap-2">
+          {checkingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+          {checkingIn ? "Acquiring GPS Location..." : "Check In at Centre (GPS)"}
+        </button>
+      ) : (
+        <div className="w-full bg-[#e6f4ea] text-[#137333] border border-[#ceead6] py-3 rounded-xl text-[14px] font-medium flex items-center justify-center gap-2">
+          <CheckCircle2 className="w-4 h-4" /> Checked In Location Saved
+        </div>
+      )}
 
       {!data || data.length === 0 ? (
         <div className="bg-white rounded-2xl border border-[#ececec] p-8 text-center text-slate-500 shadow-subtle-1 text-sm">
