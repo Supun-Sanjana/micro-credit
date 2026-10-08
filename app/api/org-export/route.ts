@@ -3,7 +3,6 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { EXPORT_ENTITIES, createEntityCsvStream } from "@/lib/org-export"
 import { logAudit } from "@/lib/audit"
-import { AuditAction } from "@prisma/client"
 
 export const dynamic = "force-dynamic"
 
@@ -46,7 +45,7 @@ export async function GET(req: NextRequest) {
     const recentExports = await prisma.auditLog.count({
       where: {
         organizationId,
-        action: "EXPORT" as AuditAction,
+        action: "EXPORT",
         createdAt: { gte: tenMinutesAgo },
       },
     })
@@ -59,7 +58,7 @@ export async function GET(req: NextRequest) {
     try {
       await logAudit({
         dal: { prisma, organizationId, userId: session.user.id },
-        action: "EXPORT" as AuditAction,
+        action: "EXPORT",
         entityType: "OrgExport",
         entityId: entity,
         note: "CSV export: " + entity,

@@ -150,12 +150,12 @@ export default async function BillingSettingsPage() {
       {/* Header */}
       <div>
         <h1
-          className="text-[44px] leading-[1.25] text-navy-900 font-serif font-normal"
+          className="text-[32px] sm:text-[44px] leading-[1.25] text-navy-900 font-serif font-normal"
           style={{ letterSpacing: "-0.66px" }}
         >
           Subscription & Billing
         </h1>
-        <p className="text-[17px] text-slate-500 mt-2">
+        <p className="text-[15px] sm:text-[17px] text-slate-500 mt-2">
           Manage your organization plan, resource quotas, and offline payment claims.
         </p>
       </div>

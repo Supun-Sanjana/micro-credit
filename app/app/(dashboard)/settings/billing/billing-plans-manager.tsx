@@ -50,17 +50,17 @@ export function BillingPlansManager({
     <div className="flex flex-col gap-12">
       {/* Plans Section Header */}
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-[#166534]/10 text-[#166534] uppercase tracking-wider">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="inline-block shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-[#166534]/10 text-[#166534] uppercase tracking-wider whitespace-nowrap">
             Operational Tiers
           </span>
-          <span className="text-xs text-slate-400">•</span>
-          <span className="text-xs text-slate-500 font-medium">Grouped by platform capability</span>
+          <span className="hidden sm:inline-block text-xs text-slate-400">•</span>
+          <span className="text-[13px] text-slate-500 font-medium">Grouped by platform capability</span>
         </div>
-        <h2 className="text-[28px] font-sans font-medium text-navy-900 tracking-tight">
+        <h2 className="text-[28px] sm:text-[32px] leading-tight font-sans font-medium text-navy-900 tracking-tight">
           Available Subscription Plans
         </h2>
-        <p className="text-[15px] text-slate-500 mt-1 max-w-3xl">
+        <p className="text-[15px] sm:text-[16px] leading-relaxed text-slate-500 mt-2 max-w-3xl">
           Choose the capacity and functional tier suited for your microfinance operations. Compare feature groups across tiers or select a plan to renew or upgrade.
         </p>
       </div>
