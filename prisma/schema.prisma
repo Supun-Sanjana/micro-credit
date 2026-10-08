@@ -1160,3 +1160,16 @@ model FieldCheckIn {
   @@index([centreId])
   @@index([timestamp])
 }
+
+model DataPurgeRecord {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  organizationName    String
+  reason              String
+  triggeredBy         String
+  rowCounts           Json?
+  storageFilesDeleted Int      @default(0)
+  createdAt           DateTime @default(now())
+
+  @@index([organizationId])
+}
