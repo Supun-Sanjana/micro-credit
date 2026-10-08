@@ -260,13 +260,31 @@ export function DashboardShell({ children, user, orgName, isRestricted }: Dashbo
 
         {/* Mobile Sidebar Overlay */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-30 flex">
+          <div className="lg:hidden fixed inset-0 z-50 flex">
             <div 
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" 
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300" 
               onClick={() => setIsMobileMenuOpen(false)}
             />
-            <aside className="relative w-[280px] max-w-[80%] h-[calc(100vh-72px)] mt-[72px] bg-navy-950 overflow-y-auto flex-1 shadow-xl sidebar-scrollbar">
-              <NavContent />
+            <aside className="relative w-full max-w-[320px] h-full bg-navy-950 flex flex-col shadow-2xl animate-in slide-in-from-left duration-300">
+              <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
+                <Link href={isRestricted ? "/app/settings/billing" : "/app/dashboard"} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center border border-brand-100">
+                    <div className="w-4 h-4 border-2 border-brand-600 rounded-sm transform rotate-45" />
+                  </div>
+                  <span className="text-[18px] font-semibold tracking-tight text-white">
+                    {orgName}
+                  </span>
+                </Link>
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 sidebar-scrollbar">
+                <NavContent />
+              </div>
             </aside>
           </div>
         )}

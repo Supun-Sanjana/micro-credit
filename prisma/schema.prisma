@@ -28,6 +28,7 @@ model Organization {
   memberDocuments         MemberDocument[]
   subscription            Subscription?
   users                   User[]
+  FieldCheckIn            FieldCheckIn[]
 }
 
 model User {
@@ -55,6 +56,7 @@ model User {
   branch                    Branch?                      @relation(fields: [branchId], references: [id])
   organization              Organization                 @relation(fields: [organizationId], references: [id])
   notificationPreferences   UserNotificationPreference[]
+  FieldCheckIn              FieldCheckIn[]
 
   @@index([organizationId])
 }
@@ -95,6 +97,7 @@ model Centre {
   fieldOfficerAssignments FieldOfficerAssignment[]
   groups                  Group[]
   members                 Member[]
+  FieldCheckIn            FieldCheckIn[]
 
   @@unique([branchId, centreCode])
   @@index([branchId])
@@ -157,23 +160,25 @@ model LoanProduct {
 }
 
 model Group {
-  id             String            @id @default(cuid())
-  organizationId String
-  branchId       String
-  centreId       String
-  groupNumber    Int
-  name           String
-  leaderMemberId String?
-  formationDate  DateTime?         @db.Date
-  meetingDay     String?
-  meetingTime    String?
-  status         GroupStatus       @default(ACTIVE)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  branch         Branch            @relation(fields: [branchId], references: [id])
-  centre         Centre            @relation(fields: [centreId], references: [id])
-  organization   Organization      @relation(fields: [organizationId], references: [id])
-  memberships    GroupMembership[]
+  id              String            @id @default(cuid())
+  organizationId  String
+  branchId        String
+  centreId        String
+  groupNumber     Int
+  name            String
+  leaderMemberId  String?
+  formationDate   DateTime?         @db.Date
+  meetingDay      String?
+  meetingTime     String?
+  collectionRule  String?
+  gracePeriodDays Int?
+  status          GroupStatus       @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  branch          Branch            @relation(fields: [branchId], references: [id])
+  centre          Centre            @relation(fields: [centreId], references: [id])
+  organization    Organization      @relation(fields: [organizationId], references: [id])
+  memberships     GroupMembership[]
 
   @@unique([organizationId, centreId, groupNumber])
   @@index([organizationId, branchId])
@@ -211,6 +216,7 @@ model Loan {
   status             LoanStatus            @default(ACTIVE)
   verificationStatus VerificationStatus    @default(PENDING)
   verificationNote   String?
+  gracePeriodDays    Int?
   totalPaid          Decimal               @default(0) @db.Decimal(12, 2)
   outstanding        Decimal               @db.Decimal(12, 2)
   createdAt          DateTime              @default(now())
@@ -899,7 +905,6 @@ enum AuditAction {
   CREATE
   UPDATE
   DELETE
-  EXPORT
 }
 
 enum LoanType {
@@ -1136,6 +1141,25 @@ enum MissedReason {
   OTHER
 }
 
+model FieldCheckIn {
+  id             String   @id @default(cuid())
+  organizationId String
+  officerId      String
+  centreId       String
+  latitude       Float
+  longitude      Float
+  accuracy       Float?
+  timestamp      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  officer      User         @relation(fields: [officerId], references: [id], onDelete: Cascade)
+  centre       Centre       @relation(fields: [centreId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([officerId])
+  @@index([centreId])
+  @@index([timestamp])
+}
 
 model DataPurgeRecord {
   id                  String   @id @default(cuid())
@@ -1143,10 +1167,9 @@ model DataPurgeRecord {
   organizationName    String
   reason              String
   triggeredBy         String
-  rowCounts           Json
+  rowCounts           Json?
   storageFilesDeleted Int      @default(0)
-  purgedAt            DateTime @default(now())
+  createdAt           DateTime @default(now())
 
   @@index([organizationId])
-  @@index([purgedAt])
 }

@@ -65,6 +65,17 @@ export default async function Receipt({ params }: { params: Promise<{ repaymentI
             <span className="text-[15px] font-medium text-navy-900">{repayment.id.slice(-8).toUpperCase()}</span>
           </div>
         </div>
+
+        <div className="mt-8 pt-8 border-t border-[#ececec] flex flex-col items-center">
+          <div className="bg-white p-2 rounded-xl border border-[#ececec] shadow-sm mb-3">
+            <img 
+              src={await import('qrcode').then(qrcode => qrcode.toDataURL(`https://solida.cylvox.com/app/field/receipt/${repayment.id}`, { margin: 1, width: 140, color: { dark: '#0f172a', light: '#ffffff' } }))} 
+              alt="Receipt Verification QR" 
+              className="w-32 h-32"
+            />
+          </div>
+          <span className="text-[12px] text-slate-500 uppercase tracking-widest font-semibold">Scan to Verify</span>
+        </div>
       </div>
 
       <Link

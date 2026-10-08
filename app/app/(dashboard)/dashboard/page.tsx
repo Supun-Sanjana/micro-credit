@@ -137,7 +137,7 @@ export default async function DashboardPage() {
   const totalSavings = savingsAccounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
 
   return (
-    <div className="flex flex-col gap-10 w-full h-full">
+    <div className="flex flex-col gap-6 sm:gap-10 w-full h-full">
       <div>
         <h1 className="text-[28px] font-serif font-medium tracking-tight text-ink-black mb-1">
           Performance Overview
@@ -148,7 +148,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatCard title="Active Capital" value={`LKR ${activeCapital.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Live Portfolio</>} />
         <StatCard title="Today's Collections" value={`LKR ${todayCollections.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><TrendingUp className="w-3 h-3 mr-1 inline" />Real-time Sync</>} />
         <StatCard title="Total Savings" value={`LKR ${totalSavings.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} delta={<><Wallet className="w-3 h-3 mr-1 inline" />Pooled Capital</>} />
@@ -156,55 +156,55 @@ export default async function DashboardPage() {
       </div>
 
       {/* Full Width Chart */}
-      <div className="bg-paper-white border border-[#ececec] rounded-[24px] p-8 shadow-subtle-3">
+      <div className="bg-paper-white border border-[#ececec] rounded-[16px] sm:rounded-[24px] p-4 sm:p-8 shadow-sm sm:shadow-subtle-3">
         <FinancialChart 
           data6Months={financialFlow.data6Months} 
           dataThisYear={financialFlow.dataThisYear} 
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Quick Actions */}
         <div className="lg:col-span-2 flex flex-col gap-5">
           <h2 className="text-[20px] font-serif font-medium tracking-tight text-ink-black">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Link href="/app/members" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-6 shadow-subtle flex flex-col gap-4 hover:border-ink-black transition-colors">
-              <div className="w-12 h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black">
-                <Users className="w-6 h-6" />
+            <Link href="/app/members" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="font-medium text-[17px] text-ink-black group-hover:underline">Manage Members</h3>
-                <p className="text-[14px] text-slate-gray mt-1">Register members and view KYC profiles.</p>
+                <h3 className="font-medium text-[16px] sm:text-[17px] text-ink-black group-hover:underline">Manage Members</h3>
+                <p className="text-[13px] sm:text-[14px] text-slate-gray mt-1">Register members and view KYC profiles.</p>
               </div>
             </Link>
             
-            <Link href="/app/loans" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-6 shadow-subtle flex flex-col gap-4 hover:border-ink-black transition-colors">
-              <div className="w-12 h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black">
-                <DollarSign className="w-6 h-6" />
+            <Link href="/app/loans" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="font-medium text-[17px] text-ink-black group-hover:underline">Disburse Loans</h3>
-                <p className="text-[14px] text-slate-gray mt-1">Approve and disburse member loans.</p>
+                <h3 className="font-medium text-[16px] sm:text-[17px] text-ink-black group-hover:underline">Disburse Loans</h3>
+                <p className="text-[13px] sm:text-[14px] text-slate-gray mt-1">Approve and disburse member loans.</p>
               </div>
             </Link>
 
-            <Link href="/app/accounting" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-6 shadow-subtle flex flex-col gap-4 hover:border-ink-black transition-colors">
-              <div className="w-12 h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black">
-                <FileText className="w-6 h-6" />
+            <Link href="/app/accounting" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="font-medium text-[17px] text-ink-black group-hover:underline">General Ledger</h3>
-                <p className="text-[14px] text-slate-gray mt-1">View automated double-entry journals.</p>
+                <h3 className="font-medium text-[16px] sm:text-[17px] text-ink-black group-hover:underline">General Ledger</h3>
+                <p className="text-[13px] sm:text-[14px] text-slate-gray mt-1">View automated double-entry journals.</p>
               </div>
             </Link>
 
-            <Link href="/app/collection" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-6 shadow-subtle flex flex-col gap-4 hover:border-ink-black transition-colors">
-              <div className="w-12 h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black">
-                <Activity className="w-6 h-6" />
+            <Link href="/app/collection" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+                <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
-                <h3 className="font-medium text-[17px] text-ink-black group-hover:underline">Daily Collections</h3>
-                <p className="text-[14px] text-slate-gray mt-1">Reconcile field officer daily sheets.</p>
+                <h3 className="font-medium text-[16px] sm:text-[17px] text-ink-black group-hover:underline">Daily Collections</h3>
+                <p className="text-[13px] sm:text-[14px] text-slate-gray mt-1">Reconcile field officer daily sheets.</p>
               </div>
             </Link>
           </div>
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
         {/* Recent Activity */}
         <div className="flex flex-col gap-5">
           <h2 className="text-[20px] font-serif font-medium tracking-tight text-ink-black">Recent Activity</h2>
-          <div className="bg-paper-white border border-[#ececec] rounded-[16px] p-6 shadow-subtle flex flex-col gap-5">
+          <div className="bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-4 sm:gap-5">
             {recentAuditLogs.length === 0 ? (
               <p className="text-[14px] text-slate-gray">No recent activities found.</p>
             ) : (
@@ -245,10 +245,10 @@ export default async function DashboardPage() {
 
 function StatCard({ title, value, delta }: { title: string, value: string, delta: React.ReactNode }) {
   return (
-    <div className="bg-paper-white rounded-[20px] p-6 shadow-subtle-3 flex flex-col gap-2">
-      <span className="text-[15px] font-medium text-slate-gray tracking-wide">{title}</span>
-      <span className="text-[32px] font-sans font-medium text-ink-black tracking-[-0.5px] truncate">{value}</span>
-      <span className="text-[13px] font-medium text-[#137333] mt-2 flex items-center">{delta}</span>
+    <div className="bg-paper-white rounded-[16px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm sm:shadow-subtle-3 border border-[#ececec] sm:border-transparent flex flex-col gap-1 sm:gap-2">
+      <span className="text-[13px] sm:text-[15px] font-medium text-slate-gray tracking-wide">{title}</span>
+      <span className="text-[28px] sm:text-[32px] font-sans font-medium text-ink-black tracking-[-0.5px] truncate">{value}</span>
+      <span className="text-[12px] sm:text-[13px] font-medium text-[#137333] mt-1 sm:mt-2 flex items-center">{delta}</span>
     </div>
   )
 }

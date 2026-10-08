@@ -193,6 +193,7 @@ export const mockLoans: Loan[] = [
     outstanding: new Prisma.Decimal(49500),
     createdAt: now,
     updatedAt: now,
+    gracePeriodDays: null,
   },
   {
     id: "loan_2",
@@ -213,6 +214,7 @@ export const mockLoans: Loan[] = [
     outstanding: new Prisma.Decimal(117000),
     createdAt: now,
     updatedAt: now,
+    gracePeriodDays: null,
   },
   {
     id: "loan_3",
@@ -233,6 +235,7 @@ export const mockLoans: Loan[] = [
     outstanding: new Prisma.Decimal(35100),
     createdAt: now,
     updatedAt: now,
+    gracePeriodDays: null,
   },
 ];
 
