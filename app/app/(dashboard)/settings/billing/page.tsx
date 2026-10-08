@@ -4,10 +4,13 @@ import prisma from "@/lib/prisma"
 import { BillingPlansManager } from "./billing-plans-manager"
 import { ShieldCheck, HardDrive, Users, Building2, Calendar, CreditCard, Clock } from "lucide-react"
 import { getPlanConfig } from "@/lib/plans"
+import { EXPORT_ENTITY_LABELS } from "@/lib/org-export"
+import { TRIAL_PURGE_GRACE_DAYS } from "@/lib/org-purge"
 
 export default async function BillingSettingsPage() {
   const session = await auth()
   const organizationId = (session?.user as any)?.organizationId
+  const role = (session?.user as any)?.role
 
   if (!session?.user || !organizationId) {
     redirect("/app/login")
@@ -310,6 +313,38 @@ export default async function BillingSettingsPage() {
               </div>
             )}
           </div>
+
+          {/* Your Data / CSV Export Card */}
+          {(role === "HEAD_OFFICE" || role === "SYSTEM_ADMIN") && (
+            <div className="bg-white rounded-[24px] shadow-subtle-3 p-8 border border-border/30">
+              <div className="mb-6">
+                <h3 className="text-[22px] font-sans font-medium text-navy-900 tracking-tight">
+                  Your data
+                </h3>
+                <p className="text-[15px] text-slate-500 mt-1 leading-relaxed max-w-3xl">
+                  Download your institution's records as CSV files. Available to Head Office and System Admin users, at any time — including after a trial ends.
+                </p>
+                {subscription?.status === "SUSPENDED" && subscription.currentPeriodEnd === null && subscription.trialEndsAt && (
+                  <div className="mt-3 bg-[#fce8e6] text-[#c5221f] px-4 py-3 rounded-xl text-sm border border-[#c5221f]/15">
+                    Your trial data will be permanently deleted on **{formatDate(new Date(subscription.trialEndsAt.getTime() + TRIAL_PURGE_GRACE_DAYS * 24 * 60 * 60 * 1000))}**. Export it before then.
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.entries(EXPORT_ENTITY_LABELS).map(([key, label]) => (
+                  <a
+                    key={key}
+                    href={`/api/org-export?entity=${key}`}
+                    download
+                    className="flex items-center justify-between p-3 rounded-xl border border-border/40 hover:bg-slate-50 transition-colors text-sm font-medium text-navy-900"
+                  >
+                    {label}
+                    <span className="text-slate-400 text-xs">CSV ↓</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Member E2E Flow', () => {
   test('should login, create a member, and upload a document', async ({ page }) => {
     // 1. Log in
-    await page.goto('http://localhost:3001/app/login');
+    await page.goto('/app/login');
     
     await page.locator('input[name="email"]').fill('admin@micro.local');
     await page.locator('input[name="password"]').fill('admin123');
@@ -23,7 +23,7 @@ test.describe('Member E2E Flow', () => {
     });
 
     // 2. Navigate to Members page
-    await page.goto('http://localhost:3001/app/members');
+    await page.goto('/app/members');
 
     // Generate random name to ensure unique test data
     const uniqueName = `Test Member ${Date.now()}`;
@@ -31,7 +31,7 @@ test.describe('Member E2E Flow', () => {
     
     // Fill out the Register Member form
     // The centre select doesn't have a label for/id, so we use locator('select')
-    await page.locator('select').selectOption({ index: 1 }); // Select first available option (index 0 is placeholder)
+    await page.locator('form').getByRole('combobox').selectOption({ index: 1 }); // Select first available option (index 0 is placeholder)
     
     await page.getByPlaceholder('E.g. Kamal Perera').fill(uniqueName);
     await page.getByPlaceholder('Optional').fill(nic);
@@ -62,10 +62,10 @@ test.describe('Member E2E Flow', () => {
     await expect(page.getByText('Upload Member Document')).toBeVisible();
     
     // The input file is hidden, but Playwright can interact with it using setInputFiles
-    await page.setInputFiles('input[type="file"]', 'test-image.png');
+    await page.setInputFiles('input[type="file"]', 'public/allow.jpg');
 
     // Verify preview or file selected state
-    await expect(page.getByText('test-image.png')).toBeVisible();
+    await expect(page.getByText('allow.jpg')).toBeVisible();
 
     // Click upload and wait for the API response
     const [response] = await Promise.all([

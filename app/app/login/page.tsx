@@ -4,6 +4,7 @@ import { useFormState, useFormStatus } from "react-dom"
 import { authenticate } from "@/app/actions/auth"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
+import Link from "next/link"
 
 export default function LoginPage() {
   const [errorMessage, formAction] = useFormState(
@@ -92,9 +93,9 @@ export default function LoginPage() {
         <div className="mt-8 text-center">
           <p className="text-[15px] text-[#777b86]">
             Don&apos;t have an account?{" "}
-            <a href="#" className="text-[#17191c] hover:underline underline-offset-4 ml-1">
-              Contact Admin →
-            </a>
+            <Link href="/app/signup" className="text-[#17191c] hover:underline underline-offset-4 ml-1">
+              Sign up →
+            </Link>
           </p>
         </div>
 
