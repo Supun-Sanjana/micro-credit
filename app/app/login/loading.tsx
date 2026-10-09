@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react"
+import { LogoTraceLoader } from "@/components/LogoTraceLoader"
 
 export default function LoginLoading() {
   return (
@@ -12,7 +13,7 @@ export default function LoginLoading() {
       >
         <div className="text-center mb-10 flex flex-col items-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 border border-brand-100 text-brand-700 text-xs font-medium mb-4">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-600" />
+            <LogoTraceLoader size={14} strokeWidth={6} className="text-brand-600" />
             <span>Loading workspace login...</span>
           </div>
           <div className="h-10 w-56 bg-slate-200 rounded-xl animate-pulse" />
