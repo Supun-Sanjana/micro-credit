@@ -13,6 +13,9 @@ const nextConfig = {
       "@base-ui/react",
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {

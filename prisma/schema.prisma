@@ -905,6 +905,7 @@ enum AuditAction {
   CREATE
   UPDATE
   DELETE
+  EXPORT
 }
 
 enum LoanType {
