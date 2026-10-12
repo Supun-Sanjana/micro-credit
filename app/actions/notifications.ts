@@ -130,8 +130,12 @@ export async function getNotifications(): Promise<{ notifications: NotificationI
     let link = "/app/dashboard"
     let message = log.subject
 
-    if (log.eventType.includes("LOAN")) {
-      link = "/app/loans"
+    const subjectLower = log.subject.toLowerCase()
+    if (subjectLower.includes("portfolio") || subjectLower.includes("summary") || subjectLower.includes("report")) {
+      link = "/app/reports"
+      message = "Daily portfolio summary report is ready for your review."
+    } else if (log.eventType.includes("LOAN")) {
+      link = log.memberId ? `/app/members/${log.memberId}` : "/app/loans"
       message = `Loan update: ${log.subject}`
     } else if (log.eventType.includes("PAYMENT")) {
       link = "/app/collection"

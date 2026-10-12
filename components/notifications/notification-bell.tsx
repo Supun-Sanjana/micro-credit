@@ -128,10 +128,10 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
   const handleNotificationClick = (item: NotificationItem) => {
     markAsRead(item.id)
-    setIsOpen(false)
     if (item.link) {
       router.push(item.link)
     }
+    setIsOpen(false)
   }
 
   const filteredNotifications = notifications.filter(item => {
@@ -359,10 +359,18 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                       <div className="flex items-center gap-2 text-[11px] text-slate-400">
                         <span>{formatRelativeTime(item.createdAt)}</span>
                         {item.link && (
-                          <span className="text-brand-600 group-hover:underline inline-flex items-center gap-0.5">
+                          <Link
+                            href={item.link}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              markAsRead(item.id)
+                              setIsOpen(false)
+                            }}
+                            className="text-brand-600 hover:text-brand-700 hover:underline inline-flex items-center gap-0.5 font-medium z-10 cursor-pointer"
+                          >
                             View details
                             <ExternalLink className="w-2.5 h-2.5" />
-                          </span>
+                          </Link>
                         )}
                       </div>
                     </div>
