@@ -27,7 +27,7 @@ export const withOrgScope = (organizationId: string, branchId?: string | null) =
 
           args.where = args.where || {}
 
-          if (['Branch', 'User', 'LoanProduct', 'Member', 'Group', 'PaymentReversal', 'ChartOfAccount', 'AccountingPeriod', 'JournalEntry', 'SavingsProduct', 'SavingsAccount', 'SavingsTransaction', 'MemberDocument', 'FinancialProfile', 'CreditAssessment', 'RiskAlert', 'CollectionAttempt', 'FieldOfficerAssignment', 'FieldOfficerReconciliation', 'ApprovalRule', 'AuditLog', 'NotificationLog', 'UserNotificationPreference', 'LoanRefinance', 'LoanRestructure', 'LoanWriteOff'].includes(model)) {
+          if (['Branch', 'User', 'LoanProduct', 'Member', 'Group', 'PaymentReversal', 'ChartOfAccount', 'AccountingPeriod', 'JournalEntry', 'SavingsProduct', 'SavingsAccount', 'SavingsTransaction', 'MemberDocument', 'FinancialProfile', 'CreditAssessment', 'RiskAlert', 'CollectionAttempt', 'FieldOfficerAssignment', 'FieldOfficerReconciliation', 'ApprovalRule', 'AuditLog', 'NotificationLog', 'UserNotificationPreference', 'LoanRefinance', 'LoanRestructure', 'LoanWriteOff', 'FieldCheckIn', 'DataPurgeRecord'].includes(model)) {
             args.where = { ...args.where, organizationId }
             if (branchId && model === 'Member') {
               args.where = { ...args.where, centre: { ...args.where.centre, branchId } }

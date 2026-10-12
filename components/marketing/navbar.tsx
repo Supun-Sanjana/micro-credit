@@ -31,13 +31,13 @@ export function Navbar() {
         </Link>
         
         <div className="hidden md:flex items-center gap-8">
-          <Link href="#features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">
+          <Link href="/features" className="text-sm font-medium text-white/50 hover:text-white transition-colors">
             Features
           </Link>
-          <Link href="#pricing" className="text-sm font-medium text-white/50 hover:text-white transition-colors">
+          <Link href="/pricing" className="text-sm font-medium text-white/50 hover:text-white transition-colors">
             Pricing
           </Link>
-          <Link href="#contact" className="text-sm font-medium text-white/50 hover:text-white transition-colors">
+          <Link href="/#contact" className="text-sm font-medium text-white/50 hover:text-white transition-colors">
             Contact
           </Link>
         </div>

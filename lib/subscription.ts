@@ -121,10 +121,37 @@ export async function getSubscriptionStatus(organizationId: string): Promise<Sub
     }
   }
 
-  // 4. Any other non-active statuses
+  // 4. PENDING_VERIFICATION — payment submitted, awaiting admin review
+  // Allow read access but flag as pending so UI can show a banner
+  if (subscription.status === "PENDING_VERIFICATION") {
+    return {
+      isRestricted: false, // allow continued access while payment is being verified
+      status: "PENDING_VERIFICATION",
+    }
+  }
+
+  // 5. GRACE_PERIOD — recently expired, allow limited continued access
+  if (subscription.status === "GRACE_PERIOD") {
+    const isExpired = !!subscription.currentPeriodEnd && new Date(subscription.currentPeriodEnd) <= new Date()
+    if (isExpired) {
+      return {
+        isRestricted: true,
+        status: "SUSPENDED",
+        reason: "PERIOD_EXPIRED",
+        daysRemaining: 0,
+      }
+    }
+    return {
+      isRestricted: false,
+      status: subscription.status as any,
+    }
+  }
+
+  // 6. Any other unknown status — restrict by default
   return {
-    isRestricted: false,
-    status: subscription.status as any,
+    isRestricted: true,
+    status: "SUSPENDED" as any,
+    reason: "NO_SUBSCRIPTION" as any,
   }
 }
 

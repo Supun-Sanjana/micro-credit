@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import crypto from "crypto"
 
-const BUCKET_NAME = "documents"
+const BUCKET_NAME = process.env.S3_BUCKET_NAME ?? "documents"
 /** Maximum size allowed per individual document file: 1 MB */
 const MAX_FILE_SIZE = 1 * 1024 * 1024 // 1 MB
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"]

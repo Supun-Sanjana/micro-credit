@@ -1,4 +1,5 @@
 import { auth } from "@/auth"
+import { getScopedDal } from "@/lib/dal"
 import prisma from "@/lib/prisma"
 import Link from "next/link"
 import { ArrowRight, TrendingUp, Users, DollarSign, Wallet, FileText, Activity } from "lucide-react"
@@ -9,10 +10,11 @@ export default async function DashboardPage() {
   const session = await auth()
   
   if (session?.user?.role === "FIELD_OFFICER") {
-    const officerId = session.user.id
+    const dal = await getScopedDal()
+    const officerId = dal.userId
     
-    // Fetch assigned centres
-    const assignedCentres = await prisma.centre.findMany({
+    // Fetch assigned centres (scoped to organization for security)
+    const assignedCentres = await dal.prisma.centre.findMany({
       where: { officerId },
       include: {
         members: {

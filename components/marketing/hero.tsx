@@ -29,10 +29,10 @@ const fadeUp: Variants = {
 };
 
 const navItems = [
-  { label: "Operations", href: "#operations" },
-  { label: "Features", href: "#features" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Contact", href: "#contact" },
+  { label: "Operations", href: "/#operations" },
+  { label: "Features", href: "/features" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export function Hero() {

@@ -100,6 +100,22 @@ export async function POST(request: Request) {
       return processed
     })
 
+    // Audit log each recorded payment
+    await Promise.all(results.map(item =>
+      logAudit({
+        dal,
+        action: 'CREATE',
+        entityType: 'LoanRepayment',
+        entityId: item.repayment.id,
+        after: {
+          loanId: item.repayment.loanId,
+          amount: item.amount,
+          paidDate: item.paidDate,
+          isSettled: item.isSettled,
+        },
+      })
+    ))
+
     // Dispatch notifications after successful transaction
     const { dispatchNotification } = await import('@/lib/services/notification-service')
     for (const item of results) {

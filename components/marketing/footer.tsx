@@ -16,15 +16,15 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-[14px] tracking-tight text-neutral-900 mb-6">Product</h3>
             <ul className="space-y-4">
-              <li><Link href="#features" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">Features</Link></li>
-              <li><Link href="#pricing" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">Pricing</Link></li>
+              <li><Link href="/features" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">Features</Link></li>
+              <li><Link href="/pricing" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">Pricing</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold text-[14px] tracking-tight text-neutral-900 mb-6">Company</h3>
             <ul className="space-y-4">
               <li><Link href="https://cylvox.com" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">About Cylvox</Link></li>
-              <li><Link href="#contact" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">Contact</Link></li>
+              <li><Link href="/#contact" className="text-[14px] font-medium text-neutral-500 hover:text-neutral-900 transition-colors">Contact</Link></li>
             </ul>
           </div>
         </div>

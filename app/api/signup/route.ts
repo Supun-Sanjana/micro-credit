@@ -1,19 +1,26 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import bcrypt from "bcrypt"
-import { checkMemoryRateLimit } from "@/lib/rate-limit"
+import { checkMemoryRateLimit, checkRateLimit, recordFailedLogin } from "@/lib/rate-limit"
 
 export async function POST(req: Request) {
   try {
     const ip = req.headers.get("x-forwarded-for") || "unknown"
+    const body = await req.json()
+    const { orgName, adminName, email, password } = body
+
+    // DB-backed rate limit per email (survives cold starts)
+    try {
+      await checkRateLimit(email || ip, ip)
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message }, { status: 429 })
+    }
+    // In-memory burst protection per IP
     try {
       checkMemoryRateLimit(`signup-${ip}`, 5, 10)
     } catch (error: any) {
       return NextResponse.json({ error: error.message }, { status: 429 })
     }
-
-    const body = await req.json()
-    const { orgName, adminName, email, password } = body
 
     if (!orgName || !adminName || !email || !password) {
       return NextResponse.json(
