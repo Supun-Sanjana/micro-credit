@@ -10,6 +10,8 @@ interface SolidaDB extends DBSchema {
       collectedAt: string;
       centreId: string;
       memberId: string;
+      memberName?: string;
+      centreName?: string;
       synced: boolean;
     };
     indexes: { 'by-centre': string };
@@ -41,7 +43,15 @@ export function getDB() {
   return dbPromise;
 }
 
-export async function saveRepaymentOffline(data: { id: string; loanId: string; amount: number; centreId: string; memberId: string }) {
+export async function saveRepaymentOffline(data: {
+  id: string;
+  loanId: string;
+  amount: number;
+  centreId: string;
+  memberId: string;
+  memberName?: string;
+  centreName?: string;
+}) {
   const db = await getDB();
   if (!db) return;
   await db.put('pendingRepayments', {
@@ -78,3 +88,28 @@ export async function getCachedCollectionSheet(centreId: string) {
   if (!db) return null;
   return db.get('cachedCollectionSheets', centreId);
 }
+
+export async function getAllCachedCollectionSheets() {
+  const db = await getDB();
+  if (!db) return [];
+  const all = await db.getAll('cachedCollectionSheets');
+  return all.filter((item) => item.centreId !== '__centres_list__');
+}
+
+export async function cacheCentresList(centres: any[]) {
+  const db = await getDB();
+  if (!db) return;
+  await db.put('cachedCollectionSheets', {
+    centreId: '__centres_list__',
+    updatedAt: new Date().toISOString(),
+    data: centres,
+  });
+}
+
+export async function getCachedCentresList(): Promise<any[] | null> {
+  const db = await getDB();
+  if (!db) return null;
+  const entry = await db.get('cachedCollectionSheets', '__centres_list__');
+  return entry?.data || null;
+}
+

@@ -2,22 +2,53 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Loader2, MapPin, ChevronRight, Users } from "lucide-react"
+import { Loader2, MapPin, ChevronRight, Users, CloudOff } from "lucide-react"
+import { cacheCentresList, getCachedCentresList, cacheCollectionSheet } from "@/lib/indexed-db"
 
 export default function CentresListPage() {
   const [centres, setCentres] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isOffline, setIsOffline] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchCentres = async () => {
       try {
+        if (!navigator.onLine) {
+          setIsOffline(true)
+          const cached = await getCachedCentresList()
+          if (cached) setCentres(cached)
+          return
+        }
+
         const res = await fetch("/api/field/centres")
         if (!res.ok) throw new Error("Failed to fetch centres")
         const json = await res.json()
         setCentres(json)
+        await cacheCentresList(json)
+
+        // Pre-cache each centre's collection sheet in the background for offline field use
+        if (Array.isArray(json)) {
+          json.forEach(async (c: any) => {
+            try {
+              const sheetRes = await fetch(`/api/field/centres/${c.id}/collection-sheet`)
+              if (sheetRes.ok) {
+                const sheetData = await sheetRes.json()
+                await cacheCollectionSheet(c.id, sheetData)
+              }
+            } catch {
+              // Ignore background pre-fetch failures
+            }
+          })
+        }
       } catch (err: any) {
-        setError(err.message)
+        setIsOffline(true)
+        const cached = await getCachedCentresList()
+        if (cached) {
+          setCentres(cached)
+        } else {
+          setError(err.message)
+        }
       } finally {
         setLoading(false)
       }
