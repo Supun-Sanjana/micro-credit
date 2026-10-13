@@ -86,17 +86,17 @@ function MemberDrawer({
       />
       {/* Drawer */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-white dark:bg-slate-900 border-l border-transparent dark:border-slate-800 shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-slate-800">
           <div>
-            <h2 className="text-[17px] font-semibold text-navy-900">{member ? "Edit Member" : "Register Member"}</h2>
-            <p className="text-[13px] text-slate-500 mt-0.5">{member ? "Update member details" : "Add a new community member"}</p>
+            <h2 className="text-[17px] font-semibold text-navy-900 dark:text-white">{member ? "Edit Member" : "Register Member"}</h2>
+            <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">{member ? "Update member details" : "Add a new community member"}</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-slate-400 hover:text-slate-600"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
             <X className="w-4 h-4" />
           </button>
@@ -106,7 +106,7 @@ function MemberDrawer({
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
 
           {error && (
-            <div className="text-[13px] text-danger-600 bg-danger-50 rounded-lg px-4 py-3 border border-danger-100">
+            <div className="text-[13px] text-danger-600 dark:text-rose-400 bg-danger-50 dark:bg-rose-950/40 rounded-lg px-4 py-3 border border-danger-100 dark:border-rose-900/50">
               {error}
             </div>
           )}
@@ -170,11 +170,11 @@ function MemberDrawer({
             />
           </Field>
 
-          <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3">
+          <div className="mt-auto pt-4 border-t border-gray-100 dark:border-slate-800 flex gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 rounded-lg border border-gray-200 text-[14px] font-medium text-slate-600 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 text-[14px] font-medium text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
             >
               Cancel
             </button>
@@ -192,12 +192,12 @@ function MemberDrawer({
   )
 }
 
-const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-[14px] text-navy-900 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/10 transition-all"
+const inputCls = "w-full bg-gray-50 dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-[14px] text-navy-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-brand-500 focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-brand-500/10 transition-all"
 
 function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[13px] font-medium text-slate-700">
+      <label className="text-[13px] font-medium text-slate-700 dark:text-slate-300">
         {label}{required && <span className="text-danger-500 ml-0.5">*</span>}
       </label>
       {children}
@@ -276,9 +276,9 @@ export default function MembersPage() {
       {/* -- Page Header -- */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Members</h1>
-          <p className="text-[14px] text-slate-500 mt-0.5">
-            {isLoading ? "Loading-" : `${total} registered member${total !== 1 ? "s" : ""} across ${centres.length} centre${centres.length !== 1 ? "s" : ""}`}
+          <h1 className="text-[26px] font-bold text-navy-900 dark:text-white tracking-tight">Members</h1>
+          <p className="text-[14px] text-slate-500 dark:text-slate-400 mt-0.5">
+            {isLoading ? "Loading..." : `${total} registered member${total !== 1 ? "s" : ""} across ${centres.length} centre${centres.length !== 1 ? "s" : ""}`}
           </p>
         </div>
         <button
@@ -295,10 +295,10 @@ export default function MembersPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
-            placeholder="Search by name, NIC, or member no-"
+            placeholder="Search by name, NIC, or member no..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all"
+            className="w-full pl-9 pr-4 py-2.5 text-[14px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg text-navy-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all"
           />
         </div>
 
@@ -307,7 +307,7 @@ export default function MembersPage() {
           <select
             value={centreFilter}
             onChange={(e) => { setCentreFilter(e.target.value); setPage(1); }}
-            className="pl-9 pr-8 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 appearance-none outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all"
+            className="pl-9 pr-8 py-2.5 text-[14px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg text-navy-900 dark:text-slate-100 appearance-none outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all"
           >
             <option value="">All Centres</option>
             {centres.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -320,7 +320,7 @@ export default function MembersPage() {
           <select
             value={groupFilter}
             onChange={(e) => setGroupFilter(e.target.value)}
-            className="pl-9 pr-8 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 appearance-none outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all"
+            className="pl-9 pr-8 py-2.5 text-[14px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg text-navy-900 dark:text-slate-100 appearance-none outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 cursor-pointer transition-all"
           >
             <option value="">All Groups</option>
             {uniqueGroups.map((g) => <option key={g} value={String(g)}>Group {g}</option>)}
@@ -330,27 +330,27 @@ export default function MembersPage() {
       </div>
 
       {/* -- Table -- */}
-      <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+      <div className="flex-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="text-left py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider w-[260px]">Member</th>
-                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Member No.</th>
-                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Centre</th>
-                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Group</th>
-                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">NIC</th>
-                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60">
+                <th className="text-left py-3 px-5 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[260px]">Member</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Member No.</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Centre</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Group</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">NIC</th>
+                <th className="text-left py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="text-right py-3 px-5 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="py-20 text-center">
                     <div className="inline-flex flex-col items-center gap-3 text-slate-400">
                       <div className="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
-                      <span className="text-[14px]">Loading members-</span>
+                      <span className="text-[14px]">Loading members...</span>
                     </div>
                   </td>
                 </tr>
@@ -358,10 +358,10 @@ export default function MembersPage() {
                 <tr>
                   <td colSpan={7} className="py-20 text-center">
                     <div className="inline-flex flex-col items-center gap-3 text-slate-400">
-                      <Users className="w-10 h-10 text-slate-200" />
+                      <Users className="w-10 h-10 text-slate-200 dark:text-slate-700" />
                       <div>
-                        <p className="text-[15px] font-medium text-slate-600">No members found</p>
-                        <p className="text-[13px] text-slate-400 mt-1">
+                        <p className="text-[15px] font-medium text-slate-600 dark:text-slate-300">No members found</p>
+                        <p className="text-[13px] text-slate-400 dark:text-slate-500 mt-1">
                           {search || centreFilter || groupFilter ? "Try adjusting your filters" : "Register your first member to get started"}
                         </p>
                       </div>
@@ -381,7 +381,7 @@ export default function MembersPage() {
                   const centre = centres.find((c) => c.id === m.centreId) || m.centre
                   const color = avatarColor(m.id)
                   return (
-                    <tr key={m.id} className="hover:bg-gray-50/70 transition-colors group">
+                    <tr key={m.id} className="hover:bg-gray-50/70 dark:hover:bg-slate-800/40 transition-colors group">
                       <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center flex-shrink-0`}>
@@ -390,45 +390,45 @@ export default function MembersPage() {
                           <div>
                             <Link
                               href={`/app/members/${m.id}`}
-                              className="text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors"
+                              className="text-[14px] font-semibold text-navy-900 dark:text-slate-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                             >
                               {m.name}
                             </Link>
                             {m.contact1 && (
-                              <p className="text-[12px] text-slate-400 mt-0.5">{m.contact1}</p>
+                              <p className="text-[12px] text-slate-400 dark:text-slate-500 mt-0.5">{m.contact1}</p>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <Link href={`/app/members/${m.id}`} className="text-[13px] font-mono text-brand-600 hover:text-brand-700 hover:underline transition-colors">
+                        <Link href={`/app/members/${m.id}`} className="text-[13px] font-mono text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline transition-colors">
                           {m.memberNumber ?? "-"}
                         </Link>
                       </td>
                       <td className="py-3.5 px-4">
                         {centre ? (
-                          <span className="inline-flex items-center gap-1.5 text-[13px] text-slate-600">
+                          <span className="inline-flex items-center gap-1.5 text-[13px] text-slate-600 dark:text-slate-300">
                             <MapPin className="w-3 h-3 text-slate-400" />
                             {centre.name}
                           </span>
                         ) : (
-                          <span className="text-[13px] text-slate-300">-</span>
+                          <span className="text-[13px] text-slate-300 dark:text-slate-600">-</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
                         {m.groupNumber ? (
-                          <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-navy-50 text-navy-700 px-2.5 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-[12px] font-medium bg-navy-50 dark:bg-slate-800 text-navy-700 dark:text-slate-300 border border-transparent dark:border-slate-700 px-2.5 py-0.5 rounded-full">
                             G{m.groupNumber}
                           </span>
                         ) : (
-                          <span className="text-[13px] text-slate-300">-</span>
+                          <span className="text-[13px] text-slate-300 dark:text-slate-600">-</span>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="text-[13px] font-mono text-slate-500">{m.nic || "-"}</span>
+                        <span className="text-[13px] font-mono text-slate-500 dark:text-slate-400">{m.nic || "-"}</span>
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-success-50 text-success-700 px-2.5 py-1 rounded-full">
+                        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium bg-success-50 dark:bg-emerald-950/50 text-success-700 dark:text-emerald-400 border border-transparent dark:border-emerald-900/40 px-2.5 py-1 rounded-full">
                           <span className="w-1.5 h-1.5 rounded-full bg-success-500" />
                           Active
                         </span>
@@ -437,14 +437,14 @@ export default function MembersPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => { setEditingMember(m); setDrawerOpen(true); }}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-brand-50 text-slate-400 hover:text-brand-600 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                             title="Edit Member"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(m.id)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-danger-50 text-slate-400 hover:text-danger-600 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-danger-50 dark:hover:bg-slate-800 text-slate-400 hover:text-danger-600 dark:hover:text-danger-400 transition-colors"
                             title="Delete Member"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -460,8 +460,8 @@ export default function MembersPage() {
         </div>
 
         {/* Table Footer with Pagination */}
-        <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/60 flex items-center justify-between">
-          <span className="text-[13px] text-slate-500 flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-900/60 flex items-center justify-between">
+          <span className="text-[13px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
             Showing {filtered.length} of {total} members
             {isFetching && <span className="inline-block w-3 h-3 border-2 border-brand-600 border-t-transparent rounded-full animate-spin ml-2"></span>}
           </span>
@@ -469,14 +469,14 @@ export default function MembersPage() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium text-slate-600 disabled:opacity-50 hover:bg-gray-100 transition-colors"
+              className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-slate-800 text-[13px] font-medium text-slate-600 dark:text-slate-300 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium text-slate-600 disabled:opacity-50 hover:bg-gray-100 transition-colors"
+              className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-slate-800 text-[13px] font-medium text-slate-600 dark:text-slate-300 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
               Next
             </button>

@@ -13,6 +13,7 @@ import {
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { NotificationBell } from "@/components/notifications/notification-bell"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { TopLoadingBar } from "@/components/top-loading-bar"
 
 interface DashboardShellProps {
@@ -183,64 +184,71 @@ export function DashboardShell({ children, user, orgName, isRestricted }: Dashbo
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
       {/* Top Header */}
-      <header className="shrink-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-6 h-[72px] flex items-center justify-between">
+      <header className="shrink-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 h-[72px] flex items-center justify-between transition-colors">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 -ml-2 text-slate-700 hover:bg-slate-50 rounded-lg"
+            className="lg:hidden p-2 -ml-2 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
           <Link href={isRestricted ? "/app/settings/billing" : "/app/dashboard"} className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center border border-brand-100">
+            <div className="w-10 h-10 bg-brand-50 dark:bg-brand-950/60 rounded-lg flex items-center justify-center border border-brand-100 dark:border-brand-800/60">
               <div className="w-5 h-5 border-2 border-brand-600 rounded-sm transform rotate-45" />
             </div>
-            <span className="text-[20px] font-semibold tracking-tight hidden sm:block text-navy-950">
+            <span className="text-[20px] font-semibold tracking-tight hidden sm:block text-navy-950 dark:text-white">
               {orgName}
             </span>
           </Link>
         </div>
 
-        {/* Right Header Area: Navigation Loading Indicator + Top Bar Notification Bell + Profile */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Right Header Area: Navigation Loading Indicator + Theme Toggle + Top Bar Notification Bell + Profile */}
+        <div className="flex items-center gap-1.5 sm:gap-3">
           {/* Visual feedback when switching tabs */}
           {navigatingHref && (
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-50 border border-brand-200 text-brand-700 rounded-full text-xs font-medium animate-pulse">
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-600" />
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 rounded-full text-xs font-medium animate-pulse">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-600 dark:text-brand-400" />
               <span>Switching tab...</span>
             </div>
           )}
 
+          {/* Dark / Light Theme Toggle */}
+          <ThemeToggle />
+
           {/* Display Notification On Top Bar */}
           <NotificationBell userId={user?.id} />
 
-          <div className="h-6 w-[1px] bg-slate-200 hidden sm:block my-auto" />
+          <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 hidden sm:block my-auto" />
 
           {/* User Profile Dropdown */}
           <div className="relative" ref={profileRef}>
             <button 
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-3 hover:bg-slate-50 p-1.5 rounded-full pr-4 transition-colors border border-transparent hover:border-slate-200"
+              className="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 p-1.5 rounded-full pr-4 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
             >
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden border border-slate-200">
-                <UserIcon className="w-5 h-5 text-slate-500" />
+              <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
+                <UserIcon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               </div>
               <div className="hidden sm:flex flex-col items-start">
-                <span className="text-[14px] font-medium leading-none text-navy-900">{user?.name || "User"}</span>
-                <span className="text-[12px] text-slate-500 mt-1 leading-none">{user?.role === "ADMIN" ? "Admin" : "Officer"}</span>
+                <span className="text-[14px] font-medium leading-none text-navy-900 dark:text-slate-100">{user?.name || "User"}</span>
+                <span className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 leading-none">{user?.role === "ADMIN" ? "Admin" : "Officer"}</span>
               </div>
-              <ChevronDown className="w-4 h-4 text-slate-400 ml-1" />
+              <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 ml-1" />
             </button>
 
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50">
-                <div className="px-4 py-3 border-b border-slate-100 sm:hidden">
-                  <p className="text-sm font-medium text-navy-900 truncate">{user?.name}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg py-2 z-50">
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 sm:hidden">
+                  <p className="text-sm font-medium text-navy-900 dark:text-slate-100 truncate">{user?.name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+                </div>
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sm:hidden">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Theme</span>
+                  <ThemeToggle />
                 </div>
                 <button
                   onClick={() => signOut({ callbackUrl: "/app/login" })}
-                  className="w-full text-left px-4 py-2.5 text-[15px] text-danger-600 hover:bg-danger-50 flex items-center gap-2 transition-colors"
+                  className="w-full text-left px-4 py-2.5 text-[15px] text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-950/40 flex items-center gap-2 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign out
@@ -252,7 +260,7 @@ export function DashboardShell({ children, user, orgName, isRestricted }: Dashbo
       </header>
 
       {/* Main Layout Area */}
-      <div className="flex flex-1 min-h-0 overflow-hidden bg-slate-50">
+      <div className="flex flex-1 min-h-0 overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:flex lg:flex-col w-[260px] h-full bg-navy-950 overflow-y-auto shrink-0 shadow-[inset_-1px_0_0_rgba(255,255,255,0.1)] sidebar-scrollbar">
           <NavContent />

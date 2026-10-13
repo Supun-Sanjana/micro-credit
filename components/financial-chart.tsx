@@ -24,15 +24,15 @@ export function FinancialChart({ data6Months = [], dataThisYear = [] }: Financia
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-[20px] font-serif font-medium tracking-tight text-ink-black">Financial Flow</h2>
-          <p className="text-[13px] text-slate-500 mt-0.5">Live disbursements and collections over time</p>
+          <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-0.5">Live disbursements and collections over time</p>
         </div>
         <select 
           value={filter}
           onChange={(e) => setFilter(e.target.value as "6M" | "1Y")}
-          className="bg-[#f8f9fa] border border-slate-200 text-[13px] font-medium text-navy-900 py-2 px-4 rounded-full cursor-pointer hover:bg-[#f0f0f0] transition-colors focus:ring-0 focus:outline-none"
+          className="bg-[#f8f9fa] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[13px] font-medium text-navy-900 dark:text-slate-100 py-2 px-4 rounded-full cursor-pointer hover:bg-[#f0f0f0] dark:hover:bg-slate-700 transition-colors focus:ring-0 focus:outline-none"
         >
-          <option value="6M">Last 6 Months</option>
-          <option value="1Y">This Year</option>
+          <option value="6M" className="dark:bg-slate-800">Last 6 Months</option>
+          <option value="1Y" className="dark:bg-slate-800">This Year</option>
         </select>
       </div>
 

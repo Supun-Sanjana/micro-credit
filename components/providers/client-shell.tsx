@@ -3,6 +3,7 @@
 // Providers must be a STATIC import — it wraps children and must be present
 // during hydration. Dynamic import of the wrapper breaks React hydration.
 import Providers from "./query-provider"
+import { ThemeProvider } from "./theme-provider"
 import dynamic from "next/dynamic"
 
 // These are UI-only overlays — safe to load lazily after hydration
@@ -18,10 +19,12 @@ const OfflineSyncManager = dynamic(
 
 export function ClientShell({ children }: { children: React.ReactNode }) {
   return (
-    <Providers>
-      <TopLoadingBar />
-      {children}
-      <OfflineSyncManager />
-    </Providers>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <Providers>
+        <TopLoadingBar />
+        {children}
+        <OfflineSyncManager />
+      </Providers>
+    </ThemeProvider>
   )
 }

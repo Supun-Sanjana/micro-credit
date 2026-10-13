@@ -79,13 +79,13 @@ export default async function DashboardPage() {
           <h2 className="text-[20px] font-sans font-medium text-ink-black mb-6">Today's Itinerary</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {centresList.map(c => (
-              <div key={c.id} className="bg-paper-white rounded-[20px] p-6 shadow-subtle flex flex-col gap-3 border border-[#ececec]">
+              <div key={c.id} className="bg-paper-white rounded-[20px] p-6 shadow-subtle flex flex-col gap-3 border border-[#ececec] dark:border-slate-800">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium text-[16px] text-ink-black">{c.name}</h3>
                     <span className="text-[14px] text-slate-gray">{c.membersCount} members</span>
                   </div>
-                  <span className="bg-[#f0f9f4] text-[#137333] px-3 py-1 rounded-full text-[13px] font-medium">
+                  <span className="bg-[#f0f9f4] dark:bg-emerald-950/60 text-[#137333] dark:text-emerald-400 px-3 py-1 rounded-full text-[13px] font-medium">
                     LKR {c.target.toLocaleString()}
                   </span>
                 </div>
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Full Width Chart */}
-      <div className="bg-paper-white border border-[#ececec] rounded-[16px] sm:rounded-[24px] p-4 sm:p-8 shadow-sm sm:shadow-subtle-3">
+      <div className="bg-paper-white border border-[#ececec] dark:border-slate-800 rounded-[16px] sm:rounded-[24px] p-4 sm:p-8 shadow-sm sm:shadow-subtle-3">
         <FinancialChart 
           data6Months={financialFlow.data6Months} 
           dataThisYear={financialFlow.dataThisYear} 
@@ -170,8 +170,8 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 flex flex-col gap-5">
           <h2 className="text-[20px] font-serif font-medium tracking-tight text-ink-black">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Link href="/app/members" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+            <Link href="/app/members" className="group bg-paper-white border border-[#ececec] dark:border-slate-800 rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] dark:bg-slate-800 flex items-center justify-center text-ink-black shrink-0">
                 <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
@@ -180,8 +180,8 @@ export default async function DashboardPage() {
               </div>
             </Link>
             
-            <Link href="/app/loans" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+            <Link href="/app/loans" className="group bg-paper-white border border-[#ececec] dark:border-slate-800 rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] dark:bg-slate-800 flex items-center justify-center text-ink-black shrink-0">
                 <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
@@ -190,8 +190,8 @@ export default async function DashboardPage() {
               </div>
             </Link>
 
-            <Link href="/app/accounting" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+            <Link href="/app/accounting" className="group bg-paper-white border border-[#ececec] dark:border-slate-800 rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] dark:bg-slate-800 flex items-center justify-center text-ink-black shrink-0">
                 <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
@@ -200,8 +200,8 @@ export default async function DashboardPage() {
               </div>
             </Link>
 
-            <Link href="/app/collection" className="group bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] flex items-center justify-center text-ink-black shrink-0">
+            <Link href="/app/collection" className="group bg-paper-white border border-[#ececec] dark:border-slate-800 rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-3 sm:gap-4 hover:border-ink-black transition-colors">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#f4f4f4] dark:bg-slate-800 flex items-center justify-center text-ink-black shrink-0">
                 <Activity className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div>
@@ -215,7 +215,7 @@ export default async function DashboardPage() {
         {/* Recent Activity */}
         <div className="flex flex-col gap-5">
           <h2 className="text-[20px] font-serif font-medium tracking-tight text-ink-black">Recent Activity</h2>
-          <div className="bg-paper-white border border-[#ececec] rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-4 sm:gap-5">
+          <div className="bg-paper-white border border-[#ececec] dark:border-slate-800 rounded-[16px] p-4 sm:p-6 shadow-subtle flex flex-col gap-4 sm:gap-5">
             {recentAuditLogs.length === 0 ? (
               <p className="text-[14px] text-slate-gray">No recent activities found.</p>
             ) : (
@@ -247,7 +247,7 @@ export default async function DashboardPage() {
 
 function StatCard({ title, value, delta }: { title: string, value: string, delta: React.ReactNode }) {
   return (
-    <div className="bg-paper-white rounded-[16px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm sm:shadow-subtle-3 border border-[#ececec] sm:border-transparent flex flex-col gap-1 sm:gap-2">
+    <div className="bg-paper-white rounded-[16px] sm:rounded-[20px] p-4 sm:p-6 shadow-sm sm:shadow-subtle-3 border border-[#ececec] dark:border-slate-800 sm:border-transparent flex flex-col gap-1 sm:gap-2">
       <span className="text-[13px] sm:text-[15px] font-medium text-slate-gray tracking-wide">{title}</span>
       <span className="text-[28px] sm:text-[32px] font-sans font-medium text-ink-black tracking-[-0.5px] truncate">{value}</span>
       <span className="text-[12px] sm:text-[13px] font-medium text-[#137333] mt-1 sm:mt-2 flex items-center">{delta}</span>

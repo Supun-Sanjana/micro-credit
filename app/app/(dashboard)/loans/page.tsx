@@ -37,31 +37,31 @@ export default function LoansPage() {
     <div className="flex flex-col h-full gap-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[26px] font-bold text-navy-900 tracking-tight">Loan Portfolio</h1>
-          <p className="text-[14px] text-slate-500 mt-0.5">{isLoading ? "Loading..." : `${total} loans in portfolio`}</p>
+          <h1 className="text-[26px] font-bold text-navy-900 dark:text-white tracking-tight">Loan Portfolio</h1>
+          <p className="text-[14px] text-slate-500 dark:text-slate-400 mt-0.5">{isLoading ? "Loading..." : `${total} loans in portfolio`}</p>
         </div>
         <Link href="/app/loans/new" className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-[14px] font-medium px-4 py-2.5 rounded-lg shadow-sm transition-colors">
           <Plus className="w-4 h-4" /> New Application
         </Link>
       </div>
 
-      {error && <div className="bg-danger-50 border border-danger-200 text-danger-700 px-4 py-3 rounded-lg text-[14px]">{error}</div>}
+      {error && <div className="bg-danger-50 dark:bg-rose-950/40 border border-danger-200 dark:border-rose-900/50 text-danger-700 dark:text-rose-300 px-4 py-3 rounded-lg text-[14px]">{error}</div>}
 
       {pending.length > 0 && (
-        <div className="bg-amber-50 border border-amber-100 rounded-xl p-5">
-          <h2 className="text-[15px] font-semibold text-amber-900 mb-3 flex items-center gap-2">
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40 rounded-xl p-5">
+          <h2 className="text-[15px] font-semibold text-amber-900 dark:text-amber-300 mb-3 flex items-center gap-2">
             <FileText className="w-4 h-4" /> Review Queue ({pending.length})
           </h2>
           <div className="flex flex-col gap-2">
             {pending.map(l => (
-              <Link key={l.id} href={`/app/loans/${l.id}`} className="bg-white px-4 py-3 rounded-lg shadow-sm border border-amber-100/50 flex justify-between items-center hover:border-amber-300 transition-colors">
+              <Link key={l.id} href={`/app/loans/${l.id}`} className="bg-white dark:bg-slate-800 px-4 py-3 rounded-lg shadow-sm border border-amber-100/50 dark:border-amber-900/30 flex justify-between items-center hover:border-amber-300 dark:hover:border-amber-500/50 transition-colors">
                 <div className="flex flex-col">
-                  <span className="text-[14px] font-medium text-navy-900">{l.member.name}</span>
-                  <span className="text-[12px] text-slate-500">{l.loanProduct?.name || "Product unavailable"}</span>
+                  <span className="text-[14px] font-medium text-navy-900 dark:text-slate-100">{l.member.name}</span>
+                  <span className="text-[12px] text-slate-500 dark:text-slate-400">{l.loanProduct?.name || "Product unavailable"}</span>
                 </div>
                 <div className="flex flex-col items-end">
-                  <span className="text-[14px] font-medium text-navy-900">LKR {Number(l.loanAmount).toLocaleString()}</span>
-                  <span className="text-[12px] font-medium text-amber-600 uppercase tracking-wider">{l.status}</span>
+                  <span className="text-[14px] font-medium text-navy-900 dark:text-white">LKR {Number(l.loanAmount).toLocaleString()}</span>
+                  <span className="text-[12px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">{l.status}</span>
                 </div>
               </Link>
             ))}
@@ -72,39 +72,39 @@ export default function LoansPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-[480px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input placeholder="Search loans by member or product..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 text-[14px] bg-white border border-gray-200 rounded-lg text-navy-900 placeholder:text-slate-400 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all" />
+          <input placeholder="Search loans by member or product..." value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 text-[14px] bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg text-navy-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 transition-all" />
         </div>
       </div>
 
-      <div className="flex-1 bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col">
+      <div className="flex-1 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm flex flex-col">
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="py-3 px-5 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Borrower</th>
-                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Product</th>
-                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Outstanding</th>
-                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+              <tr className="border-b border-gray-100 dark:border-slate-800 bg-gray-50/80 dark:bg-slate-800/60">
+                <th className="py-3 px-5 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Borrower</th>
+                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Product</th>
+                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Outstanding</th>
+                <th className="py-3 px-4 text-[12px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-50 dark:divide-slate-800/60">
               {isLoading ? (
-                <tr><td colSpan={5} className="py-20 text-center text-slate-400">Loading loans...</td></tr>
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400 dark:text-slate-500">Loading loans...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="py-20 text-center text-slate-400">No loans found</td></tr>
+                <tr><td colSpan={5} className="py-20 text-center text-slate-400 dark:text-slate-500">No loans found</td></tr>
               ) : filtered.map(l => (
-                <tr key={l.id} className="hover:bg-gray-50/70 transition-colors">
+                <tr key={l.id} className="hover:bg-gray-50/70 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="py-3.5 px-5">
-                    <Link href={`/app/loans/${l.id}`} className="text-[14px] font-semibold text-navy-900 hover:text-brand-600 transition-colors">
+                    <Link href={`/app/loans/${l.id}`} className="text-[14px] font-semibold text-navy-900 dark:text-slate-100 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
                       {l.member.name}
                     </Link>
                   </td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">{l.loanProduct?.name || "-"}</td>
-                  <td className="py-3.5 px-4 text-[13px] font-medium text-navy-900">LKR {Number(l.loanAmount).toLocaleString()}</td>
-                  <td className="py-3.5 px-4 text-[13px] text-slate-600">LKR {Number(l.outstanding).toLocaleString()}</td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600 dark:text-slate-300">{l.loanProduct?.name || "-"}</td>
+                  <td className="py-3.5 px-4 text-[13px] font-medium text-navy-900 dark:text-white">LKR {Number(l.loanAmount).toLocaleString()}</td>
+                  <td className="py-3.5 px-4 text-[13px] text-slate-600 dark:text-slate-300">LKR {Number(l.outstanding).toLocaleString()}</td>
                   <td className="py-3.5 px-4">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider ${l.status === 'ACTIVE' ? 'bg-success-50 text-success-700' : l.status === 'ARREARS' || l.status === 'DEFAULTED' ? 'bg-danger-50 text-danger-700' : 'bg-slate-100 text-slate-600'}`}>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider ${l.status === 'ACTIVE' ? 'bg-success-50 dark:bg-emerald-950/50 text-success-700 dark:text-emerald-400 border border-transparent dark:border-emerald-900/40' : l.status === 'ARREARS' || l.status === 'DEFAULTED' ? 'bg-danger-50 dark:bg-rose-950/50 text-danger-700 dark:text-rose-400 border border-transparent dark:border-rose-900/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                       {l.status}
                     </span>
                   </td>
@@ -115,8 +115,8 @@ export default function LoansPage() {
         </div>
         
         {/* Table Footer with Pagination */}
-        <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/60 flex items-center justify-between">
-          <span className="text-[13px] text-slate-500 flex items-center gap-2">
+        <div className="px-5 py-3 border-t border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-900/60 flex items-center justify-between">
+          <span className="text-[13px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
             Showing {filtered.length} of {total} loans
             {isFetching && <span className="inline-block w-3 h-3 border-2 border-brand-600 border-t-transparent rounded-full animate-spin ml-2"></span>}
           </span>
@@ -124,14 +124,14 @@ export default function LoansPage() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium text-slate-600 disabled:opacity-50 hover:bg-gray-100 transition-colors"
+              className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-slate-800 text-[13px] font-medium text-slate-600 dark:text-slate-300 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
               Previous
             </button>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 rounded-md border border-gray-200 text-[13px] font-medium text-slate-600 disabled:opacity-50 hover:bg-gray-100 transition-colors"
+              className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-slate-800 text-[13px] font-medium text-slate-600 dark:text-slate-300 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
             >
               Next
             </button>

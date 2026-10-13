@@ -36,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased scroll-smooth", inter.variable, outfit.variable, instrumentSerif.variable, playfair.variable, geistFallback.variable, geistMonoFallback.variable)}>
+    <html lang="en" suppressHydrationWarning className={cn("h-full antialiased scroll-smooth", inter.variable, outfit.variable, instrumentSerif.variable, playfair.variable, geistFallback.variable, geistMonoFallback.variable)}>
       <body className="min-h-full flex flex-col">
         <ClientShell>
           {children}

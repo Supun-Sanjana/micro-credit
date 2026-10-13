@@ -48,8 +48,12 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     }
   }
 
+  const isFetchingRef = useRef(false)
+
   // Fetch notifications
   const fetchNotifications = async (showRefreshIndicator = false) => {
+    if (isFetchingRef.current && !showRefreshIndicator) return
+    isFetchingRef.current = true
     if (showRefreshIndicator) setIsRefreshing(true)
     try {
       const res = await fetch("/api/notifications")
@@ -62,12 +66,13 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     } catch (err) {
       console.error("Failed to fetch notifications:", err)
     } finally {
+      isFetchingRef.current = false
       setIsLoading(false)
       if (showRefreshIndicator) setIsRefreshing(false)
     }
   }
 
-  // Initial fetch and auto-polling
+  // Fetch once on page load/refresh + gentle 5-minute background interval
   useEffect(() => {
     fetchNotifications()
 
@@ -75,14 +80,10 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       if (document.visibilityState === "visible") {
         fetchNotifications()
       }
-    }, 30000)
-
-    const handleFocus = () => fetchNotifications()
-    window.addEventListener("focus", handleFocus)
+    }, 5 * 60 * 1000) // 5 minutes
 
     return () => {
       clearInterval(interval)
-      window.removeEventListener("focus", handleFocus)
     }
   }, [])
 
@@ -212,15 +213,15 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         aria-label="Notifications"
         aria-expanded={isOpen}
         className={cn(
-          "relative p-2 rounded-full text-slate-600 hover:text-navy-900 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1",
-          isOpen && "bg-slate-100 text-navy-900"
+          "relative p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-navy-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1",
+          isOpen && "bg-slate-100 dark:bg-slate-800 text-navy-900 dark:text-white"
         )}
       >
         <Bell className="w-5 h-5" />
         
         {/* Unread Badge */}
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900">
             {unreadCount > 9 ? "9+" : unreadCount}
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-30" />
           </span>
@@ -229,17 +230,17 @@ export function NotificationBell({ userId }: NotificationBellProps) {
 
       {/* Dropdown Popover */}
       {isOpen && (
-        <div className="absolute right-[-70px] sm:right-0 mt-2 w-[320px] sm:w-[400px] bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-[-70px] sm:right-0 mt-2 w-[320px] sm:w-[400px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           {/* Header */}
-          <div className="px-3 sm:px-4 py-2.5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div className="px-3 sm:px-4 py-2.5 sm:py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-800/50">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-900 text-[14px] sm:text-[15px]">Notifications</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100 text-[14px] sm:text-[15px]">Notifications</span>
               {unreadCount > 0 ? (
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 text-rose-700">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
                   {unreadCount} new
                 </span>
               ) : (
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                   All caught up
                 </span>
               )}
@@ -249,15 +250,15 @@ export function NotificationBell({ userId }: NotificationBellProps) {
               <button
                 onClick={() => fetchNotifications(true)}
                 title="Refresh notifications"
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
-                <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin text-brand-600")} />
+                <RefreshCw className={cn("w-3.5 h-3.5", isRefreshing && "animate-spin text-brand-600 dark:text-brand-400")} />
               </button>
               <Link
                 href="/app/settings/notifications"
                 onClick={() => setIsOpen(false)}
                 title="Notification Settings"
-                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <Settings className="w-3.5 h-3.5" />
               </Link>
@@ -272,8 +273,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                 className={cn(
                   "px-2.5 py-1 rounded-md font-medium transition-colors",
                   activeFilter === "all"
-                    ? "bg-slate-100 text-navy-900 font-semibold"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-slate-100 dark:bg-slate-800 text-navy-900 dark:text-slate-100 font-semibold"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 )}
               >
                 All ({notifications.length})
@@ -283,8 +284,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                 className={cn(
                   "px-2.5 py-1 rounded-md font-medium transition-colors",
                   activeFilter === "unread"
-                    ? "bg-slate-100 text-navy-900 font-semibold"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-slate-100 dark:bg-slate-800 text-navy-900 dark:text-slate-100 font-semibold"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 )}
               >
                 Unread ({unreadCount})
@@ -294,7 +295,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-800 font-medium transition-colors px-1 py-0.5 rounded hover:bg-brand-50"
+                className="flex items-center gap-1 text-[11px] text-brand-600 dark:text-brand-400 hover:text-brand-800 dark:hover:text-brand-300 font-medium transition-colors px-1 py-0.5 rounded hover:bg-brand-50 dark:hover:bg-brand-950"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Mark all read
@@ -303,26 +304,26 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           </div>
 
           {/* Notifications List */}
-          <div className="max-h-[320px] sm:max-h-[400px] overflow-y-auto divide-y divide-slate-100 overscroll-contain">
+          <div className="max-h-[320px] sm:max-h-[400px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80 overscroll-contain">
             {isLoading ? (
               <div className="p-4 space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex gap-3 items-start animate-pulse">
-                    <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3.5 bg-slate-200 rounded w-3/4" />
-                      <div className="h-3 bg-slate-100 rounded w-1/2" />
+                      <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                      <div className="h-3 bg-slate-100 dark:bg-slate-850 rounded w-1/2" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : filteredNotifications.length === 0 ? (
               <div className="py-10 px-4 text-center">
-                <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-2.5">
+                <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 mx-auto flex items-center justify-center mb-2.5">
                   <Bell className="w-5 h-5" />
                 </div>
-                <p className="text-[13px] font-medium text-slate-700">No notifications to display</p>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-[13px] font-medium text-slate-700 dark:text-slate-200">No notifications to display</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                   {activeFilter === "unread" ? "You've read all your notifications." : "No notifications have been recorded yet."}
                 </p>
               </div>
@@ -334,8 +335,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                     key={item.id}
                     onClick={() => handleNotificationClick(item)}
                     className={cn(
-                      "px-3 sm:px-4 py-2.5 sm:py-3 flex gap-2 sm:gap-3 items-start hover:bg-slate-50 cursor-pointer transition-colors relative group",
-                      isUnread && "bg-brand-50/20"
+                      "px-3 sm:px-4 py-2.5 sm:py-3 flex gap-2 sm:gap-3 items-start hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors relative group",
+                      isUnread && "bg-brand-50/20 dark:bg-brand-950/20"
                     )}
                   >
                     {getEventIcon(item.eventType)}
@@ -344,19 +345,19 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                       <div className="flex items-baseline justify-between gap-1 mb-0.5">
                         <p className={cn(
                           "text-[13px] leading-snug truncate",
-                          isUnread ? "font-semibold text-navy-950" : "font-normal text-slate-700"
+                          isUnread ? "font-semibold text-navy-950 dark:text-white" : "font-normal text-slate-700 dark:text-slate-300"
                         )}>
                           {item.subject}
                         </p>
                       </div>
 
                       {item.message && item.message !== item.subject && (
-                        <p className="text-[12px] text-slate-500 line-clamp-2 leading-relaxed mb-1">
+                        <p className="text-[12px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-1">
                           {item.message}
                         </p>
                       )}
 
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
                         <span>{formatRelativeTime(item.createdAt)}</span>
                         {item.link && (
                           <Link
@@ -366,7 +367,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                               markAsRead(item.id)
                               setIsOpen(false)
                             }}
-                            className="text-brand-600 hover:text-brand-700 hover:underline inline-flex items-center gap-0.5 font-medium z-10 cursor-pointer"
+                            className="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 hover:underline inline-flex items-center gap-0.5 font-medium z-10 cursor-pointer"
                           >
                             View details
                             <ExternalLink className="w-2.5 h-2.5" />
@@ -381,7 +382,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                         <button
                           onClick={(e) => markAsRead(item.id, e)}
                           title="Mark as read"
-                          className="w-2.5 h-2.5 rounded-full bg-brand-600 hover:scale-125 transition-transform"
+                          className="w-2.5 h-2.5 rounded-full bg-brand-600 dark:bg-brand-500 hover:scale-125 transition-transform"
                         />
                       ) : (
                         <span className="w-1.5 h-1.5 rounded-full bg-transparent" />
@@ -394,12 +395,12 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           </div>
 
           {/* Footer */}
-          <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <div className="px-3 sm:px-4 py-2 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="text-[11px]">Solida Notification Center</span>
             <Link
               href="/app/settings/notifications"
               onClick={() => setIsOpen(false)}
-              className="text-[11px] text-brand-600 hover:text-brand-700 font-medium hover:underline inline-flex items-center gap-1"
+              className="text-[11px] text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium hover:underline inline-flex items-center gap-1"
             >
               Preferences
             </Link>
