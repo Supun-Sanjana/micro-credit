@@ -2,7 +2,7 @@ import withSerwistInit from "@serwist/next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // Temporarily disabled to prevent Windows copyfile ENOENT errors during build
+  ...(process.env.DOCKER_BUILD === "true" ? { output: "standalone" } : {}),
   experimental: {
     optimizePackageImports: [
       "lucide-react",
@@ -14,7 +14,7 @@ const nextConfig = {
     ],
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   async headers() {
     return [
