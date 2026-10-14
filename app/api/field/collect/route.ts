@@ -1,19 +1,25 @@
 import { NextResponse } from "next/server";
 import { getScopedDal } from "@/lib/dal";
 import { recordPayment } from "@/lib/services/payment-service";
+import { assertScheduleOwnership, parseFieldCollectionBody } from "@/lib/field-collection";
 import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
     const dal = await getScopedDal();
-    const json = await request.json();
-    const { loanId, scheduleId, amount, method, clientTransactionId, notes } = json;
-
-    if (!clientTransactionId) {
-      return NextResponse.json({ error: "clientTransactionId required" }, { status: 400 });
+    let json: unknown
+    try {
+      json = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    // Idempotency check
+    const parsed = parseFieldCollectionBody(json);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const { loanId, scheduleId, amount, method, clientTransactionId, notes } = parsed.value;
+
     const existing = await dal.prisma.loanRepayment.findUnique({
       where: {
         organizationId_clientTransactionId: {
@@ -27,8 +33,8 @@ export async function POST(request: Request) {
       return NextResponse.json(existing);
     }
 
+    let replay = false;
     const result = await dal.prisma.$transaction(async (tx: any) => {
-      // Validate Assignment
       const loan = await tx.loan.findFirst({
         where: { id: loanId, member: { organizationId: dal.organizationId } },
         include: { member: true }
@@ -47,6 +53,14 @@ export async function POST(request: Request) {
 
       if (!assignment) throw new Error("Not assigned to this centre");
 
+      if (scheduleId) {
+        const schedule = await tx.repaymentSchedule.findFirst({
+          where: { id: scheduleId },
+          include: { loan: { include: { member: true } } }
+        });
+        assertScheduleOwnership(schedule, loan.id, dal.organizationId);
+      }
+
       const decimalAmount = new Prisma.Decimal(amount || 0);
       const repayment = await recordPayment(tx, {
         organizationId: dal.organizationId,
@@ -54,14 +68,13 @@ export async function POST(request: Request) {
         amount: decimalAmount,
         paidDate: new Date(),
         method,
-        scheduleId,
+        scheduleId: scheduleId ?? undefined,
         note: notes,
         collectedBy: dal.userId,
         clientTransactionId,
         source: 'FIELD_MOBILE'
       });
 
-      // Update schedule attempt history
       if (scheduleId) {
         await tx.collectionAttempt.create({
           data: {
@@ -77,7 +90,9 @@ export async function POST(request: Request) {
       }
       return repayment;
     }).catch(async (error: any) => {
-      if (error.code === 'P2002') {
+      // Unique violation on the repayment or the collection attempt: a concurrent
+      // retry already committed. Return that row instead of inserting again.
+      if (error.code === "P2002") {
         const existingAgain = await dal.prisma.loanRepayment.findUnique({
           where: {
             organizationId_clientTransactionId: {
@@ -86,15 +101,18 @@ export async function POST(request: Request) {
             }
           }
         });
-        if (existingAgain) return existingAgain;
+        if (existingAgain) {
+          replay = true;
+          return existingAgain;
+        }
       }
       throw error;
     });
 
-    // If it's an existing record from the catch block, return 200 instead of 201
-    // We can just return 201 for both or 200 for existing, but 201 is fine, wait, idempotency expects same result
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(result, { status: replay ? 200 : 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === "Not assigned to this centre" ? 403 : 400 });
+    const message = error?.message || "Collection failed";
+    const status = message === "Not assigned to this centre" ? 403 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -836,6 +836,7 @@ model CollectionAttempt {
   organization    Organization      @relation(fields: [organizationId], references: [id])
   schedule        RepaymentSchedule @relation(fields: [scheduleId], references: [id])
 
+  @@unique([organizationId, clientTxId])
   @@index([organizationId, officerId, attemptedAt])
   @@index([scheduleId])
 }
