@@ -2,7 +2,7 @@
 
 import { getScopedDal } from "@/lib/dal"
 import { requireRole } from "@/lib/auth-utils"
-import { Prisma } from "@prisma/client"
+import { computeCollectionEfficiency, parseReportingWindow } from "@/lib/collection-efficiency"
 
 /**
  * Ensures the user is authorized to view reports.
@@ -63,37 +63,68 @@ export async function getPortfolioAtRisk() {
 export async function getCollectionEfficiency(startDateStr: string, endDateStr: string) {
   await authorizeReporting()
   const dal = await getScopedDal()
-  
-  const startDate = new Date(startDateStr)
-  const endDate = new Date(endDateStr)
+  const window = parseReportingWindow(startDateStr, endDateStr)
 
-  const flows = await dal.prisma.cashFlow.findMany({
-    where: {
-      date: { gte: startDate, lte: endDate }
-    },
-    include: { branch: true }
-  })
+  // Both queries run on the scoped client from getScopedDal(). RepaymentSchedule
+  // and LoanRepayment are organization-scoped through the loan's member, and
+  // branch-scoped for field officers and branch managers. Do not query the
+  // unscoped Prisma client here.
+  const [schedules, receipts] = await Promise.all([
+    dal.prisma.repaymentSchedule.findMany({
+      where: {
+        scheduledDate: { gte: window.start, lte: window.end },
+        supersededAt: null,
+      },
+      include: {
+        loan: {
+          include: {
+            member: { include: { centre: { include: { branch: true } } } },
+            repayments: {
+              where: {
+                paidDate: { lte: window.cutoff },
+                transactionType: { in: ["PAYMENT", "REVERSAL"] },
+              },
+            },
+          },
+        },
+      },
+    }),
+    dal.prisma.loanRepayment.findMany({
+      where: {
+        paidDate: { gte: window.start, lte: window.end },
+        transactionType: { in: ["PAYMENT", "REVERSAL"] },
+      },
+      include: {
+        loan: {
+          include: {
+            member: { include: { centre: { include: { branch: true } } } },
+          },
+        },
+      },
+    }),
+  ])
 
-  const aggregated = flows.reduce((acc: any, flow) => {
-    const key = `${flow.branchId}-${flow.centreName}`
-    if (!acc[key]) {
-      acc[key] = {
-        branchName: flow.branch.name,
-        centreName: flow.centreName,
-        scheduled: 0, // Note: The old implementation used mock scheduled vs actual collected. We will use dcAmount vs expected.
-        collected: 0
-      }
-    }
-    // We approximate scheduled vs collected based on cashflow records
-    acc[key].collected += flow.dcAmount.toNumber()
-    acc[key].scheduled += flow.totalRecovery.toNumber() // Using totalRecovery as expected target for now
-    return acc
-  }, {})
-
-  return Object.values(aggregated).map((a: any) => ({
-    ...a,
-    efficiency: a.scheduled > 0 ? (a.collected / a.scheduled) * 100 : 0
-  }))
+  return computeCollectionEfficiency(
+    schedules.map((schedule) => ({
+      loanId: schedule.loanId,
+      instalmentNumber: schedule.instalmentNumber,
+      scheduledAmount: schedule.scheduledAmount,
+      centreId: schedule.loan.member.centre.id,
+      centreName: schedule.loan.member.centre.name,
+      branchId: schedule.loan.member.centre.branchId,
+      branchName: schedule.loan.member.centre.branch.name,
+      repayments: schedule.loan.repayments
+        .filter((repayment) => repayment.instalmentNumber === schedule.instalmentNumber)
+        .map((repayment) => ({ amount: repayment.amount })),
+    })),
+    receipts.map((receipt) => ({
+      amount: receipt.amount,
+      centreId: receipt.loan.member.centre.id,
+      centreName: receipt.loan.member.centre.name,
+      branchId: receipt.loan.member.centre.branchId,
+      branchName: receipt.loan.member.centre.branch.name,
+    }))
+  )
 }
 
 export async function getAgingReport() {
