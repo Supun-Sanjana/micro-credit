@@ -61,13 +61,13 @@ export async function POST(request: Request) {
         assertScheduleOwnership(schedule, loan.id, dal.organizationId);
       }
 
-      const decimalAmount = new Prisma.Decimal(amount || 0);
+      const decimalAmount = new Prisma.Decimal((amount as any) || 0);
       const repayment = await recordPayment(tx, {
         organizationId: dal.organizationId,
         loanId,
         amount: decimalAmount,
         paidDate: new Date(),
-        method,
+        method: (method as any) || "CASH",
         scheduleId: scheduleId ?? undefined,
         note: notes,
         collectedBy: dal.userId,
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
             scheduleId,
             officerId: dal.userId,
             outcome: 'PAID',
-            amountCollected: amount,
+            amountCollected: (amount as any) ?? 0,
             notes,
             clientTxId: clientTransactionId
           }
