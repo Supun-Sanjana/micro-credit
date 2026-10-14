@@ -33,6 +33,12 @@ export async function getPortfolioAtRisk() {
     }
   })
 
+  // Standard cumulative PAR: each threshold includes all loans at OR above it.
+  // PAR 1  = all outstanding balances on loans >= 1 DPD  (includes 7, 30, 90)
+  // PAR 7  = all outstanding balances on loans >= 7 DPD  (includes 30, 90)
+  // PAR 30 = all outstanding balances on loans >= 30 DPD (includes 90)
+  // PAR 90 = all outstanding balances on loans >= 90 DPD
+  // parTotal == par1: the canonical headline PAR figure used by CGAP / MIX Market
   let par1 = 0, par7 = 0, par30 = 0, par90 = 0, totalOutstanding = 0
 
   for (const loan of loans) {
@@ -41,12 +47,13 @@ export async function getPortfolioAtRisk() {
     if (loan.repaymentSchedule.length > 0) {
       const oldestDue = loan.repaymentSchedule[0].scheduledDate
       const daysPastDue = Math.floor((now.getTime() - oldestDue.getTime()) / (1000 * 60 * 60 * 24))
-      
+
       const outstanding = loan.outstanding.toNumber()
+      // Each condition is independent (no else-if): a 90-DPD loan is counted in all four.
+      if (daysPastDue >= 1)  par1  += outstanding
+      if (daysPastDue >= 7)  par7  += outstanding
+      if (daysPastDue >= 30) par30 += outstanding
       if (daysPastDue >= 90) par90 += outstanding
-      else if (daysPastDue >= 30) par30 += outstanding
-      else if (daysPastDue >= 7) par7 += outstanding
-      else if (daysPastDue >= 1) par1 += outstanding
     }
   }
 
@@ -56,44 +63,117 @@ export async function getPortfolioAtRisk() {
     par7,
     par30,
     par90,
-    parTotal: par1 + par7 + par30 + par90
+    // parTotal is par1: the standard headline figure (all at-risk outstanding)
+    parTotal: par1
   }
 }
 
 export async function getCollectionEfficiency(startDateStr: string, endDateStr: string) {
   await authorizeReporting()
   const dal = await getScopedDal()
-  
+
   const startDate = new Date(startDateStr)
+  startDate.setHours(0, 0, 0, 0)
   const endDate = new Date(endDateStr)
+  endDate.setHours(23, 59, 59, 999)
 
-  const flows = await dal.prisma.cashFlow.findMany({
+  // 1. Scheduled obligations due during the selected period
+  const schedules = await dal.prisma.repaymentSchedule.findMany({
     where: {
-      date: { gte: startDate, lte: endDate }
+      scheduledDate: { gte: startDate, lte: endDate },
+      loan: { status: { in: ['ACTIVE', 'SETTLED', 'OVERDUE'] } }
     },
-    include: { branch: true }
-  })
-
-  const aggregated = flows.reduce((acc: any, flow) => {
-    const key = `${flow.branchId}-${flow.centreName}`
-    if (!acc[key]) {
-      acc[key] = {
-        branchName: flow.branch.name,
-        centreName: flow.centreName,
-        scheduled: 0, // Note: The old implementation used mock scheduled vs actual collected. We will use dcAmount vs expected.
-        collected: 0
+    include: {
+      loan: {
+        include: {
+          member: {
+            include: {
+              centre: {
+                include: { branch: true }
+              }
+            }
+          }
+        }
       }
     }
-    // We approximate scheduled vs collected based on cashflow records
-    acc[key].collected += flow.dcAmount.toNumber()
-    acc[key].scheduled += flow.totalRecovery.toNumber() // Using totalRecovery as expected target for now
-    return acc
-  }, {})
+  })
 
-  return Object.values(aggregated).map((a: any) => ({
-    ...a,
-    efficiency: a.scheduled > 0 ? (a.collected / a.scheduled) * 100 : 0
-  }))
+  // 2. Actual cash payments received during the selected period (by paidDate)
+  const repayments = await dal.prisma.loanRepayment.findMany({
+    where: {
+      paidDate: { gte: startDate, lte: endDate },
+      transactionType: 'PAYMENT',
+    },
+    include: {
+      paymentReversal: true,
+      loan: {
+        include: {
+          member: {
+            include: {
+              centre: {
+                include: { branch: true }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  type BucketValue = {
+    branchName: string
+    centreName: string
+    scheduled: number
+    collected: number
+    cohortCollected: number
+  }
+  const aggregated: Record<string, BucketValue> = {}
+
+  // Aggregate scheduled obligations and cumulative cohort receipts
+  for (const s of schedules) {
+    const centre = s.loan.member.centre
+    const key = `${centre.branchId}-${centre.id}`
+    if (!aggregated[key]) {
+      aggregated[key] = {
+        branchName: centre.branch.name,
+        centreName: centre.name,
+        scheduled: 0,
+        collected: 0,
+        cohortCollected: 0
+      }
+    }
+    aggregated[key].scheduled += s.scheduledAmount.toNumber()
+    aggregated[key].cohortCollected += s.paidAmount.toNumber()
+  }
+
+  // Aggregate cash payments actually received during the period (excluding approved reversals)
+  for (const r of repayments) {
+    if (r.paymentReversal && r.paymentReversal.status === 'APPROVED') {
+      continue
+    }
+    const centre = r.loan.member.centre
+    const key = `${centre.branchId}-${centre.id}`
+    if (!aggregated[key]) {
+      aggregated[key] = {
+        branchName: centre.branch.name,
+        centreName: centre.name,
+        scheduled: 0,
+        collected: 0,
+        cohortCollected: 0
+      }
+    }
+    aggregated[key].collected += r.amount.toNumber()
+  }
+
+  return Object.values(aggregated).map((a) => ({
+    branchName: a.branchName,
+    centreName: a.centreName,
+    scheduled: a.scheduled,
+    collected: a.collected,
+    cohortCollected: a.cohortCollected,
+    efficiency: a.scheduled > 0 ? (a.collected / a.scheduled) * 100 : 0,
+    cohortEfficiency: a.scheduled > 0 ? (a.cohortCollected / a.scheduled) * 100 : 0
+  })).sort((a, b) => b.efficiency - a.efficiency)
 }
 
 export async function getAgingReport() {

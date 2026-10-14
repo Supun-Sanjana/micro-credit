@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { cacheCollectionSheet, getCachedCollectionSheet, saveRepaymentOffline } from "@/lib/indexed-db"
+import { cacheCollectionSheet, getCachedCollectionSheet, saveRepaymentOffline, getPendingRepayments } from "@/lib/indexed-db"
 import { CheckCircle2, CloudOff, Loader2, ChevronDown, X, MapPin } from "lucide-react"
 import { logFieldCheckIn } from "@/app/actions/field"
 
@@ -67,6 +67,23 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
           const cached = await getCachedCollectionSheet(centreId)
           if (cached) setData(cached.data)
         }
+
+        // Restore any offline collections recorded on this device for this centre
+        try {
+          const offlinePending = await getPendingRepayments()
+          const currentCentrePending = offlinePending.filter(p => p.centreId === centreId)
+          if (currentCentrePending.length > 0) {
+            setSuccess(prev => {
+              const next = { ...prev }
+              for (const p of currentCentrePending) {
+                next[p.loanId] = 'PAID'
+              }
+              return next
+            })
+          }
+        } catch {
+          // Ignore IndexedDB read error in non-browser context
+        }
       } catch (err) {
         setIsOffline(true)
         const cached = await getCachedCollectionSheet(centreId)
@@ -104,7 +121,8 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
 
   const handleSubmit = async () => {
     if (!activeLoanId || !activeSchedule) return
-    const memberId = data?.find(m => m.loans.some((l: any) => l.id === activeLoanId))?.id
+    const member = data?.find(m => m.loans.some((l: any) => l.id === activeLoanId))
+    const memberId = member?.id
     
     setSubmitting(true)
 
@@ -123,13 +141,13 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
           })
           if (!res.ok) throw new Error("Failed to log missed payment")
         } else {
-          // In a full implementation, we'd queue missed payments offline too
           alert("Cannot log missed payments offline yet.")
           throw new Error("Offline")
         }
         setSuccess(prev => ({ ...prev, [activeLoanId]: 'MISSED' }))
       } else {
         const amount = Number(amountInput)
+        const clientTxId = crypto.randomUUID()
         if (navigator.onLine) {
           const res = await fetch("/api/field/collect", {
             method: "POST",
@@ -139,26 +157,35 @@ export default function CollectionSheetPage({ params }: { params: Promise<{ id: 
               scheduleId: activeSchedule.id,
               amount, 
               method: 'CASH',
-              clientTransactionId: crypto.randomUUID(),
+              clientTransactionId: clientTxId,
               notes: drawerMode === 'PARTIAL' ? "Partial Payment" : "Full Payment" 
             })
           })
-          if (!res.ok) throw new Error("Network response was not ok")
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({ error: "Failed to collect" }))
+            throw new Error(errJson.error || "Network response was not ok")
+          }
         } else {
           throw new Error("Offline")
         }
         setSuccess(prev => ({ ...prev, [activeLoanId]: 'PAID' }))
       }
     } catch (err: any) {
-      if (err.message === "Offline" && drawerMode !== 'MISSED') {
+      if ((err.message === "Offline" || !navigator.onLine || err.name === "TypeError") && drawerMode !== 'MISSED') {
         await saveRepaymentOffline({
           id: crypto.randomUUID(),
           loanId: activeLoanId,
+          scheduleId: activeSchedule?.id,
           amount: Number(amountInput),
+          method: 'CASH',
+          notes: drawerMode === 'PARTIAL' ? "Partial Payment" : "Full Payment",
           centreId: centreId!,
-          memberId
+          memberId,
+          memberName: member?.name,
         })
         setSuccess(prev => ({ ...prev, [activeLoanId]: 'PAID' }))
+      } else if (err.message !== "Offline") {
+        alert(err.message || "Failed to submit collection")
       }
     } finally {
       setSubmitting(false)

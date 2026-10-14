@@ -12,6 +12,7 @@ interface PageProps {
   }>
   searchParams?: Promise<{
     action?: string
+    error?: string
   }>
 }
 
@@ -322,6 +323,6 @@ export default async function ClaimDetailPage({ params, searchParams }: PageProp
           />
         )}
       </div>
-
+    </div>
   )
 }
