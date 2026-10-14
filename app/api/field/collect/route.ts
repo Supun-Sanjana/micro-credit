@@ -1,48 +1,42 @@
 import { NextResponse } from "next/server";
 import { getScopedDal } from "@/lib/dal";
 import { recordPayment } from "@/lib/services/payment-service";
+import { assertScheduleOwnership, parseFieldCollectionBody } from "@/lib/field-collection";
 import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
     const dal = await getScopedDal();
-    const json = await request.json();
-    const { loanId, scheduleId, amount, method, clientTransactionId, notes } = json;
-
-    if (!clientTransactionId || typeof clientTransactionId !== "string" || !clientTransactionId.trim()) {
-      return NextResponse.json({ error: "clientTransactionId required" }, { status: 400 });
+    let json: unknown
+    try {
+      json = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    if (!loanId || typeof loanId !== "string" || !loanId.trim()) {
-      return NextResponse.json({ error: "loanId required" }, { status: 400 });
+    const parsed = parseFieldCollectionBody(json);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+    const { loanId, scheduleId, amount, method, clientTransactionId, notes } = parsed.value;
 
-    if (amount === undefined || amount === null || isNaN(Number(amount)) || Number(amount) <= 0) {
-      return NextResponse.json({ error: "Valid positive amount required" }, { status: 400 });
-    }
-
-    const cleanClientTxId = clientTransactionId.trim();
-    const cleanLoanId = loanId.trim();
-    const cleanScheduleId = typeof scheduleId === "string" && scheduleId.trim() ? scheduleId.trim() : null;
-
-    // Idempotency check
     const existing = await dal.prisma.loanRepayment.findUnique({
       where: {
         organizationId_clientTransactionId: {
           organizationId: dal.organizationId,
-          clientTransactionId: cleanClientTxId,
+          clientTransactionId,
         }
       }
     });
 
     if (existing) {
-      return NextResponse.json(existing, { status: 200 });
+      return NextResponse.json(existing);
     }
 
+    let replay = false;
     const result = await dal.prisma.$transaction(async (tx: any) => {
-      // Validate Assignment
       const loan = await tx.loan.findFirst({
-        where: { id: cleanLoanId, member: { organizationId: dal.organizationId } },
+        where: { id: loanId, member: { organizationId: dal.organizationId } },
         include: { member: true }
       });
 
@@ -59,70 +53,66 @@ export async function POST(request: Request) {
 
       if (!assignment) throw new Error("Not assigned to this centre");
 
-      // Validate that scheduleId (when supplied) belongs to this specific loan,
-      // preventing cross-loan injection from the field app.
-      if (cleanScheduleId) {
+      if (scheduleId) {
         const schedule = await tx.repaymentSchedule.findFirst({
-          where: { id: cleanScheduleId, loanId: cleanLoanId }
+          where: { id: scheduleId },
+          include: { loan: { include: { member: true } } }
         });
-        if (!schedule) throw new Error("Schedule does not belong to this loan");
+        assertScheduleOwnership(schedule, loan.id, dal.organizationId);
       }
 
-      const decimalAmount = new Prisma.Decimal(amount);
+      const decimalAmount = new Prisma.Decimal(amount || 0);
       const repayment = await recordPayment(tx, {
         organizationId: dal.organizationId,
-        loanId: cleanLoanId,
+        loanId,
         amount: decimalAmount,
         paidDate: new Date(),
-        method: method || "CASH",
-        scheduleId: cleanScheduleId ?? undefined,
+        method,
+        scheduleId: scheduleId ?? undefined,
         note: notes,
         collectedBy: dal.userId,
-        clientTransactionId: cleanClientTxId,
+        clientTransactionId,
         source: 'FIELD_MOBILE'
       });
 
-      // Update schedule attempt history idempotently
-      if (cleanScheduleId) {
-        const existingAttempt = await tx.collectionAttempt.findFirst({
-          where: {
+      if (scheduleId) {
+        await tx.collectionAttempt.create({
+          data: {
             organizationId: dal.organizationId,
-            clientTxId: cleanClientTxId
+            scheduleId,
+            officerId: dal.userId,
+            outcome: 'PAID',
+            amountCollected: amount,
+            notes,
+            clientTxId: clientTransactionId
           }
         });
-
-        if (!existingAttempt) {
-          await tx.collectionAttempt.create({
-            data: {
-              organizationId: dal.organizationId,
-              scheduleId: cleanScheduleId,
-              officerId: dal.userId,
-              outcome: 'PAID',
-              amountCollected: amount,
-              notes,
-              clientTxId: cleanClientTxId
-            }
-          });
-        }
       }
-      return { repayment, isNew: true };
+      return repayment;
     }).catch(async (error: any) => {
-      if (error.code === 'P2002') {
+      // Unique violation on the repayment or the collection attempt: a concurrent
+      // retry already committed. Return that row instead of inserting again.
+      if (error.code === "P2002") {
         const existingAgain = await dal.prisma.loanRepayment.findUnique({
           where: {
             organizationId_clientTransactionId: {
               organizationId: dal.organizationId,
-              clientTransactionId: cleanClientTxId,
+              clientTransactionId,
             }
           }
         });
-        if (existingAgain) return { repayment: existingAgain, isNew: false };
+        if (existingAgain) {
+          replay = true;
+          return existingAgain;
+        }
       }
       throw error;
     });
 
-    return NextResponse.json(result.repayment, { status: result.isNew ? 201 : 200 });
+    return NextResponse.json(result, { status: replay ? 200 : 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: error.message === "Not assigned to this centre" ? 403 : 400 });
+    const message = error?.message || "Collection failed";
+    const status = message === "Not assigned to this centre" ? 403 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

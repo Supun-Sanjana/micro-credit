@@ -101,7 +101,7 @@ export default function ReportsPage() {
       headers = ["Total Outstanding", "PAR 1+", "PAR 7+", "PAR 30+", "PAR 90+", "Total PAR", "PAR Ratio (%)"]
     } else if (activeTab === "efficiency" && efficiencyData) {
       dataToExport = efficiencyData
-      headers = ["Branch Name", "Centre Name", "Scheduled", "Collected", "Efficiency (%)"]
+      headers = ["Branch Name", "Centre Name", "Due in period", "Cash received", "Cash efficiency (%)", "Due-cohort collected", "Due-cohort efficiency (%)"]
     } else if (activeTab === "aging" && agingData) {
       dataToExport = agingData
       headers = ["Loan ID", "Loan Number", "Member Name", "Days Past Due", "Overdue Amount", "Outstanding"]
@@ -145,9 +145,11 @@ export default function ReportsPage() {
           } else if (activeTab === "efficiency") {
             if (header === "Branch Name") val = row.branchName || ""
             if (header === "Centre Name") val = row.centreName || ""
-            if (header === "Scheduled") val = row.scheduled || "0"
-            if (header === "Collected") val = row.collected || "0"
-            if (header === "Efficiency (%)") val = row.efficiency?.toFixed(2) || "0"
+            if (header === "Due in period") val = row.scheduled || "0"
+            if (header === "Cash received") val = row.collected || "0"
+            if (header === "Cash efficiency (%)") val = row.efficiency?.toFixed(2) || "0"
+            if (header === "Due-cohort collected") val = row.dueCohortCollected || "0"
+            if (header === "Due-cohort efficiency (%)") val = row.dueCohortEfficiency?.toFixed(2) || "0"
           } else if (activeTab === "aging") {
             if (header === "Loan ID") val = row.loanId || ""
             if (header === "Loan Number") val = row.loanNumber || ""
@@ -407,21 +409,25 @@ export default function ReportsPage() {
 
           {activeTab === "efficiency" && efficiencyData && !isTabLoading && (
             <div className="bg-slate-50 dark:bg-slate-900 border border-transparent dark:border-slate-800 rounded-[24px] p-[32px] md:p-[40px]">
-              <h2 className="text-[20px] font-sans font-medium text-navy-900 dark:text-white mb-6">Collection Efficiency (Last 30 Days)</h2>
+              <h2 className="text-[20px] font-sans font-medium text-navy-900 dark:text-white mb-2">Collection Efficiency (Last 30 Days)</h2>
+              <p className="text-[14px] text-slate-500 dark:text-slate-400 mb-6 max-w-3xl">
+                Cash efficiency is money received during the period divided by instalments due in that period. Due-cohort collected is what has been paid against those instalments as of the period end, including earlier partial payments and excluding anything received after the cutoff.
+              </p>
               <div className="w-full overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-border/40 dark:border-slate-800">
                       <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal">Branch</th>
                       <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal">Centre</th>
-                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Expected</th>
-                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Collected</th>
-                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Efficiency</th>
+                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Due</th>
+                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Cash received</th>
+                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Cash efficiency</th>
+                      <th className="pb-4 font-sans text-[15px] text-slate-500 dark:text-slate-400 font-normal text-right">Due-cohort</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Array.isArray(efficiencyData) && efficiencyData.map((d: any) => (
-                      <tr key={d.centreName} className="border-b border-border/40 dark:border-slate-800/60 last:border-0">
+                      <tr key={`${d.branchId}-${d.centreId}`} className="border-b border-border/40 dark:border-slate-800/60 last:border-0">
                         <td className="py-5 pr-4 text-[16px] font-sans text-slate-500 dark:text-slate-400">{d.branchName}</td>
                         <td className="py-5 pr-4 text-[16px] font-sans text-navy-900 dark:text-slate-100 font-medium">{d.centreName}</td>
                         <td className="py-5 pr-4 text-[16px] font-sans text-slate-500 dark:text-slate-400 text-right">LKR {d.scheduled.toLocaleString()}</td>
@@ -429,11 +435,14 @@ export default function ReportsPage() {
                         <td className="py-5 pl-4 text-[16px] font-sans font-medium text-navy-900 dark:text-slate-100 text-right">
                           {d.efficiency.toFixed(2)}%
                         </td>
+                        <td className="py-5 pl-4 text-[16px] font-sans text-navy-900 dark:text-slate-100 text-right">
+                          LKR {Number(d.dueCohortCollected || 0).toLocaleString()} ({Number(d.dueCohortEfficiency || 0).toFixed(2)}%)
+                        </td>
                       </tr>
                     ))}
                     {efficiencyData.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="py-5 text-center text-slate-500 dark:text-slate-400">No data available.</td>
+                        <td colSpan={6} className="py-5 text-center text-slate-500 dark:text-slate-400">No data available.</td>
                       </tr>
                     )}
                   </tbody>

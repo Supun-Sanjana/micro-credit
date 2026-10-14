@@ -1,5 +1,6 @@
-import { Prisma, RepaymentMethod } from "@prisma/client"
+import { Prisma, RepaymentMethod, ScheduleStatus } from "@prisma/client"
 import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
+import { assertScheduleOwnership } from "@/lib/field-collection"
 import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
 
 export interface PaymentParams {
@@ -56,15 +57,17 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
   // 5. Create Repayment & Allocations
   let instalmentNumber: number | null = null
   let scheduledDate: Date | null = null
+  let matchedSchedule: { paidAmount: Prisma.Decimal; scheduledAmount: Prisma.Decimal; status: ScheduleStatus; isPaid: boolean } | null = null
 
   if (params.scheduleId) {
     const schedule = await tx.repaymentSchedule.findUnique({
-      where: { id: params.scheduleId }
+      where: { id: params.scheduleId },
+      include: { loan: { include: { member: true } } }
     })
-    if (schedule) {
-      instalmentNumber = schedule.instalmentNumber
-      scheduledDate = schedule.scheduledDate
-    }
+    assertScheduleOwnership(schedule, params.loanId, params.organizationId)
+    instalmentNumber = schedule.instalmentNumber
+    scheduledDate = schedule.scheduledDate
+    matchedSchedule = schedule
   }
 
   const repayment = await tx.loanRepayment.create({
@@ -100,31 +103,26 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
   })
 
   // 7. Update RepaymentSchedule
-  if (params.scheduleId) {
-    const schedule = await tx.repaymentSchedule.findUnique({
-      where: { id: params.scheduleId }
-    })
-    if (schedule) {
-      const newPaidAmount = schedule.paidAmount.add(params.amount)
-      let status = schedule.status
-      let isPaid = schedule.isPaid
+  if (params.scheduleId && matchedSchedule) {
+    const newPaidAmount = matchedSchedule.paidAmount.add(params.amount)
+    let status = matchedSchedule.status
+    let isPaid = matchedSchedule.isPaid
 
-      if (newPaidAmount.gte(schedule.scheduledAmount)) {
-        status = "PAID"
-        isPaid = true
-      } else if (newPaidAmount.gt(0)) {
-        status = "PARTIALLY_PAID"
-      }
-
-      await tx.repaymentSchedule.update({
-        where: { id: params.scheduleId },
-        data: {
-          paidAmount: newPaidAmount,
-          status,
-          isPaid
-        }
-      })
+    if (newPaidAmount.gte(matchedSchedule.scheduledAmount)) {
+      status = "PAID"
+      isPaid = true
+    } else if (newPaidAmount.gt(0)) {
+      status = "PARTIALLY_PAID"
     }
+
+    await tx.repaymentSchedule.update({
+      where: { id: params.scheduleId },
+      data: {
+        paidAmount: newPaidAmount,
+        status,
+        isPaid
+      }
+    })
   }
 
   // 8. Post Accounting Journal

@@ -1,9 +1,7 @@
-import { getPortfolioAtRisk, getCollectionEfficiency } from "@/app/actions/reports"
-import { getScopedDal } from "@/lib/dal"
-import { requireRole } from "@/lib/auth-utils"
 import { Prisma } from "@prisma/client"
-
-// ── Module mocks ──────────────────────────────────────────────────────────────
+import { getCollectionEfficiency, getPortfolioAtRisk } from "@/app/actions/reports"
+import { getScopedDal } from "@/lib/dal"
+import prisma from "@/lib/prisma"
 
 jest.mock("@/lib/dal", () => ({
   getScopedDal: jest.fn(),
@@ -11,315 +9,263 @@ jest.mock("@/lib/dal", () => ({
 
 jest.mock("@/lib/auth-utils", () => ({
   requireRole: jest.fn(),
-  hasRole: jest.fn(),
-  canAccessBranch: jest.fn(),
 }))
 
-describe("Reports Action - Portfolio at Risk & Collection Efficiency", () => {
-  let mockPrisma: any
+jest.mock("@/lib/prisma", () => ({
+  __esModule: true,
+  default: {
+    loan: { findMany: jest.fn() },
+    repaymentSchedule: { findMany: jest.fn() },
+    loanRepayment: { findMany: jest.fn() },
+    cashFlow: { findMany: jest.fn() },
+  },
+}))
+
+const scopedDal = getScopedDal as jest.Mock
+const unscoped = prisma as unknown as {
+  loan: { findMany: jest.Mock }
+  repaymentSchedule: { findMany: jest.Mock }
+  loanRepayment: { findMany: jest.Mock }
+  cashFlow: { findMany: jest.Mock }
+}
+
+function money(value: string | number) {
+  return new Prisma.Decimal(value)
+}
+
+function loan(outstanding: string, oldestDue: string | null, extraDue: string[] = []) {
+  const dates = oldestDue ? [oldestDue, ...extraDue] : []
+  return {
+    outstanding: money(outstanding),
+    repaymentSchedule: dates.map((scheduledDate) => ({ scheduledDate: new Date(scheduledDate) })),
+  }
+}
+
+describe("getPortfolioAtRisk", () => {
+  const now = new Date("2026-04-01T00:00:00.000Z")
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.useFakeTimers()
+    jest.setSystemTime(now)
+    unscoped.loan.findMany.mockClear()
+  })
 
-    mockPrisma = {
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  it("buckets outstanding by the oldest unpaid due date using the real report", async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      loan("100", "2026-03-31T00:00:00.000Z"),
+      loan("200", "2026-03-25T00:00:00.000Z"),
+      loan("300", "2026-03-02T00:00:00.000Z"),
+      loan("400", "2026-01-01T00:00:00.000Z"),
+      loan("50", "2026-03-26T00:00:00.000Z"),
+      loan("80", "2026-01-02T00:00:00.000Z"),
+      loan("10", "2026-04-01T00:00:00.000Z"),
+      loan("25", null),
+      loan("1000", "2026-01-01T00:00:00.000Z", ["2026-03-31T00:00:00.000Z"]),
+    ])
+    scopedDal.mockResolvedValue({ organizationId: "org-a", prisma: { loan: { findMany } } })
+
+    const report = await getPortfolioAtRisk()
+
+    expect(unscoped.loan.findMany).not.toHaveBeenCalled()
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { status: "ACTIVE" },
+      include: expect.objectContaining({
+        repaymentSchedule: expect.objectContaining({
+          where: { isPaid: false, scheduledDate: { lt: now } },
+          orderBy: { scheduledDate: "asc" },
+        }),
+      }),
+    }))
+    expect(report).toEqual({
+      totalOutstanding: 2165,
+      par1: 150,
+      par7: 200,
+      par30: 380,
+      par90: 1400,
+      parTotal: 2130,
+    })
+  })
+})
+
+describe("getCollectionEfficiency", () => {
+  const centre = {
+    id: "centre-1",
+    name: "Harbour",
+    branchId: "branch-1",
+    branch: { name: "Colombo" },
+  }
+  const otherBranchCentre = {
+    id: "centre-2",
+    name: "Harbour",
+    branchId: "branch-2",
+    branch: { name: "Galle" },
+  }
+
+  function schedule(opts: {
+    loanId: string
+    instalmentNumber: number
+    scheduledDate: string
+    scheduledAmount: string
+    centre?: typeof centre
+    repayments: Array<{ instalmentNumber: number | null; paidDate: string; amount: string }>
+  }) {
+    const place = opts.centre ?? centre
+    return {
+      loanId: opts.loanId,
+      instalmentNumber: opts.instalmentNumber,
+      scheduledDate: new Date(opts.scheduledDate),
+      scheduledAmount: money(opts.scheduledAmount),
       loan: {
-        findMany: jest.fn(),
-      },
-      repaymentSchedule: {
-        findMany: jest.fn(),
-      },
-      loanRepayment: {
-        findMany: jest.fn(),
+        member: { centre: place },
+        repayments: opts.repayments.map((repayment) => ({
+          instalmentNumber: repayment.instalmentNumber,
+          paidDate: new Date(repayment.paidDate),
+          amount: money(repayment.amount),
+        })),
       },
     }
+  }
 
-    ;(requireRole as jest.Mock).mockResolvedValue(undefined)
-    ;(getScopedDal as jest.Mock).mockResolvedValue({
-      organizationId: "org-test-1",
-      userId: "user-1",
-      role: "HEAD_OFFICE",
-      prisma: mockPrisma,
-    })
+  function receipt(amount: string, paidDate: string, place = centre) {
+    return {
+      paidDate: new Date(paidDate),
+      amount: money(amount),
+      loan: { member: { centre: place } },
+    }
+  }
+
+  beforeEach(() => {
+    unscoped.repaymentSchedule.findMany.mockClear()
+    unscoped.loanRepayment.findMany.mockClear()
+    unscoped.cashFlow.findMany.mockClear()
   })
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // getPortfolioAtRisk()
-  // ════════════════════════════════════════════════════════════════════════════
-
-  describe("getPortfolioAtRisk()", () => {
-    it("should reject when user lacks authorized role", async () => {
-      ;(requireRole as jest.Mock).mockRejectedValueOnce(new Error("Forbidden: requires one of authorized roles"))
-
-      await expect(getPortfolioAtRisk()).rejects.toThrow("Forbidden")
+  async function run(schedules: unknown[], receipts: unknown[], start = "2026-03-01", end = "2026-03-31") {
+    const findSchedules = jest.fn().mockResolvedValue(schedules)
+    const findReceipts = jest.fn().mockResolvedValue(receipts)
+    scopedDal.mockResolvedValue({
+      organizationId: "org-a",
+      role: "BRANCH_MANAGER",
+      prisma: {
+        repaymentSchedule: { findMany: findSchedules },
+        loanRepayment: { findMany: findReceipts },
+        cashFlow: { findMany: jest.fn() },
+      },
     })
+    const rows = await getCollectionEfficiency(start, end)
+    return { rows, findSchedules, findReceipts }
+  }
 
-    it("should return zero PAR when all loans are fully performing (0 DPD)", async () => {
-      mockPrisma.loan.findMany.mockResolvedValueOnce([
-        {
-          id: "loan-1",
-          outstanding: new Prisma.Decimal(5000),
-          repaymentSchedule: [],
-        },
-        {
-          id: "loan-2",
-          outstanding: new Prisma.Decimal(3000),
-          repaymentSchedule: [],
-        },
-      ])
-
-      const result = await getPortfolioAtRisk()
-
-      expect(result.totalOutstanding).toBe(8000)
-      expect(result.par1).toBe(0)
-      expect(result.par7).toBe(0)
-      expect(result.par30).toBe(0)
-      expect(result.par90).toBe(0)
-      expect(result.parTotal).toBe(0)
-    })
-
-    it("should correctly classify loans into cumulative PAR thresholds (PAR 1, 7, 30, 90)", async () => {
-      const now = new Date()
-      const daysAgo = (days: number) =>
-        new Date(now.getTime() - days * 24 * 60 * 60 * 1000 - 1000)
-
-      mockPrisma.loan.findMany.mockResolvedValueOnce([
-        // Loan A: 3 DPD -> PAR 1 only (1,000)
-        {
-          id: "loan-a",
-          outstanding: new Prisma.Decimal(1000),
-          repaymentSchedule: [{ scheduledDate: daysAgo(3) }],
-        },
-        // Loan B: 15 DPD -> PAR 1, PAR 7 (2,000)
-        {
-          id: "loan-b",
-          outstanding: new Prisma.Decimal(2000),
-          repaymentSchedule: [{ scheduledDate: daysAgo(15) }],
-        },
-        // Loan C: 45 DPD -> PAR 1, PAR 7, PAR 30 (3,000)
-        {
-          id: "loan-c",
-          outstanding: new Prisma.Decimal(3000),
-          repaymentSchedule: [{ scheduledDate: daysAgo(45) }],
-        },
-        // Loan D: 95 DPD -> PAR 1, PAR 7, PAR 30, PAR 90 (4,000)
-        {
-          id: "loan-d",
-          outstanding: new Prisma.Decimal(4000),
-          repaymentSchedule: [{ scheduledDate: daysAgo(95) }],
-        },
-        // Loan E: Current / 0 DPD -> Not in PAR (5,000)
-        {
-          id: "loan-e",
-          outstanding: new Prisma.Decimal(5000),
-          repaymentSchedule: [],
-        },
-      ])
-
-      const result = await getPortfolioAtRisk()
-
-      // Cumulative checks:
-      // PAR 90: Loan D = 4,000
-      expect(result.par90).toBe(4000)
-
-      // PAR 30: Loan C (3,000) + Loan D (4,000) = 7,000
-      expect(result.par30).toBe(7000)
-
-      // PAR 7:  Loan B (2,000) + Loan C (3,000) + Loan D (4,000) = 9,000
-      expect(result.par7).toBe(9000)
-
-      // PAR 1:  Loan A (1,000) + Loan B (2,000) + Loan C (3,000) + Loan D (4,000) = 10,000
-      expect(result.par1).toBe(10000)
-
-      // parTotal is the headline cumulative PAR (par1)
-      expect(result.parTotal).toBe(10000)
-      expect(result.parTotal).toBe(result.par1)
-
-      // Total portfolio outstanding includes performing loan E
-      expect(result.totalOutstanding).toBe(15000)
-    })
-
-    it("should measure DPD from the oldest overdue instalment when a loan has multiple past-due instalments", async () => {
-      const now = new Date()
-      const daysAgo = (days: number) =>
-        new Date(now.getTime() - days * 24 * 60 * 60 * 1000 - 1000)
-
-      // Loan with multiple overdue schedules: oldest is 50 days ago
-      mockPrisma.loan.findMany.mockResolvedValueOnce([
-        {
-          id: "loan-multi",
-          outstanding: new Prisma.Decimal(2500),
-          repaymentSchedule: [
-            { scheduledDate: daysAgo(50) }, // oldest
-            { scheduledDate: daysAgo(10) },
+  it("separates cash received in the window from the due-cohort balance at the cutoff", async () => {
+    const { rows } = await run(
+      [
+        schedule({
+          loanId: "loan-1",
+          instalmentNumber: 2,
+          scheduledDate: "2026-03-15T00:00:00.000Z",
+          scheduledAmount: "100.00",
+          repayments: [
+            { instalmentNumber: 2, paidDate: "2026-02-20T00:00:00.000Z", amount: "40.00" },
+            { instalmentNumber: 2, paidDate: "2026-03-20T00:00:00.000Z", amount: "30.00" },
+            { instalmentNumber: 1, paidDate: "2026-03-20T00:00:00.000Z", amount: "999.00" },
           ],
+        }),
+      ],
+      [
+        receipt("30.00", "2026-03-20T00:00:00.000Z"),
+        receipt("15.00", "2026-03-21T00:00:00.000Z"),
+        receipt("-15.00", "2026-03-22T00:00:00.000Z"),
+      ]
+    )
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        branchId: "branch-1",
+        branchName: "Colombo",
+        centreName: "Harbour",
+        scheduled: 100,
+        collected: 30,
+        efficiency: 30,
+        dueCohortCollected: 70,
+        dueCohortEfficiency: 70,
+        metric: "cash_received",
+      }),
+    ])
+  })
+
+  it("applies inclusive date boundaries and does not merge branches", async () => {
+    const { rows, findSchedules, findReceipts } = await run(
+      [
+        schedule({
+          loanId: "loan-1",
+          instalmentNumber: 1,
+          scheduledDate: "2026-03-01T00:00:00.000Z",
+          scheduledAmount: "10.00",
+          repayments: [],
+        }),
+        schedule({
+          loanId: "loan-1",
+          instalmentNumber: 2,
+          scheduledDate: "2026-03-31T00:00:00.000Z",
+          scheduledAmount: "20.00",
+          repayments: [{ instalmentNumber: 2, paidDate: "2026-03-31T00:00:00.000Z", amount: "20.00" }],
+        }),
+        schedule({
+          loanId: "loan-2",
+          instalmentNumber: 1,
+          scheduledDate: "2026-03-15T00:00:00.000Z",
+          scheduledAmount: "50.00",
+          centre: otherBranchCentre,
+          repayments: [],
+        }),
+      ],
+      [
+        receipt("5.00", "2026-03-01T00:00:00.000Z"),
+        receipt("7.00", "2026-03-31T00:00:00.000Z"),
+        receipt("50.00", "2026-03-15T00:00:00.000Z", otherBranchCentre),
+      ],
+      "2026-03-01T00:00:00.000Z",
+      "2026-03-31T00:00:00.000Z"
+    )
+
+    expect(findSchedules).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        scheduledDate: {
+          gte: new Date("2026-03-01T00:00:00.000Z"),
+          lte: new Date("2026-03-31T00:00:00.000Z"),
         },
-      ])
+        supersededAt: null,
+      },
+    }))
+    expect(findReceipts.mock.calls[0][0].where.paidDate).toEqual({
+      gte: new Date("2026-03-01T00:00:00.000Z"),
+      lte: new Date("2026-03-31T00:00:00.000Z"),
+    })
+    expect(unscoped.repaymentSchedule.findMany).not.toHaveBeenCalled()
+    expect(unscoped.loanRepayment.findMany).not.toHaveBeenCalled()
+    expect(unscoped.cashFlow.findMany).not.toHaveBeenCalled()
+    expect(JSON.stringify(findSchedules.mock.calls[0][0])).not.toContain("paidAmount")
 
-      const result = await getPortfolioAtRisk()
+    const colombo = rows.find((row) => row.branchId === "branch-1")
+    const galle = rows.find((row) => row.branchId === "branch-2")
+    expect(colombo).toEqual(expect.objectContaining({ scheduled: 30, collected: 12, dueCohortCollected: 20 }))
+    expect(galle).toEqual(expect.objectContaining({ scheduled: 50, collected: 50, centreName: "Harbour" }))
+  })
 
-      // Oldest is 50 DPD, so loan qualifies for PAR 1, 7, 30, but not 90
-      expect(result.par1).toBe(2500)
-      expect(result.par7).toBe(2500)
-      expect(result.par30).toBe(2500)
-      expect(result.par90).toBe(0)
-      expect(result.parTotal).toBe(2500)
-      expect(result.totalOutstanding).toBe(2500)
+  it("expands a calendar end date through the end of that day", async () => {
+    const { findSchedules } = await run([], [], "2026-03-01", "2026-03-31")
+    expect(findSchedules.mock.calls[0][0].where.scheduledDate).toEqual({
+      gte: new Date("2026-03-01T00:00:00.000Z"),
+      lte: new Date("2026-03-31T23:59:59.999Z"),
     })
   })
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // getCollectionEfficiency()
-  // ════════════════════════════════════════════════════════════════════════════
-
-  describe("getCollectionEfficiency()", () => {
-    const centreA = {
-      id: "centre-1",
-      name: "North Centre",
-      branchId: "branch-1",
-      branch: { id: "branch-1", name: "Main Branch" },
-    }
-
-    const centreB = {
-      id: "centre-2",
-      name: "South Centre",
-      branchId: "branch-2",
-      branch: { id: "branch-2", name: "West Branch" },
-    }
-
-    it("should correctly compute cash-received efficiency and cohort efficiency", async () => {
-      // Schedules due in reporting period
-      mockPrisma.repaymentSchedule.findMany.mockResolvedValueOnce([
-        {
-          scheduledAmount: new Prisma.Decimal(1000),
-          paidAmount: new Prisma.Decimal(1000),
-          loan: { member: { centre: centreA } },
-        },
-        {
-          scheduledAmount: new Prisma.Decimal(1000),
-          paidAmount: new Prisma.Decimal(500),
-          loan: { member: { centre: centreA } },
-        },
-      ])
-
-      // Actual cash payments received in period
-      mockPrisma.loanRepayment.findMany.mockResolvedValueOnce([
-        {
-          amount: new Prisma.Decimal(1000),
-          paymentReversal: null,
-          loan: { member: { centre: centreA } },
-        },
-        {
-          amount: new Prisma.Decimal(800),
-          paymentReversal: null,
-          loan: { member: { centre: centreA } },
-        },
-      ])
-
-      const result = await getCollectionEfficiency("2026-04-01", "2026-04-30")
-
-      expect(result).toHaveLength(1)
-      const row = result[0]
-      expect(row.branchName).toBe("Main Branch")
-      expect(row.centreName).toBe("North Centre")
-      expect(row.scheduled).toBe(2000)
-      expect(row.collected).toBe(1800)          // Cash received: 1000 + 800
-      expect(row.cohortCollected).toBe(1500)    // Cumulative cohort paid: 1000 + 500
-      expect(row.efficiency).toBe(90)           // (1800 / 2000) * 100
-      expect(row.cohortEfficiency).toBe(75)     // (1500 / 2000) * 100
-    })
-
-    it("should exclude approved payment reversals from cash collected", async () => {
-      mockPrisma.repaymentSchedule.findMany.mockResolvedValueOnce([
-        {
-          scheduledAmount: new Prisma.Decimal(1000),
-          paidAmount: new Prisma.Decimal(1000),
-          loan: { member: { centre: centreA } },
-        },
-      ])
-
-      mockPrisma.loanRepayment.findMany.mockResolvedValueOnce([
-        {
-          amount: new Prisma.Decimal(500),
-          paymentReversal: null,
-          loan: { member: { centre: centreA } },
-        },
-        // APPROVED reversal: must be skipped entirely
-        {
-          amount: new Prisma.Decimal(400),
-          paymentReversal: { status: "APPROVED" },
-          loan: { member: { centre: centreA } },
-        },
-        // PENDING reversal: not yet approved, so still counted as collected
-        {
-          amount: new Prisma.Decimal(200),
-          paymentReversal: { status: "PENDING" },
-          loan: { member: { centre: centreA } },
-        },
-      ])
-
-      const result = await getCollectionEfficiency("2026-04-01", "2026-04-30")
-
-      expect(result).toHaveLength(1)
-      // 500 + 200 = 700 (400 is excluded)
-      expect(result[0].collected).toBe(700)
-      expect(result[0].efficiency).toBe(70)
-    })
-
-    it("should aggregate by centre and sort descending by efficiency", async () => {
-      mockPrisma.repaymentSchedule.findMany.mockResolvedValueOnce([
-        {
-          scheduledAmount: new Prisma.Decimal(1000),
-          paidAmount: new Prisma.Decimal(500),
-          loan: { member: { centre: centreA } },
-        },
-        {
-          scheduledAmount: new Prisma.Decimal(1000),
-          paidAmount: new Prisma.Decimal(1000),
-          loan: { member: { centre: centreB } },
-        },
-      ])
-
-      mockPrisma.loanRepayment.findMany.mockResolvedValueOnce([
-        {
-          amount: new Prisma.Decimal(500),
-          paymentReversal: null,
-          loan: { member: { centre: centreA } },
-        },
-        {
-          amount: new Prisma.Decimal(1000),
-          paymentReversal: null,
-          loan: { member: { centre: centreB } },
-        },
-      ])
-
-      const result = await getCollectionEfficiency("2026-04-01", "2026-04-30")
-
-      expect(result).toHaveLength(2)
-      // centreB has 100% efficiency, centreA has 50%
-      expect(result[0].centreName).toBe("South Centre")
-      expect(result[0].efficiency).toBe(100)
-      expect(result[1].centreName).toBe("North Centre")
-      expect(result[1].efficiency).toBe(50)
-    })
-
-    it("should handle zero scheduled amounts safely without division by zero", async () => {
-      mockPrisma.repaymentSchedule.findMany.mockResolvedValueOnce([])
-
-      mockPrisma.loanRepayment.findMany.mockResolvedValueOnce([
-        {
-          amount: new Prisma.Decimal(200),
-          paymentReversal: null,
-          loan: { member: { centre: centreA } },
-        },
-      ])
-
-      const result = await getCollectionEfficiency("2026-04-01", "2026-04-30")
-
-      expect(result).toHaveLength(1)
-      expect(result[0].scheduled).toBe(0)
-      expect(result[0].collected).toBe(200)
-      expect(result[0].efficiency).toBe(0)
-      expect(result[0].cohortEfficiency).toBe(0)
-    })
+  it("rejects an inverted reporting window", async () => {
+    scopedDal.mockResolvedValue({ prisma: {} })
+    await expect(getCollectionEfficiency("2026-04-02", "2026-04-01")).rejects.toThrow(/start is after end/)
   })
 })

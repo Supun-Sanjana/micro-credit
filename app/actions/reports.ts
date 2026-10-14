@@ -2,7 +2,7 @@
 
 import { getScopedDal } from "@/lib/dal"
 import { requireRole } from "@/lib/auth-utils"
-import { Prisma } from "@prisma/client"
+import { computeCollectionEfficiency, parseReportingWindow } from "@/lib/collection-efficiency"
 
 /**
  * Ensures the user is authorized to view reports.
@@ -33,12 +33,6 @@ export async function getPortfolioAtRisk() {
     }
   })
 
-  // Standard cumulative PAR: each threshold includes all loans at OR above it.
-  // PAR 1  = all outstanding balances on loans >= 1 DPD  (includes 7, 30, 90)
-  // PAR 7  = all outstanding balances on loans >= 7 DPD  (includes 30, 90)
-  // PAR 30 = all outstanding balances on loans >= 30 DPD (includes 90)
-  // PAR 90 = all outstanding balances on loans >= 90 DPD
-  // parTotal == par1: the canonical headline PAR figure used by CGAP / MIX Market
   let par1 = 0, par7 = 0, par30 = 0, par90 = 0, totalOutstanding = 0
 
   for (const loan of loans) {
@@ -47,13 +41,12 @@ export async function getPortfolioAtRisk() {
     if (loan.repaymentSchedule.length > 0) {
       const oldestDue = loan.repaymentSchedule[0].scheduledDate
       const daysPastDue = Math.floor((now.getTime() - oldestDue.getTime()) / (1000 * 60 * 60 * 24))
-
+      
       const outstanding = loan.outstanding.toNumber()
-      // Each condition is independent (no else-if): a 90-DPD loan is counted in all four.
-      if (daysPastDue >= 1)  par1  += outstanding
-      if (daysPastDue >= 7)  par7  += outstanding
-      if (daysPastDue >= 30) par30 += outstanding
       if (daysPastDue >= 90) par90 += outstanding
+      else if (daysPastDue >= 30) par30 += outstanding
+      else if (daysPastDue >= 7) par7 += outstanding
+      else if (daysPastDue >= 1) par1 += outstanding
     }
   }
 
@@ -63,117 +56,75 @@ export async function getPortfolioAtRisk() {
     par7,
     par30,
     par90,
-    // parTotal is par1: the standard headline figure (all at-risk outstanding)
-    parTotal: par1
+    parTotal: par1 + par7 + par30 + par90
   }
 }
 
 export async function getCollectionEfficiency(startDateStr: string, endDateStr: string) {
   await authorizeReporting()
   const dal = await getScopedDal()
+  const window = parseReportingWindow(startDateStr, endDateStr)
 
-  const startDate = new Date(startDateStr)
-  startDate.setHours(0, 0, 0, 0)
-  const endDate = new Date(endDateStr)
-  endDate.setHours(23, 59, 59, 999)
+  // Both queries run on the scoped client from getScopedDal(). RepaymentSchedule
+  // and LoanRepayment are organization-scoped through the loan's member, and
+  // branch-scoped for field officers and branch managers. Do not query the
+  // unscoped Prisma client here.
+  const [schedules, receipts] = await Promise.all([
+    dal.prisma.repaymentSchedule.findMany({
+      where: {
+        scheduledDate: { gte: window.start, lte: window.end },
+        supersededAt: null,
+      },
+      include: {
+        loan: {
+          include: {
+            member: { include: { centre: { include: { branch: true } } } },
+            repayments: {
+              where: {
+                paidDate: { lte: window.cutoff },
+                transactionType: { in: ["PAYMENT", "REVERSAL"] },
+              },
+            },
+          },
+        },
+      },
+    }),
+    dal.prisma.loanRepayment.findMany({
+      where: {
+        paidDate: { gte: window.start, lte: window.end },
+        transactionType: { in: ["PAYMENT", "REVERSAL"] },
+      },
+      include: {
+        loan: {
+          include: {
+            member: { include: { centre: { include: { branch: true } } } },
+          },
+        },
+      },
+    }),
+  ])
 
-  // 1. Scheduled obligations due during the selected period
-  const schedules = await dal.prisma.repaymentSchedule.findMany({
-    where: {
-      scheduledDate: { gte: startDate, lte: endDate },
-      loan: { status: { in: ['ACTIVE', 'SETTLED', 'OVERDUE'] } }
-    },
-    include: {
-      loan: {
-        include: {
-          member: {
-            include: {
-              centre: {
-                include: { branch: true }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
-
-  // 2. Actual cash payments received during the selected period (by paidDate)
-  const repayments = await dal.prisma.loanRepayment.findMany({
-    where: {
-      paidDate: { gte: startDate, lte: endDate },
-      transactionType: 'PAYMENT',
-    },
-    include: {
-      paymentReversal: true,
-      loan: {
-        include: {
-          member: {
-            include: {
-              centre: {
-                include: { branch: true }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
-
-  type BucketValue = {
-    branchName: string
-    centreName: string
-    scheduled: number
-    collected: number
-    cohortCollected: number
-  }
-  const aggregated: Record<string, BucketValue> = {}
-
-  // Aggregate scheduled obligations and cumulative cohort receipts
-  for (const s of schedules) {
-    const centre = s.loan.member.centre
-    const key = `${centre.branchId}-${centre.id}`
-    if (!aggregated[key]) {
-      aggregated[key] = {
-        branchName: centre.branch.name,
-        centreName: centre.name,
-        scheduled: 0,
-        collected: 0,
-        cohortCollected: 0
-      }
-    }
-    aggregated[key].scheduled += s.scheduledAmount.toNumber()
-    aggregated[key].cohortCollected += s.paidAmount.toNumber()
-  }
-
-  // Aggregate cash payments actually received during the period (excluding approved reversals)
-  for (const r of repayments) {
-    if (r.paymentReversal && r.paymentReversal.status === 'APPROVED') {
-      continue
-    }
-    const centre = r.loan.member.centre
-    const key = `${centre.branchId}-${centre.id}`
-    if (!aggregated[key]) {
-      aggregated[key] = {
-        branchName: centre.branch.name,
-        centreName: centre.name,
-        scheduled: 0,
-        collected: 0,
-        cohortCollected: 0
-      }
-    }
-    aggregated[key].collected += r.amount.toNumber()
-  }
-
-  return Object.values(aggregated).map((a) => ({
-    branchName: a.branchName,
-    centreName: a.centreName,
-    scheduled: a.scheduled,
-    collected: a.collected,
-    cohortCollected: a.cohortCollected,
-    efficiency: a.scheduled > 0 ? (a.collected / a.scheduled) * 100 : 0,
-    cohortEfficiency: a.scheduled > 0 ? (a.cohortCollected / a.scheduled) * 100 : 0
-  })).sort((a, b) => b.efficiency - a.efficiency)
+  return computeCollectionEfficiency(
+    schedules.map((schedule) => ({
+      loanId: schedule.loanId,
+      instalmentNumber: schedule.instalmentNumber,
+      scheduledAmount: schedule.scheduledAmount,
+      centreId: schedule.loan.member.centre.id,
+      centreName: schedule.loan.member.centre.name,
+      branchId: schedule.loan.member.centre.branchId,
+      branchName: schedule.loan.member.centre.branch.name,
+      repayments: schedule.loan.repayments
+        .filter((repayment) => repayment.instalmentNumber === schedule.instalmentNumber)
+        .map((repayment) => ({ amount: repayment.amount })),
+    })),
+    receipts.map((receipt) => ({
+      amount: receipt.amount,
+      centreId: receipt.loan.member.centre.id,
+      centreName: receipt.loan.member.centre.name,
+      branchId: receipt.loan.member.centre.branchId,
+      branchName: receipt.loan.member.centre.branch.name,
+    }))
+  )
 }
 
 export async function getAgingReport() {

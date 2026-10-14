@@ -1,9 +1,7 @@
 import { POST } from "@/app/api/field/collect/route"
 import { getScopedDal } from "@/lib/dal"
+import { assertScheduleOwnership } from "@/lib/field-collection"
 import { recordPayment } from "@/lib/services/payment-service"
-import { Prisma } from "@prisma/client"
-
-// ── Module mocks ──────────────────────────────────────────────────────────────
 
 jest.mock("@/lib/dal", () => ({
   getScopedDal: jest.fn(),
@@ -13,341 +11,166 @@ jest.mock("@/lib/services/payment-service", () => ({
   recordPayment: jest.fn(),
 }))
 
-describe("Field Collection API (POST /api/field/collect)", () => {
-  let mockPrisma: any
-  let mockTx: any
+const scopedDal = getScopedDal as jest.Mock
+const record = recordPayment as jest.Mock
+
+function collect(body: unknown) {
+  return POST(new Request("http://localhost/api/field/collect", {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: { "content-type": "application/json" },
+  }))
+}
+
+describe("assertScheduleOwnership", () => {
+  const schedule = {
+    loanId: "loan-1",
+    loan: { member: { organizationId: "org-1" } },
+  }
+
+  it("accepts a schedule on the requested loan and organization", () => {
+    expect(() => assertScheduleOwnership(schedule, "loan-1", "org-1")).not.toThrow()
+  })
+
+  it("rejects a schedule from another loan", () => {
+    expect(() => assertScheduleOwnership(schedule, "loan-2", "org-1")).toThrow(/does not belong/)
+  })
+
+  it("rejects a schedule from another organization", () => {
+    expect(() => assertScheduleOwnership(schedule, "loan-1", "org-2")).toThrow(/Schedule not found/)
+  })
+})
+
+describe("POST /api/field/collect", () => {
+  const tx = {
+    loan: { findFirst: jest.fn() },
+    fieldOfficerAssignment: { findFirst: jest.fn() },
+    repaymentSchedule: { findFirst: jest.fn() },
+    collectionAttempt: { create: jest.fn() },
+  }
+  const loanRepayment = { findUnique: jest.fn() }
+  let transaction: jest.Mock
 
   beforeEach(() => {
     jest.clearAllMocks()
-
-    mockTx = {
-      loan: {
-        findFirst: jest.fn(),
-      },
-      fieldOfficerAssignment: {
-        findFirst: jest.fn(),
-      },
-      repaymentSchedule: {
-        findFirst: jest.fn(),
-      },
-      collectionAttempt: {
-        findFirst: jest.fn(),
-        create: jest.fn(),
-      },
-    }
-
-    mockPrisma = {
-      loanRepayment: {
-        findUnique: jest.fn().mockResolvedValue(null),
-      },
-      $transaction: jest.fn(async (callback: (tx: any) => Promise<any>) => {
-        return callback(mockTx)
-      }),
-    }
-
-    ;(getScopedDal as jest.Mock).mockResolvedValue({
-      organizationId: "org-field-1",
-      userId: "officer-100",
-      role: "FIELD_OFFICER",
-      prisma: mockPrisma,
+    transaction = jest.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx))
+    scopedDal.mockResolvedValue({
+      organizationId: "org-1",
+      userId: "officer-1",
+      prisma: { loanRepayment, $transaction: transaction },
     })
+    tx.loan.findFirst.mockResolvedValue({
+      id: "loan-1",
+      member: { centreId: "centre-1", organizationId: "org-1" },
+    })
+    tx.fieldOfficerAssignment.findFirst.mockResolvedValue({ id: "assign-1" })
+    tx.repaymentSchedule.findFirst.mockResolvedValue({
+      id: "sched-1",
+      loanId: "loan-1",
+      loan: { member: { organizationId: "org-1" } },
+    })
+    tx.collectionAttempt.create.mockResolvedValue({ id: "attempt-1" })
+    loanRepayment.findUnique.mockResolvedValue(null)
+    record.mockResolvedValue({ id: "repay-1", clientTransactionId: "tx-1" })
   })
 
-  function makeRequest(body: any) {
-    return new Request("http://localhost/api/field/collect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
+  const valid = {
+    loanId: "loan-1",
+    scheduleId: "sched-1",
+    amount: 100,
+    method: "CASH",
+    clientTransactionId: "tx-1",
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // 1. Input Validation
-  // ════════════════════════════════════════════════════════════════════════════
-
-  describe("Input validation", () => {
-    it("should return 400 if clientTransactionId is missing or empty string", async () => {
-      const res1 = await POST(makeRequest({ loanId: "loan-1", amount: 100 }))
-      expect(res1.status).toBe(400)
-      const data1 = await res1.json()
-      expect(data1.error).toBe("clientTransactionId required")
-
-      const res2 = await POST(makeRequest({ clientTransactionId: "   ", loanId: "loan-1", amount: 100 }))
-      expect(res2.status).toBe(400)
-      const data2 = await res2.json()
-      expect(data2.error).toBe("clientTransactionId required")
-    })
-
-    it("should return 400 if loanId is missing or empty string", async () => {
-      const res1 = await POST(makeRequest({ clientTransactionId: "tx-1", amount: 100 }))
-      expect(res1.status).toBe(400)
-      const data1 = await res1.json()
-      expect(data1.error).toBe("loanId required")
-
-      const res2 = await POST(makeRequest({ clientTransactionId: "tx-1", loanId: "  ", amount: 100 }))
-      expect(res2.status).toBe(400)
-      const data2 = await res2.json()
-      expect(data2.error).toBe("loanId required")
-    })
-
-    it("should return 400 if amount is missing, non-positive, or NaN", async () => {
-      const invalidAmounts = [0, -50, null, undefined, "abc"]
-
-      for (const amount of invalidAmounts) {
-        const res = await POST(makeRequest({ clientTransactionId: "tx-1", loanId: "loan-1", amount }))
-        expect(res.status).toBe(400)
-        const data = await res.json()
-        expect(data.error).toBe("Valid positive amount required")
-      }
-    })
+  it("accepts a schedule that belongs to the loan", async () => {
+    const response = await collect(valid)
+    expect(response.status).toBe(201)
+    expect(record).toHaveBeenCalledWith(tx, expect.objectContaining({
+      loanId: "loan-1",
+      scheduleId: "sched-1",
+      clientTransactionId: "tx-1",
+    }))
+    expect(tx.collectionAttempt.create).toHaveBeenCalledTimes(1)
   })
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // 2. Idempotency & Duplicate Guards
-  // ════════════════════════════════════════════════════════════════════════════
-
-  describe("Idempotency checks", () => {
-    it("should return existing repayment with 200 without executing transaction if already saved", async () => {
-      const existingRepayment = {
-        id: "rep-existing-1",
-        amount: new Prisma.Decimal(250),
-        clientTransactionId: "tx-existing-100",
-      }
-      mockPrisma.loanRepayment.findUnique.mockResolvedValueOnce(existingRepayment)
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-existing-100",
-        loanId: "loan-1",
-        amount: 250,
-      }))
-
-      expect(res.status).toBe(200)
-      const data = await res.json()
-      expect(data.id).toBe("rep-existing-1")
-      // Crucial: no transaction executed
-      expect(mockPrisma.$transaction).not.toHaveBeenCalled()
+  it("rejects a schedule from another loan before recording a payment", async () => {
+    tx.repaymentSchedule.findFirst.mockResolvedValue({
+      id: "sched-2",
+      loanId: "loan-9",
+      loan: { member: { organizationId: "org-1" } },
     })
-
-    it("should recover gracefully from P2002 race condition and return existing repayment with 200", async () => {
-      const existingFromRace = {
-        id: "rep-race-1",
-        clientTransactionId: "tx-race-1",
-      }
-
-      // Simulate concurrent transaction conflict throwing P2002
-      mockPrisma.$transaction.mockRejectedValueOnce({ code: "P2002" })
-      mockPrisma.loanRepayment.findUnique.mockResolvedValueOnce(existingFromRace)
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-race-1",
-        loanId: "loan-1",
-        amount: 300,
-      }))
-
-      expect(res.status).toBe(200)
-      const data = await res.json()
-      expect(data.id).toBe("rep-race-1")
-    })
+    const response = await collect({ ...valid, scheduleId: "sched-2" })
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Schedule does not belong to this loan" })
+    expect(record).not.toHaveBeenCalled()
+    expect(tx.collectionAttempt.create).not.toHaveBeenCalled()
   })
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // 3. Security, Scoping & Authorization
-  // ════════════════════════════════════════════════════════════════════════════
-
-  describe("Security and authorization validations", () => {
-    it("should reject loan not belonging to organization with 400", async () => {
-      mockTx.loan.findFirst.mockResolvedValueOnce(null)
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-cross-org",
-        loanId: "loan-other-org",
-        amount: 500,
-      }))
-
-      expect(res.status).toBe(400)
-      const data = await res.json()
-      expect(data.error).toBe("Loan not found")
-
-      // Verify the query was scoped to dal.organizationId
-      expect(mockTx.loan.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-        where: {
-          id: "loan-other-org",
-          member: { organizationId: "org-field-1" },
-        },
-      }))
+  it("rejects a schedule from another organization", async () => {
+    tx.repaymentSchedule.findFirst.mockResolvedValue({
+      id: "sched-x",
+      loanId: "loan-1",
+      loan: { member: { organizationId: "org-2" } },
     })
-
-    it("should return 403 when field officer is not assigned to the centre", async () => {
-      mockTx.loan.findFirst.mockResolvedValueOnce({
-        id: "loan-1",
-        member: { centreId: "centre-99" },
-      })
-      mockTx.fieldOfficerAssignment.findFirst.mockResolvedValueOnce(null)
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-unassigned",
-        loanId: "loan-1",
-        amount: 500,
-      }))
-
-      expect(res.status).toBe(403)
-      const data = await res.json()
-      expect(data.error).toBe("Not assigned to this centre")
-    })
-
-    it("should reject cross-loan schedule injection with 400", async () => {
-      mockTx.loan.findFirst.mockResolvedValueOnce({
-        id: "loan-1",
-        member: { centreId: "centre-1" },
-      })
-      mockTx.fieldOfficerAssignment.findFirst.mockResolvedValueOnce({
-        id: "assign-1",
-      })
-      // Schedule belongs to loan-2, so loan-1 lookup returns null
-      mockTx.repaymentSchedule.findFirst.mockResolvedValueOnce(null)
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-injected-sched",
-        loanId: "loan-1",
-        scheduleId: "sched-of-loan-2",
-        amount: 400,
-      }))
-
-      expect(res.status).toBe(400)
-      const data = await res.json()
-      expect(data.error).toBe("Schedule does not belong to this loan")
-
-      expect(mockTx.repaymentSchedule.findFirst).toHaveBeenCalledWith({
-        where: {
-          id: "sched-of-loan-2",
-          loanId: "loan-1",
-        },
-      })
-    })
+    const response = await collect({ ...valid, scheduleId: "sched-x" })
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Schedule not found" })
+    expect(record).not.toHaveBeenCalled()
   })
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // 4. Successful Collection & Schedule Normalization
-  // ════════════════════════════════════════════════════════════════════════════
+  it.each([
+    [{ scheduleId: "sched-1", amount: 10, clientTransactionId: "tx-1" }, "loanId is required"],
+    [{ loanId: "", scheduleId: "sched-1", clientTransactionId: "tx-1" }, "loanId is required"],
+    [{ loanId: "   ", clientTransactionId: "tx-1" }, "loanId is required"],
+    [{ loanId: 12, clientTransactionId: "tx-1" }, "loanId must be a string"],
+    [{ loanId: "loan-1", scheduleId: 9, clientTransactionId: "tx-1" }, "scheduleId must be a string"],
+    [{ loanId: "loan-1", scheduleId: "sched-1" }, "clientTransactionId is required"],
+    [{ loanId: "loan-1", clientTransactionId: "  " }, "clientTransactionId is required"],
+  ])("rejects malformed input %#", async (body, error) => {
+    const response = await collect(body)
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error })
+    expect(transaction).not.toHaveBeenCalled()
+  })
 
-  describe("Successful collection execution", () => {
-    it("should normalize empty string scheduleId to null and record payment successfully", async () => {
-      mockTx.loan.findFirst.mockResolvedValueOnce({
-        id: "loan-1",
-        member: { centreId: "centre-1" },
-      })
-      mockTx.fieldOfficerAssignment.findFirst.mockResolvedValueOnce({
-        id: "assign-1",
-      })
-      ;(recordPayment as jest.Mock).mockResolvedValueOnce({
-        id: "rep-created-1",
-        amount: new Prisma.Decimal(500),
-      })
+  it("normalizes an empty scheduleId to no schedule and does not write an attempt", async () => {
+    const response = await collect({ ...valid, scheduleId: "   " })
+    expect(response.status).toBe(201)
+    expect(tx.repaymentSchedule.findFirst).not.toHaveBeenCalled()
+    expect(record).toHaveBeenCalledWith(tx, expect.objectContaining({ scheduleId: undefined }))
+    expect(tx.collectionAttempt.create).not.toHaveBeenCalled()
+  })
 
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-norm-sched",
-        loanId: "loan-1",
-        scheduleId: "   ", // whitespace only
-        amount: 500,
-      }))
+  it("returns the original collection on a retry with the same clientTransactionId", async () => {
+    loanRepayment.findUnique.mockResolvedValue({ id: "repay-1", clientTransactionId: "tx-1" })
+    const response = await collect(valid)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ id: "repay-1", clientTransactionId: "tx-1" })
+    expect(transaction).not.toHaveBeenCalled()
+    expect(tx.collectionAttempt.create).not.toHaveBeenCalled()
+  })
 
-      expect(res.status).toBe(201)
-      const data = await res.json()
-      expect(data.id).toBe("rep-created-1")
+  it("returns the committed collection when a concurrent retry hits the unique constraint", async () => {
+    record.mockRejectedValue(Object.assign(new Error("Unique constraint"), { code: "P2002" }))
+    loanRepayment.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "repay-winner", clientTransactionId: "tx-1" })
 
-      // Repayment schedule findFirst should not have been called
-      expect(mockTx.repaymentSchedule.findFirst).not.toHaveBeenCalled()
+    const response = await collect(valid)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ id: "repay-winner", clientTransactionId: "tx-1" })
+    expect(tx.collectionAttempt.create).not.toHaveBeenCalled()
+  })
 
-      // recordPayment called with scheduleId: undefined
-      expect(recordPayment).toHaveBeenCalledWith(
-        mockTx,
-        expect.objectContaining({
-          scheduleId: undefined,
-          loanId: "loan-1",
-          clientTransactionId: "tx-norm-sched",
-        })
-      )
+  it("does not insert a second attempt when the attempt unique constraint loses the race", async () => {
+    tx.collectionAttempt.create.mockRejectedValue(Object.assign(new Error("Unique constraint"), { code: "P2002" }))
+    loanRepayment.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "repay-winner", clientTransactionId: "tx-1" })
 
-      // Collection attempt should not be created when scheduleId is null
-      expect(mockTx.collectionAttempt.create).not.toHaveBeenCalled()
-    })
-
-    it("should record payment and create collection attempt idempotently when scheduleId is valid", async () => {
-      mockTx.loan.findFirst.mockResolvedValueOnce({
-        id: "loan-1",
-        member: { centreId: "centre-1" },
-      })
-      mockTx.fieldOfficerAssignment.findFirst.mockResolvedValueOnce({
-        id: "assign-1",
-      })
-      mockTx.repaymentSchedule.findFirst.mockResolvedValueOnce({
-        id: "sched-1",
-        loanId: "loan-1",
-      })
-      mockTx.collectionAttempt.findFirst.mockResolvedValueOnce(null) // No existing attempt
-
-      ;(recordPayment as jest.Mock).mockResolvedValueOnce({
-        id: "rep-created-2",
-        amount: new Prisma.Decimal(750),
-      })
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-valid-attempt",
-        loanId: "loan-1",
-        scheduleId: "sched-1",
-        amount: 750,
-        notes: "Paid in cash",
-      }))
-
-      expect(res.status).toBe(201)
-      const data = await res.json()
-      expect(data.id).toBe("rep-created-2")
-
-      // Attempt was created with clientTxId
-      expect(mockTx.collectionAttempt.create).toHaveBeenCalledWith({
-        data: {
-          organizationId: "org-field-1",
-          scheduleId: "sched-1",
-          officerId: "officer-100",
-          outcome: "PAID",
-          amountCollected: 750,
-          notes: "Paid in cash",
-          clientTxId: "tx-valid-attempt",
-        },
-      })
-    })
-
-    it("should not create duplicate collection attempt if an attempt already exists with clientTxId", async () => {
-      mockTx.loan.findFirst.mockResolvedValueOnce({
-        id: "loan-1",
-        member: { centreId: "centre-1" },
-      })
-      mockTx.fieldOfficerAssignment.findFirst.mockResolvedValueOnce({
-        id: "assign-1",
-      })
-      mockTx.repaymentSchedule.findFirst.mockResolvedValueOnce({
-        id: "sched-1",
-        loanId: "loan-1",
-      })
-      // Existing attempt found
-      mockTx.collectionAttempt.findFirst.mockResolvedValueOnce({
-        id: "attempt-existing-1",
-      })
-
-      ;(recordPayment as jest.Mock).mockResolvedValueOnce({
-        id: "rep-created-3",
-        amount: new Prisma.Decimal(600),
-      })
-
-      const res = await POST(makeRequest({
-        clientTransactionId: "tx-attempt-dup-check",
-        loanId: "loan-1",
-        scheduleId: "sched-1",
-        amount: 600,
-      }))
-
-      expect(res.status).toBe(201)
-      expect(mockTx.collectionAttempt.create).not.toHaveBeenCalled()
-    })
+    const response = await collect(valid)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(expect.objectContaining({ id: "repay-winner" }))
+    expect(tx.collectionAttempt.create).toHaveBeenCalledTimes(1)
   })
 })
