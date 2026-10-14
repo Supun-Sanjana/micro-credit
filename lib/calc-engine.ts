@@ -44,10 +44,15 @@ function isDecliningBalance(product: Pick<LoanProduct, "calculationMethod" | "in
 }
 
 /**
- * Periodic rate for a declining-balance product.
- * `multiplier` is the flat term factor (1.17 = 17% over the full term).
- * The annuity uses that flat factor spread evenly across instalments.
- * `interestMethod NONE` charges no interest.
+ * Periodic rate for declining-balance pricing.
+ *
+ * The product multiplier is a flat term factor: 1.17 means 17% over the whole
+ * term, which is also how flat loans turn principal into total receivable.
+ * For a reducing-balance loan that same factor is spread evenly:
+ * periodicRate = (multiplier - 1) / numberOfInstalments.
+ *
+ * repaymentFrequency is not used. This is not an annual rate divided by
+ * periods per year. interestMethod NONE charges no interest.
  */
 export function decliningPeriodicRate(
   product: Pick<LoanProduct, "multiplier" | "interestMethod" | "numberOfWeeks">

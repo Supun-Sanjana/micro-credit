@@ -98,7 +98,7 @@ export default function ReportsPage() {
       headers = ["Centre ID", "Centre Name", "Branch", "Active Loans", "Total Outstanding"]
     } else if (activeTab === "par" && parData) {
       dataToExport = [parData]
-      headers = ["Total Outstanding", "PAR 1+", "PAR 7+", "PAR 30+", "PAR 90+", "Total PAR", "PAR Ratio (%)"]
+      headers = ["Total Outstanding", "PAR 1+", "PAR 7+", "PAR 30+", "PAR 90+", "PAR 1+ total", "PAR Ratio (%)"]
     } else if (activeTab === "efficiency" && efficiencyData) {
       dataToExport = efficiencyData
       headers = ["Branch Name", "Centre Name", "Due in period", "Cash received", "Cash efficiency (%)", "Due-cohort collected", "Due-cohort efficiency (%)"]
@@ -140,7 +140,7 @@ export default function ReportsPage() {
             if (header === "PAR 7+") val = row.par7 || "0"
             if (header === "PAR 30+") val = row.par30 || "0"
             if (header === "PAR 90+") val = row.par90 || "0"
-            if (header === "Total PAR") val = row.parTotal || "0"
+            if (header === "PAR 1+ total") val = row.parTotal || "0"
             if (header === "PAR Ratio (%)") val = row.totalOutstanding ? ((row.parTotal / row.totalOutstanding) * 100).toFixed(2) : "0"
           } else if (activeTab === "efficiency") {
             if (header === "Branch Name") val = row.branchName || ""
@@ -379,7 +379,10 @@ export default function ReportsPage() {
 
           {activeTab === "par" && parData && !isTabLoading && (
             <div className="bg-slate-50 dark:bg-slate-900 border border-transparent dark:border-slate-800 rounded-[24px] p-[32px] md:p-[40px]">
-              <h2 className="text-[20px] font-sans font-medium text-navy-900 dark:text-white mb-6">Portfolio at Risk (PAR)</h2>
+              <h2 className="text-[20px] font-sans font-medium text-navy-900 dark:text-white mb-2">Portfolio at Risk (PAR)</h2>
+              <p className="text-[14px] text-slate-500 dark:text-slate-400 mb-6 max-w-3xl">
+                Cumulative thresholds, not separate slices. A loan overdue 90 days is included in PAR 1+, 7+, 30+, and 90+. The ratio is PAR 1+ divided by total outstanding.
+              </p>
               <div className="flex flex-col gap-6">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-slate-800/80 p-4 rounded-xl border border-border/40 dark:border-slate-700/60">
@@ -401,7 +404,7 @@ export default function ReportsPage() {
                 </div>
                 <div className="bg-white dark:bg-slate-800/80 p-6 rounded-xl border border-border/40 dark:border-slate-700/60">
                   <div className="text-[15px] text-slate-500 dark:text-slate-400 mb-2">Total Outstanding: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.totalOutstanding.toLocaleString()}</span></div>
-                  <div className="text-[15px] text-slate-500 dark:text-slate-400">Total PAR: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.parTotal.toLocaleString()}</span> ({((parData.parTotal / (parData.totalOutstanding || 1)) * 100).toFixed(2)}%)</div>
+                  <div className="text-[15px] text-slate-500 dark:text-slate-400">PAR 1+: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.parTotal.toLocaleString()}</span> ({((parData.parTotal / (parData.totalOutstanding || 1)) * 100).toFixed(2)}%)</div>
                 </div>
               </div>
             </div>

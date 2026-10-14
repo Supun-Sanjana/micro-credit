@@ -54,7 +54,7 @@ describe("getPortfolioAtRisk", () => {
     jest.useRealTimers()
   })
 
-  it("buckets outstanding by the oldest unpaid due date using the real report", async () => {
+  it("counts cumulative PAR from the oldest unpaid due date", async () => {
     const findMany = jest.fn().mockResolvedValue([
       loan("100", "2026-03-31T00:00:00.000Z"),
       loan("200", "2026-03-25T00:00:00.000Z"),
@@ -80,11 +80,13 @@ describe("getPortfolioAtRisk", () => {
         }),
       }),
     }))
+    // 1 day: 100; 6 days: 50; 7 days: 200; 30 days: 300; 89 days: 80; 90 days: 400 + 1000.
+    // 0 days (10) and no overdue schedule (25) stay out of every threshold.
     expect(report).toEqual({
       totalOutstanding: 2165,
-      par1: 150,
-      par7: 200,
-      par30: 380,
+      par1: 2130,
+      par7: 1980,
+      par30: 1780,
       par90: 1400,
       parTotal: 2130,
     })

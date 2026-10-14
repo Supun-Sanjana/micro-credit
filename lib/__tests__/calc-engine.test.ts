@@ -1,5 +1,5 @@
 import { InterestMethod, LoanCalculationMethod, LoanProduct, Prisma } from "@prisma/client"
-import { buildAmortizationSchedule, calculateLoanTerms } from "../calc-engine"
+import { buildAmortizationSchedule, calculateLoanTerms, decliningPeriodicRate } from "../calc-engine"
 
 function product(overrides: Partial<LoanProduct> = {}): LoanProduct {
   return {
@@ -92,6 +92,25 @@ describe("calc-engine", () => {
       expect(schedule.lines.map((line) => line.payment.toFixed(2))).toEqual(["33.33", "33.33", "33.34"])
       expect(schedule.lines[2].closingBalance.toFixed(2)).toBe("0.00")
       expect(schedule.totalReceivable.toFixed(2)).toBe("100.00")
+    })
+
+    it("spreads the term multiplier across instalments and ignores repayment frequency", () => {
+      const weekly = product({
+        ...declining,
+        repaymentFrequency: "WEEKLY",
+      })
+      const monthly = product({
+        ...declining,
+        repaymentFrequency: "MONTHLY",
+      })
+
+      expect(decliningPeriodicRate(weekly).toFixed(10)).toBe("0.1000000000")
+      expect(decliningPeriodicRate(monthly).toFixed(10)).toBe(decliningPeriodicRate(weekly).toFixed(10))
+
+      const weeklyTerms = calculateLoanTerms(1000, weekly)
+      const monthlyTerms = calculateLoanTerms(1000, monthly)
+      expect(monthlyTerms.totalReceivable.toFixed(2)).toBe(weeklyTerms.totalReceivable.toFixed(2))
+      expect(monthlyTerms.finalPayment.toFixed(2)).toBe(weeklyTerms.finalPayment.toFixed(2))
     })
 
     it("treats interestMethod DECLINING_BALANCE as reducing balance even when the calculation method is flat", () => {

@@ -43,10 +43,12 @@ export async function getPortfolioAtRisk() {
       const daysPastDue = Math.floor((now.getTime() - oldestDue.getTime()) / (1000 * 60 * 60 * 24))
       
       const outstanding = loan.outstanding.toNumber()
+      // Cumulative PAR: a loan overdue 90 days is inside PAR 1+, 7+, 30+, and 90+.
+      // These are nested thresholds, not mutually exclusive ageing slices.
+      if (daysPastDue >= 1) par1 += outstanding
+      if (daysPastDue >= 7) par7 += outstanding
+      if (daysPastDue >= 30) par30 += outstanding
       if (daysPastDue >= 90) par90 += outstanding
-      else if (daysPastDue >= 30) par30 += outstanding
-      else if (daysPastDue >= 7) par7 += outstanding
-      else if (daysPastDue >= 1) par1 += outstanding
     }
   }
 
@@ -56,7 +58,8 @@ export async function getPortfolioAtRisk() {
     par7,
     par30,
     par90,
-    parTotal: par1 + par7 + par30 + par90
+    // PAR 1+ is the portfolio-at-risk total. Do not sum the nested buckets.
+    parTotal: par1
   }
 }
 
