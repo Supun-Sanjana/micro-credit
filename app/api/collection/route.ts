@@ -280,7 +280,7 @@ export async function POST(request: Request) {
                 throw new PaymentIdempotencyConflictError()
               }
 
-              duplicates.push({ entryId: clientTransactionId, repaymentId: existingComp?.id || existingVol?.id })
+              duplicates.push({ entryId: clientTransactionId, repaymentId: existingComp?.id ?? existingVol?.id ?? "" })
               continue
             }
           }
@@ -575,7 +575,7 @@ export async function POST(request: Request) {
               throw new PaymentIdempotencyConflictError()
             }
 
-            recoveredDuplicates.push({ entryId: clientTransactionId, repaymentId: committedComp?.id || committedVol?.id })
+            recoveredDuplicates.push({ entryId: clientTransactionId, repaymentId: committedComp?.id ?? committedVol?.id ?? "" })
           }
         }
 
