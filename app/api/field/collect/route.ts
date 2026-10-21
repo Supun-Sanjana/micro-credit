@@ -3,6 +3,12 @@ import { getScopedDal } from "@/lib/dal";
 import { recordPayment } from "@/lib/services/payment-service";
 import { assertScheduleOwnership, parseFieldCollectionBody } from "@/lib/field-collection";
 import { Prisma } from "@prisma/client";
+import {
+  assertMatchingPaymentFingerprint,
+  normalizePaymentIdempotencyPayload,
+  paymentIdempotencyFingerprint,
+  PaymentIdempotencyConflictError,
+} from "@/lib/payment-idempotency";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +25,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
     const { loanId, scheduleId, amount, method, clientTransactionId, notes } = parsed.value;
+    const payload = normalizePaymentIdempotencyPayload({ loanId, scheduleId, amount, method });
+    const fingerprint = paymentIdempotencyFingerprint(payload);
 
     const existing = await dal.prisma.loanRepayment.findUnique({
       where: {
@@ -30,6 +38,7 @@ export async function POST(request: Request) {
     });
 
     if (existing) {
+      assertMatchingPaymentFingerprint(existing, fingerprint);
       return NextResponse.json(existing);
     }
 
@@ -61,17 +70,18 @@ export async function POST(request: Request) {
         assertScheduleOwnership(schedule, loan.id, dal.organizationId);
       }
 
-      const decimalAmount = new Prisma.Decimal((amount as any) || 0);
+      const decimalAmount = new Prisma.Decimal(payload.amount);
       const repayment = await recordPayment(tx, {
         organizationId: dal.organizationId,
         loanId,
         amount: decimalAmount,
         paidDate: new Date(),
-        method: (method as any) || "CASH",
+        method: payload.method,
         scheduleId: scheduleId ?? undefined,
         note: notes,
         collectedBy: dal.userId,
         clientTransactionId,
+        idempotencyFingerprint: fingerprint,
         source: 'FIELD_MOBILE'
       });
 
@@ -82,7 +92,7 @@ export async function POST(request: Request) {
             scheduleId,
             officerId: dal.userId,
             outcome: 'PAID',
-            amountCollected: (amount as any) ?? 0,
+            amountCollected: decimalAmount,
             notes,
             clientTxId: clientTransactionId
           }
@@ -102,6 +112,7 @@ export async function POST(request: Request) {
           }
         });
         if (existingAgain) {
+          assertMatchingPaymentFingerprint(existingAgain, fingerprint);
           replay = true;
           return existingAgain;
         }
@@ -111,6 +122,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result, { status: replay ? 200 : 201 });
   } catch (error: any) {
+    if (error instanceof PaymentIdempotencyConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     const message = error?.message || "Collection failed";
     const status = message === "Not assigned to this centre" ? 403 : 400;
     return NextResponse.json({ error: message }, { status });

@@ -3,6 +3,7 @@
 import { getScopedDal } from "@/lib/dal"
 import { requireRole } from "@/lib/auth-utils"
 import { computeCollectionEfficiency, parseReportingWindow } from "@/lib/collection-efficiency"
+import { Prisma } from "@prisma/client"
 
 /**
  * Ensures the user is authorized to view reports.
@@ -15,7 +16,11 @@ async function authorizeReporting() {
 export async function getPortfolioAtRisk() {
   await authorizeReporting()
   const dal = await getScopedDal()
+  // RepaymentSchedule.scheduledDate is a database DATE. Evaluate delinquency
+  // against the UTC calendar day so a loan is one day past due at the start of
+  // the following UTC day, irrespective of the server's local timezone.
   const now = new Date()
+  const asOfDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
 
   const loans = await dal.prisma.loan.findMany({
     where: {
@@ -26,37 +31,66 @@ export async function getPortfolioAtRisk() {
       repaymentSchedule: {
         where: {
           isPaid: false,
-          scheduledDate: { lt: now }
+          supersededAt: null,
+          scheduledDate: { lt: asOfDate }
         },
         orderBy: { scheduledDate: 'asc' }
       }
     }
   })
 
-  let par1 = 0, par7 = 0, par30 = 0, par90 = 0, totalOutstanding = 0
+  let par1 = new Prisma.Decimal(0)
+  let par7 = new Prisma.Decimal(0)
+  let par30 = new Prisma.Decimal(0)
+  let par90 = new Prisma.Decimal(0)
+  let totalOutstanding = new Prisma.Decimal(0)
 
   for (const loan of loans) {
-    totalOutstanding += loan.outstanding.toNumber()
+    // Gross portfolio is the positive outstanding balance of eligible active
+    // loans. Settled/zero-balance records must not inflate its denominator.
+    const outstanding = new Prisma.Decimal(loan.outstanding)
+    if (outstanding.lte(0)) continue
+
+    totalOutstanding = totalOutstanding.plus(outstanding)
 
     if (loan.repaymentSchedule.length > 0) {
       const oldestDue = loan.repaymentSchedule[0].scheduledDate
-      const daysPastDue = Math.floor((now.getTime() - oldestDue.getTime()) / (1000 * 60 * 60 * 24))
-      
-      const outstanding = loan.outstanding.toNumber()
-      if (daysPastDue >= 90) par90 += outstanding
-      else if (daysPastDue >= 30) par30 += outstanding
-      else if (daysPastDue >= 7) par7 += outstanding
-      else if (daysPastDue >= 1) par1 += outstanding
+      const dueDate = new Date(Date.UTC(
+        oldestDue.getUTCFullYear(),
+        oldestDue.getUTCMonth(),
+        oldestDue.getUTCDate()
+      ))
+      const daysPastDue = Math.floor((asOfDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+
+      // Cumulative PAR: one exposure is counted once per threshold it meets,
+      // never once per overdue schedule.
+      if (daysPastDue >= 1) par1 = par1.plus(outstanding)
+      if (daysPastDue >= 7) par7 = par7.plus(outstanding)
+      if (daysPastDue >= 30) par30 = par30.plus(outstanding)
+      if (daysPastDue >= 90) par90 = par90.plus(outstanding)
     }
   }
 
+  const ratio = (exposure: Prisma.Decimal) =>
+    totalOutstanding.gt(0)
+      ? exposure.dividedBy(totalOutstanding).mul(100).toDecimalPlaces(2).toNumber()
+      : 0
+
   return {
-    totalOutstanding,
-    par1,
-    par7,
-    par30,
-    par90,
-    parTotal: par1 + par7 + par30 + par90
+    totalOutstanding: totalOutstanding.toNumber(),
+    par1: par1.toNumber(),
+    par7: par7.toNumber(),
+    par30: par30.toNumber(),
+    par90: par90.toNumber(),
+    // Total PAR is explicitly the PAR 1+ exposure, not a sum of the
+    // overlapping cumulative threshold values.
+    parTotal: par1.toNumber(),
+    par1Ratio: ratio(par1),
+    par7Ratio: ratio(par7),
+    par30Ratio: ratio(par30),
+    par90Ratio: ratio(par90),
+    parTotalRatio: ratio(par1),
+    asOfDate: asOfDate.toISOString().slice(0, 10),
   }
 }
 

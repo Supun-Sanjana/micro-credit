@@ -254,6 +254,7 @@ model LoanRepayment {
   reversalOfId        String?                  @unique
   allocationMethod    String?
   clientTransactionId String?
+  idempotencyFingerprint String?
   organizationId      String
   loan                Loan                     @relation(fields: [loanId], references: [id])
   organization        Organization             @relation(fields: [organizationId], references: [id])
@@ -263,7 +264,6 @@ model LoanRepayment {
   paymentReversal     PaymentReversal?         @relation("OriginalPaymentReversal")
   reversalRecord      PaymentReversal?         @relation("ReversalPaymentRecord")
 
-  @@unique([loanId, instalmentNumber, paidDate])
   @@unique([organizationId, clientTransactionId])
   @@index([loanId])
   @@index([paidDate])
@@ -712,6 +712,7 @@ model SavingsTransaction {
   createdAt        DateTime               @default(now())
   account          SavingsAccount         @relation(fields: [savingsAccountId], references: [id], onDelete: Cascade)
 
+  @@unique([organizationId, reference])
   @@index([savingsAccountId])
   @@index([date])
 }

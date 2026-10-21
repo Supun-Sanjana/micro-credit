@@ -54,7 +54,7 @@ describe("getPortfolioAtRisk", () => {
     jest.useRealTimers()
   })
 
-  it("buckets outstanding by the oldest unpaid due date using the real report", async () => {
+  it("returns cumulative PAR exposure once per loan using its oldest active schedule", async () => {
     const findMany = jest.fn().mockResolvedValue([
       loan("100", "2026-03-31T00:00:00.000Z"),
       loan("200", "2026-03-25T00:00:00.000Z"),
@@ -65,6 +65,7 @@ describe("getPortfolioAtRisk", () => {
       loan("10", "2026-04-01T00:00:00.000Z"),
       loan("25", null),
       loan("1000", "2026-01-01T00:00:00.000Z", ["2026-03-31T00:00:00.000Z"]),
+      loan("0", "2026-01-01T00:00:00.000Z"),
     ])
     scopedDal.mockResolvedValue({ organizationId: "org-a", prisma: { loan: { findMany } } })
 
@@ -75,18 +76,47 @@ describe("getPortfolioAtRisk", () => {
       where: { status: "ACTIVE" },
       include: expect.objectContaining({
         repaymentSchedule: expect.objectContaining({
-          where: { isPaid: false, scheduledDate: { lt: now } },
+          where: { isPaid: false, supersededAt: null, scheduledDate: { lt: now } },
           orderBy: { scheduledDate: "asc" },
         }),
       }),
     }))
     expect(report).toEqual({
       totalOutstanding: 2165,
-      par1: 150,
-      par7: 200,
-      par30: 380,
+      par1: 2130,
+      par7: 1980,
+      par30: 1780,
       par90: 1400,
       parTotal: 2130,
+      par1Ratio: 98.38,
+      par7Ratio: 91.45,
+      par30Ratio: 82.22,
+      par90Ratio: 64.67,
+      parTotalRatio: 98.38,
+      asOfDate: "2026-04-01",
+    })
+  })
+
+  it("returns zero exposures and ratios for an empty eligible portfolio", async () => {
+    const findMany = jest.fn().mockResolvedValue([
+      loan("0", "2026-01-01T00:00:00.000Z"),
+      loan("-10", "2026-01-01T00:00:00.000Z"),
+    ])
+    scopedDal.mockResolvedValue({ organizationId: "org-a", prisma: { loan: { findMany } } })
+
+    await expect(getPortfolioAtRisk()).resolves.toEqual({
+      totalOutstanding: 0,
+      par1: 0,
+      par7: 0,
+      par30: 0,
+      par90: 0,
+      parTotal: 0,
+      par1Ratio: 0,
+      par7Ratio: 0,
+      par30Ratio: 0,
+      par90Ratio: 0,
+      parTotalRatio: 0,
+      asOfDate: "2026-04-01",
     })
   })
 })

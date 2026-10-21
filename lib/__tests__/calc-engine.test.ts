@@ -1,5 +1,5 @@
-import { InterestMethod, LoanCalculationMethod, LoanProduct, Prisma } from "@prisma/client"
-import { buildAmortizationSchedule, calculateLoanTerms } from "../calc-engine"
+import { InterestMethod, LoanCalculationMethod, LoanProduct, Prisma, RepaymentFrequency } from "@prisma/client"
+import { buildAmortizationSchedule, calculateLoanTerms, decliningPeriodicRate } from "../calc-engine"
 
 function product(overrides: Partial<LoanProduct> = {}): LoanProduct {
   return {
@@ -107,6 +107,45 @@ describe("calc-engine", () => {
       expect(terms.finalPayment.toFixed(2)).toBe("402.13")
       expect(terms.totalReceivable.toFixed(2)).toBe("1206.35")
     })
+
+    it("uses the legacy whole-term multiplier as a nominal weekly term rate", () => {
+      const weekly = product({
+        numberOfWeeks: 13,
+        multiplier: new Prisma.Decimal("1.17"),
+        calculationMethod: LoanCalculationMethod.DECLINING_BALANCE,
+        interestMethod: InterestMethod.DECLINING_BALANCE,
+        repaymentFrequency: RepaymentFrequency.WEEKLY,
+      })
+
+      const schedule = buildAmortizationSchedule(1000, weekly)
+
+      expect(decliningPeriodicRate(weekly).toFixed(12)).toBe("0.013076923077")
+      expect(schedule.lines[0].payment.toFixed(2)).toBe("84.15")
+      expect(schedule.lines[0].interest.toFixed(2)).toBe("13.08")
+      expect(schedule.lines.at(-1)?.closingBalance.toFixed(2)).toBe("0.00")
+    })
+
+    it("uses the same term-rate convention for monthly schedules and reconciles rounding in the final instalment", () => {
+      const monthly = product({
+        numberOfWeeks: 12,
+        multiplier: new Prisma.Decimal("1.12"),
+        calculationMethod: LoanCalculationMethod.DECLINING_BALANCE,
+        interestMethod: InterestMethod.DECLINING_BALANCE,
+        repaymentFrequency: RepaymentFrequency.MONTHLY,
+      })
+
+      const schedule = buildAmortizationSchedule(1200, monthly)
+
+      expect(decliningPeriodicRate(monthly).toFixed(4)).toBe("0.0100")
+      expect(schedule.lines[0]).toMatchObject({
+        payment: new Prisma.Decimal("106.62"),
+        interest: new Prisma.Decimal("12.00"),
+        principal: new Prisma.Decimal("94.62"),
+      })
+      expect(schedule.lines.at(-1)?.payment.toFixed(2)).toBe("106.60")
+      expect(schedule.totalReceivable.toFixed(2)).toBe("1279.42")
+      expect(schedule.lines.reduce((sum, line) => sum.plus(line.principal), new Prisma.Decimal(0)).toFixed(2)).toBe("1200.00")
+    })
   })
 
   describe("invalid inputs", () => {
@@ -124,6 +163,23 @@ describe("calc-engine", () => {
       expect(() =>
         buildAmortizationSchedule(0, product({ calculationMethod: LoanCalculationMethod.DECLINING_BALANCE }))
       ).toThrow(/greater than zero/)
+    })
+
+    it("rejects a declining-balance multiplier below one and an unsupported custom cadence", () => {
+      expect(() =>
+        buildAmortizationSchedule(1000, product({
+          multiplier: new Prisma.Decimal("0.99"),
+          calculationMethod: LoanCalculationMethod.DECLINING_BALANCE,
+          interestMethod: InterestMethod.DECLINING_BALANCE,
+        }))
+      ).toThrow(/at least 1/)
+      expect(() =>
+        buildAmortizationSchedule(1000, product({
+          calculationMethod: LoanCalculationMethod.DECLINING_BALANCE,
+          interestMethod: InterestMethod.DECLINING_BALANCE,
+          repaymentFrequency: RepaymentFrequency.CUSTOM,
+        }))
+      ).toThrow(/CUSTOM repayment frequency/)
     })
   })
 })

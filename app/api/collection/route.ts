@@ -6,6 +6,12 @@ import { addDays, subDays } from "date-fns"
 import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
 import { logAudit } from "@/lib/audit"
 import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
+import {
+  assertMatchingPaymentFingerprint,
+  normalizePaymentIdempotencyPayload,
+  paymentIdempotencyFingerprint,
+  PaymentIdempotencyConflictError,
+} from "@/lib/payment-idempotency"
 
 export async function GET(request: Request) {
   try {
@@ -155,11 +161,130 @@ export async function POST(request: Request) {
       let savedCount = 0
       let totalCollected = 0
       const notifications: any[] = []
+      const duplicates: Array<{ entryId: string; repaymentId: string }> = []
 
       for (const entry of entries) {
         const { loanId, scheduleId, instalmentNumber, amount, status, note, compulsorySavingsId, compulsorySavingsDeposit, voluntarySavingsId, voluntarySavingsDeposit } = entry
+        const clientTransactionId = typeof entry.clientTransactionId === "string"
+          ? entry.clientTransactionId.trim()
+          : typeof entry.idempotencyKey === "string"
+            ? entry.idempotencyKey.trim()
+            : ""
         
         const decimalAmount = new Prisma.Decimal(amount || 0)
+
+        // 1. Idempotency Check BEFORE any financial mutation
+        if (clientTransactionId) {
+          const compRef = `${clientTransactionId}:compulsory`
+          const volRef = `${clientTransactionId}:voluntary`
+
+          const incomingCompDeposit = (compulsorySavingsDeposit && Number(compulsorySavingsDeposit) > 0)
+            ? new Prisma.Decimal(compulsorySavingsDeposit)
+            : new Prisma.Decimal(0)
+
+          const incomingVolDeposit = (voluntarySavingsDeposit && Number(voluntarySavingsDeposit) > 0)
+            ? new Prisma.Decimal(voluntarySavingsDeposit)
+            : new Prisma.Decimal(0)
+
+          const hasLoanPayment = loanId && status !== 'NP' && amount > 0
+
+          if (hasLoanPayment) {
+            const idempotencyPayload = normalizePaymentIdempotencyPayload({ loanId, scheduleId, amount, method: 'CASH' })
+            const fingerprint = paymentIdempotencyFingerprint(idempotencyPayload)
+
+            const existingRepayment = await tx.loanRepayment.findUnique({
+              where: {
+                organizationId_clientTransactionId: {
+                  organizationId: dal.organizationId,
+                  clientTransactionId,
+                },
+              },
+            })
+
+            if (existingRepayment) {
+              assertMatchingPaymentFingerprint(existingRepayment, fingerprint)
+
+              // Symmetrical savings verification for compulsory savings
+              const existingComp = await tx.savingsTransaction.findUnique({
+                where: {
+                  organizationId_reference: {
+                    organizationId: dal.organizationId,
+                    reference: compRef,
+                  },
+                },
+              })
+
+              if (existingComp) {
+                if (!compulsorySavingsId || existingComp.savingsAccountId !== compulsorySavingsId || !existingComp.amount.equals(incomingCompDeposit)) {
+                  throw new PaymentIdempotencyConflictError()
+                }
+              } else if (incomingCompDeposit.gt(0)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+
+              // Symmetrical savings verification for voluntary savings
+              const existingVol = await tx.savingsTransaction.findUnique({
+                where: {
+                  organizationId_reference: {
+                    organizationId: dal.organizationId,
+                    reference: volRef,
+                  },
+                },
+              })
+
+              if (existingVol) {
+                if (!voluntarySavingsId || existingVol.savingsAccountId !== voluntarySavingsId || !existingVol.amount.equals(incomingVolDeposit)) {
+                  throw new PaymentIdempotencyConflictError()
+                }
+              } else if (incomingVolDeposit.gt(0)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+
+              duplicates.push({ entryId: clientTransactionId, repaymentId: existingRepayment.id })
+              continue
+            }
+          } else {
+            // Savings-only entry idempotency check (or NP / 0 amount loan)
+            const existingComp = await tx.savingsTransaction.findUnique({
+              where: {
+                organizationId_reference: {
+                  organizationId: dal.organizationId,
+                  reference: compRef,
+                },
+              },
+            })
+
+            const existingVol = await tx.savingsTransaction.findUnique({
+              where: {
+                organizationId_reference: {
+                  organizationId: dal.organizationId,
+                  reference: volRef,
+                },
+              },
+            })
+
+            if (existingComp || existingVol) {
+              if (existingComp) {
+                if (!compulsorySavingsId || existingComp.savingsAccountId !== compulsorySavingsId || !existingComp.amount.equals(incomingCompDeposit)) {
+                  throw new PaymentIdempotencyConflictError()
+                }
+              } else if (incomingCompDeposit.gt(0)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+
+              if (existingVol) {
+                if (!voluntarySavingsId || existingVol.savingsAccountId !== voluntarySavingsId || !existingVol.amount.equals(incomingVolDeposit)) {
+                  throw new PaymentIdempotencyConflictError()
+                }
+              } else if (incomingVolDeposit.gt(0)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+
+              duplicates.push({ entryId: clientTransactionId, repaymentId: existingComp?.id || existingVol?.id })
+              continue
+            }
+          }
+        }
 
         // Process Compulsory Savings
         if (compulsorySavingsId && compulsorySavingsDeposit && compulsorySavingsDeposit > 0) {
@@ -170,6 +295,7 @@ export async function POST(request: Request) {
                type: 'DEPOSIT',
                amount: depositAmount,
                date: paidDate,
+               reference: clientTransactionId ? `${clientTransactionId}:compulsory` : undefined,
                notes: 'Collection sheet deposit',
                organizationId: dal.organizationId
              }
@@ -186,7 +312,7 @@ export async function POST(request: Request) {
               organizationId: dal.organizationId,
               branchId: undefined, // we'll rely on dal scope if needed, or skip branchId for savings for now
               entryDate: paidDate,
-              reference: `SAV-C-${compulsorySavingsId.slice(-6)}`,
+              reference: clientTransactionId ? `SAV-C-${clientTransactionId}` : `SAV-C-${compulsorySavingsId.slice(-6)}`,
               description: `Compulsory Savings Deposit via Collection`,
               sourceType: 'REPAYMENT',
               sourceId: compulsorySavingsId,
@@ -208,6 +334,7 @@ export async function POST(request: Request) {
                type: 'DEPOSIT',
                amount: depositAmount,
                date: paidDate,
+               reference: clientTransactionId ? `${clientTransactionId}:voluntary` : undefined,
                notes: 'Collection sheet deposit',
                organizationId: dal.organizationId
              }
@@ -224,7 +351,7 @@ export async function POST(request: Request) {
               organizationId: dal.organizationId,
               branchId: undefined, 
               entryDate: paidDate,
-              reference: `SAV-V-${voluntarySavingsId.slice(-6)}`,
+              reference: clientTransactionId ? `SAV-V-${clientTransactionId}` : `SAV-V-${voluntarySavingsId.slice(-6)}`,
               description: `Voluntary Savings Deposit via Collection`,
               sourceType: 'REPAYMENT',
               sourceId: voluntarySavingsId,
@@ -240,19 +367,12 @@ export async function POST(request: Request) {
 
         if (!loanId) continue // If there's no loan, just process savings.
 
-        // Issue 3: Idempotency check. Avoid double-billing if the request is retried.
-        const existingRepayment = await tx.loanRepayment.findFirst({
-          where: {
-            loanId,
-            instalmentNumber,
-            paidDate
-          }
-        })
-        if (existingRepayment) {
-          continue // Skip this entry as it was already processed
-        }
-
         if (status !== 'NP' && amount > 0) {
+          const idempotencyPayload = clientTransactionId
+            ? normalizePaymentIdempotencyPayload({ loanId, scheduleId, amount, method: 'CASH' })
+            : null
+          const fingerprint = idempotencyPayload ? paymentIdempotencyFingerprint(idempotencyPayload) : undefined
+
           const repayment = await recordPayment(tx as any, {
             organizationId: dal.organizationId,
             loanId,
@@ -262,6 +382,8 @@ export async function POST(request: Request) {
             scheduleId,
             note,
             collectedBy: dal.userId,
+            clientTransactionId: clientTransactionId || undefined,
+            idempotencyFingerprint: fingerprint,
             source: 'COLLECTION_SHEET'
           })
 
@@ -314,8 +436,160 @@ export async function POST(request: Request) {
         }
       }
 
-      return { savedCount, totalCollected, notifications }
-    }, { maxWait: 20000, timeout: 30000 })
+      return { savedCount, totalCollected, notifications, duplicates }
+    }, { maxWait: 20000, timeout: 30000 }).catch(async (error: any) => {
+      // Handle P2002 on concurrent duplicate submission
+      if (error?.code === "P2002") {
+        const recoveredDuplicates: Array<{ entryId: string; repaymentId: string }> = []
+        let allMatched = true
+
+        for (const entry of entries) {
+          const clientTransactionId = typeof entry.clientTransactionId === "string"
+            ? entry.clientTransactionId.trim()
+            : typeof entry.idempotencyKey === "string"
+              ? entry.idempotencyKey.trim()
+              : ""
+
+          if (!clientTransactionId) {
+            allMatched = false
+            break
+          }
+
+          const {
+            loanId,
+            scheduleId,
+            amount,
+            status,
+            compulsorySavingsId,
+            compulsorySavingsDeposit,
+            voluntarySavingsId,
+            voluntarySavingsDeposit
+          } = entry
+
+          const compRef = `${clientTransactionId}:compulsory`
+          const volRef = `${clientTransactionId}:voluntary`
+
+          const incomingCompDeposit = (compulsorySavingsDeposit && Number(compulsorySavingsDeposit) > 0)
+            ? new Prisma.Decimal(compulsorySavingsDeposit)
+            : new Prisma.Decimal(0)
+
+          const incomingVolDeposit = (voluntarySavingsDeposit && Number(voluntarySavingsDeposit) > 0)
+            ? new Prisma.Decimal(voluntarySavingsDeposit)
+            : new Prisma.Decimal(0)
+
+          const hasLoanPayment = loanId && status !== 'NP' && amount > 0
+
+          if (hasLoanPayment) {
+            const idempotencyPayload = normalizePaymentIdempotencyPayload({ loanId, scheduleId, amount, method: 'CASH' })
+            const fingerprint = paymentIdempotencyFingerprint(idempotencyPayload)
+
+            const committed = await dal.prisma.loanRepayment.findUnique({
+              where: {
+                organizationId_clientTransactionId: {
+                  organizationId: dal.organizationId,
+                  clientTransactionId,
+                },
+              },
+            })
+
+            if (!committed) {
+              allMatched = false
+              break
+            }
+
+            assertMatchingPaymentFingerprint(committed, fingerprint)
+
+            const committedComp = await dal.prisma.savingsTransaction.findUnique({
+              where: {
+                organizationId_reference: {
+                  organizationId: dal.organizationId,
+                  reference: compRef,
+                },
+              },
+            })
+
+            if (committedComp) {
+              if (!compulsorySavingsId || committedComp.savingsAccountId !== compulsorySavingsId || !committedComp.amount.equals(incomingCompDeposit)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+            } else if (incomingCompDeposit.gt(0)) {
+              throw new PaymentIdempotencyConflictError()
+            }
+
+            const committedVol = await dal.prisma.savingsTransaction.findUnique({
+              where: {
+                organizationId_reference: {
+                  organizationId: dal.organizationId,
+                  reference: volRef,
+                },
+              },
+            })
+
+            if (committedVol) {
+              if (!voluntarySavingsId || committedVol.savingsAccountId !== voluntarySavingsId || !committedVol.amount.equals(incomingVolDeposit)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+            } else if (incomingVolDeposit.gt(0)) {
+              throw new PaymentIdempotencyConflictError()
+            }
+
+            recoveredDuplicates.push({ entryId: clientTransactionId, repaymentId: committed.id })
+          } else {
+            // Savings-only entry
+            const committedComp = await dal.prisma.savingsTransaction.findUnique({
+              where: {
+                organizationId_reference: {
+                  organizationId: dal.organizationId,
+                  reference: compRef,
+                },
+              },
+            })
+
+            const committedVol = await dal.prisma.savingsTransaction.findUnique({
+              where: {
+                organizationId_reference: {
+                  organizationId: dal.organizationId,
+                  reference: volRef,
+                },
+              },
+            })
+
+            if (!committedComp && !committedVol) {
+              allMatched = false
+              break
+            }
+
+            if (committedComp) {
+              if (!compulsorySavingsId || committedComp.savingsAccountId !== compulsorySavingsId || !committedComp.amount.equals(incomingCompDeposit)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+            } else if (incomingCompDeposit.gt(0)) {
+              throw new PaymentIdempotencyConflictError()
+            }
+
+            if (committedVol) {
+              if (!voluntarySavingsId || committedVol.savingsAccountId !== voluntarySavingsId || !committedVol.amount.equals(incomingVolDeposit)) {
+                throw new PaymentIdempotencyConflictError()
+              }
+            } else if (incomingVolDeposit.gt(0)) {
+              throw new PaymentIdempotencyConflictError()
+            }
+
+            recoveredDuplicates.push({ entryId: clientTransactionId, repaymentId: committedComp?.id || committedVol?.id })
+          }
+        }
+
+        if (allMatched && recoveredDuplicates.length === entries.length) {
+          return {
+            savedCount: 0,
+            totalCollected: 0,
+            notifications: [],
+            duplicates: recoveredDuplicates,
+          }
+        }
+      }
+      throw error
+    })
 
     // Dispatch notifications after successful transaction
     const { dispatchNotification } = await import('@/lib/services/notification-service')
@@ -325,8 +599,11 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ savedCount: result.savedCount, totalCollected: result.totalCollected })
+    return NextResponse.json({ savedCount: result.savedCount, totalCollected: result.totalCollected, duplicates: result.duplicates })
   } catch (error: any) {
+    if (error instanceof PaymentIdempotencyConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 })
+    }
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 }

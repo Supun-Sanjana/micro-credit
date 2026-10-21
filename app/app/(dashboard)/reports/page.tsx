@@ -98,7 +98,7 @@ export default function ReportsPage() {
       headers = ["Centre ID", "Centre Name", "Branch", "Active Loans", "Total Outstanding"]
     } else if (activeTab === "par" && parData) {
       dataToExport = [parData]
-      headers = ["Total Outstanding", "PAR 1+", "PAR 7+", "PAR 30+", "PAR 90+", "Total PAR", "PAR Ratio (%)"]
+      headers = ["Gross Portfolio Outstanding", "PAR 1+", "PAR 7+", "PAR 30+", "PAR 90+", "PAR 1+ Exposure", "PAR 1+ Ratio (%)"]
     } else if (activeTab === "efficiency" && efficiencyData) {
       dataToExport = efficiencyData
       headers = ["Branch Name", "Centre Name", "Due in period", "Cash received", "Cash efficiency (%)", "Due-cohort collected", "Due-cohort efficiency (%)"]
@@ -133,15 +133,15 @@ export default function ReportsPage() {
             if (header === "Centre Name") val = row.centre?.name || ""
             if (header === "Branch") val = row.centre?.branch?.name || ""
             if (header === "Active Loans") val = row.activeLoans || "0"
-            if (header === "Total Outstanding") val = row.totalOutstanding || "0"
+            if (header === "Gross Portfolio Outstanding") val = row.totalOutstanding || "0"
           } else if (activeTab === "par") {
-            if (header === "Total Outstanding") val = row.totalOutstanding || "0"
+            if (header === "Gross Portfolio Outstanding") val = row.totalOutstanding || "0"
             if (header === "PAR 1+") val = row.par1 || "0"
             if (header === "PAR 7+") val = row.par7 || "0"
             if (header === "PAR 30+") val = row.par30 || "0"
             if (header === "PAR 90+") val = row.par90 || "0"
-            if (header === "Total PAR") val = row.parTotal || "0"
-            if (header === "PAR Ratio (%)") val = row.totalOutstanding ? ((row.parTotal / row.totalOutstanding) * 100).toFixed(2) : "0"
+            if (header === "PAR 1+ Exposure") val = row.parTotal || "0"
+            if (header === "PAR 1+ Ratio (%)") val = row.parTotalRatio?.toFixed(2) || "0"
           } else if (activeTab === "efficiency") {
             if (header === "Branch Name") val = row.branchName || ""
             if (header === "Centre Name") val = row.centreName || ""
@@ -400,8 +400,8 @@ export default function ReportsPage() {
                   </div>
                 </div>
                 <div className="bg-white dark:bg-slate-800/80 p-6 rounded-xl border border-border/40 dark:border-slate-700/60">
-                  <div className="text-[15px] text-slate-500 dark:text-slate-400 mb-2">Total Outstanding: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.totalOutstanding.toLocaleString()}</span></div>
-                  <div className="text-[15px] text-slate-500 dark:text-slate-400">Total PAR: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.parTotal.toLocaleString()}</span> ({((parData.parTotal / (parData.totalOutstanding || 1)) * 100).toFixed(2)}%)</div>
+                  <div className="text-[15px] text-slate-500 dark:text-slate-400 mb-2">Gross portfolio outstanding: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.totalOutstanding.toLocaleString()}</span></div>
+                  <div className="text-[15px] text-slate-500 dark:text-slate-400">PAR 1+ exposure: <span className="font-medium text-navy-900 dark:text-slate-100">LKR {parData.parTotal.toLocaleString()}</span> ({parData.parTotalRatio.toFixed(2)}% of gross portfolio)</div>
                 </div>
               </div>
             </div>

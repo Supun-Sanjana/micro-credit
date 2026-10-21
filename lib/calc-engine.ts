@@ -1,4 +1,4 @@
-import { InterestMethod, LoanCalculationMethod, LoanProduct, Prisma } from "@prisma/client"
+import { InterestMethod, LoanCalculationMethod, LoanProduct, Prisma, RepaymentFrequency } from "@prisma/client"
 
 export interface LoanCalculation {
   loanAmount: Prisma.Decimal
@@ -43,19 +43,31 @@ function isDecliningBalance(product: Pick<LoanProduct, "calculationMethod" | "in
   )
 }
 
+function assertSupportedDecliningFrequency(frequency: RepaymentFrequency): void {
+  if (frequency === RepaymentFrequency.CUSTOM) {
+    throw new Error("CUSTOM repayment frequency is not supported for declining-balance products")
+  }
+}
+
 /**
  * Periodic rate for a declining-balance product.
- * `multiplier` is the flat term factor (1.17 = 17% over the full term).
- * The annuity uses that flat factor spread evenly across instalments.
+ * `multiplier` is the legacy whole-term factor (1.17 = 17% over the full
+ * contractual term), not an annual percentage rate. The nominal per-period
+ * rate is the term rate spread evenly over the stored instalment count.
+ * Repayment frequency determines schedule dates, rather than converting an
+ * annual rate, because the schema has no annual-rate field.
  * `interestMethod NONE` charges no interest.
  */
 export function decliningPeriodicRate(
-  product: Pick<LoanProduct, "multiplier" | "interestMethod" | "numberOfWeeks">
+  product: Pick<LoanProduct, "multiplier" | "interestMethod" | "numberOfWeeks" | "repaymentFrequency">
 ): Prisma.Decimal {
   const n = instalmentCount(product)
+  assertSupportedDecliningFrequency(product.repaymentFrequency)
   if (product.interestMethod === InterestMethod.NONE) return new Prisma.Decimal(0)
   const multiplier = new Prisma.Decimal(product.multiplier)
-  if (multiplier.lt(1)) throw new Error("Multiplier cannot be less than 1")
+  if (!multiplier.isFinite() || multiplier.lt(1)) {
+    throw new Error("Declining-balance multiplier must be a finite value of at least 1")
+  }
   return multiplier.minus(1).dividedBy(n)
 }
 
@@ -71,7 +83,7 @@ export function buildAmortizationSchedule(
 ): AmortizationSchedule {
   const n = instalmentCount(product)
   const principal = new Prisma.Decimal(loanAmount).toDecimalPlaces(2)
-  if (principal.lte(0)) throw new Error("Loan amount must be greater than zero")
+  if (!principal.isFinite() || principal.lte(0)) throw new Error("Loan amount must be a finite value greater than zero")
 
   const periodicRate = decliningPeriodicRate(product)
   const one = new Prisma.Decimal(1)

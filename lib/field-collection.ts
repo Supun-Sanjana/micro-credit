@@ -1,8 +1,10 @@
+import { Prisma, RepaymentMethod } from "@prisma/client"
+
 export interface FieldCollectionInput {
   loanId: string
   scheduleId: string | null
-  amount: unknown
-  method: unknown
+  amount: Prisma.Decimal | number | string
+  method?: RepaymentMethod | string | null
   clientTransactionId: string
   notes?: string
 }
@@ -64,13 +66,30 @@ export function parseFieldCollectionBody(
     return { ok: false, error: "clientTransactionId must be a string" }
   }
 
+  if (
+    json.amount == null ||
+    (typeof json.amount !== "number" &&
+      typeof json.amount !== "string" &&
+      !Prisma.Decimal.isDecimal(json.amount))
+  ) {
+    return { ok: false, error: "amount must be a valid number or decimal string" }
+  }
+
+  let method: RepaymentMethod | string | null = null
+  if (json.method != null) {
+    if (typeof json.method !== "string") {
+      return { ok: false, error: "method must be a string" }
+    }
+    method = json.method
+  }
+
   return {
     ok: true,
     value: {
       loanId: json.loanId.trim(),
       scheduleId,
       amount: json.amount,
-      method: json.method,
+      method,
       clientTransactionId: json.clientTransactionId.trim(),
       notes: typeof json.notes === "string" ? json.notes : undefined,
     },

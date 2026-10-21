@@ -2,6 +2,7 @@ import { Prisma, RepaymentMethod, ScheduleStatus } from "@prisma/client"
 import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
 import { assertScheduleOwnership } from "@/lib/field-collection"
 import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
+import { assertMatchingPaymentFingerprint } from "@/lib/payment-idempotency"
 
 export interface PaymentParams {
   organizationId: string
@@ -13,6 +14,7 @@ export interface PaymentParams {
   note?: string
   collectedBy?: string
   clientTransactionId?: string
+  idempotencyFingerprint?: string
   source: "OFFICE" | "COLLECTION_SHEET" | "FIELD_MOBILE"
 }
 
@@ -22,6 +24,9 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
 
   // 2. Idempotency check
   if (params.clientTransactionId) {
+    if (!params.idempotencyFingerprint) {
+      throw new Error("An idempotency fingerprint is required with a client transaction ID")
+    }
     const existing = await tx.loanRepayment.findUnique({
       where: {
         organizationId_clientTransactionId: {
@@ -30,7 +35,10 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
         }
       }
     })
-    if (existing) return existing
+    if (existing) {
+      assertMatchingPaymentFingerprint(existing, params.idempotencyFingerprint)
+      return existing
+    }
   }
 
   // Fetch full loan details after lock
@@ -82,6 +90,7 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
       note: params.note,
       collectedBy: params.collectedBy,
       clientTransactionId: params.clientTransactionId,
+      idempotencyFingerprint: params.idempotencyFingerprint,
       allocationMethod: "DEFAULT_WATERFALL",
       allocations: { create: allocations }
     }

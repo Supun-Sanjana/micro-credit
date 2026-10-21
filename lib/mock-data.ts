@@ -267,6 +267,7 @@ export const mockRepayments: Repayment[] = [
     note: "OK",
     collectedBy: "usr_2",
     transactionType: "PAYMENT", reversalOfId: null, allocationMethod: null,
+    idempotencyFingerprint: null,
     createdAt: now,
   },
   {
@@ -282,6 +283,7 @@ export const mockRepayments: Repayment[] = [
     note: "OK",
     collectedBy: "usr_2",
     transactionType: "PAYMENT", reversalOfId: null, allocationMethod: null,
+    idempotencyFingerprint: null,
     createdAt: now,
   },
 ];

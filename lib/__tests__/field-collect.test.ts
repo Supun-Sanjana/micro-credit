@@ -2,6 +2,7 @@ import { POST } from "@/app/api/field/collect/route"
 import { getScopedDal } from "@/lib/dal"
 import { assertScheduleOwnership } from "@/lib/field-collection"
 import { recordPayment } from "@/lib/services/payment-service"
+import { normalizePaymentIdempotencyPayload, paymentIdempotencyFingerprint } from "@/lib/payment-idempotency"
 
 jest.mock("@/lib/dal", () => ({
   getScopedDal: jest.fn(),
@@ -81,6 +82,7 @@ describe("POST /api/field/collect", () => {
     method: "CASH",
     clientTransactionId: "tx-1",
   }
+  const validFingerprint = paymentIdempotencyFingerprint(normalizePaymentIdempotencyPayload(valid))
 
   it("accepts a schedule that belongs to the loan", async () => {
     const response = await collect(valid)
@@ -142,23 +144,46 @@ describe("POST /api/field/collect", () => {
   })
 
   it("returns the original collection on a retry with the same clientTransactionId", async () => {
-    loanRepayment.findUnique.mockResolvedValue({ id: "repay-1", clientTransactionId: "tx-1" })
+    loanRepayment.findUnique.mockResolvedValue({ id: "repay-1", clientTransactionId: "tx-1", idempotencyFingerprint: validFingerprint })
     const response = await collect(valid)
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ id: "repay-1", clientTransactionId: "tx-1" })
+    expect(await response.json()).toEqual(expect.objectContaining({ id: "repay-1", clientTransactionId: "tx-1" }))
     expect(transaction).not.toHaveBeenCalled()
     expect(tx.collectionAttempt.create).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [{ amount: "101.00" }, "different amount"],
+    [{ loanId: "loan-2" }, "different loan"],
+    [{ method: "BANK_TRANSFER" }, "different method"],
+  ])("rejects idempotency-key reuse with a %s", async (change, _description) => {
+    loanRepayment.findUnique.mockResolvedValue({ id: "repay-1", clientTransactionId: "tx-1", idempotencyFingerprint: validFingerprint })
+
+    const response = await collect({ ...valid, ...change })
+
+    expect(response.status).toBe(409)
+    expect(await response.json()).toEqual({ error: "This idempotency key has already been used with a different payment" })
+    expect(transaction).not.toHaveBeenCalled()
+  })
+
+  it("normalizes equivalent currency representations before comparing a retry", async () => {
+    loanRepayment.findUnique.mockResolvedValue({ id: "repay-1", clientTransactionId: "tx-1", idempotencyFingerprint: validFingerprint })
+
+    const response = await collect({ ...valid, amount: "100.00" })
+
+    expect(response.status).toBe(200)
+    expect(transaction).not.toHaveBeenCalled()
   })
 
   it("returns the committed collection when a concurrent retry hits the unique constraint", async () => {
     record.mockRejectedValue(Object.assign(new Error("Unique constraint"), { code: "P2002" }))
     loanRepayment.findUnique
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: "repay-winner", clientTransactionId: "tx-1" })
+      .mockResolvedValueOnce({ id: "repay-winner", clientTransactionId: "tx-1", idempotencyFingerprint: validFingerprint })
 
     const response = await collect(valid)
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ id: "repay-winner", clientTransactionId: "tx-1" })
+    expect(await response.json()).toEqual(expect.objectContaining({ id: "repay-winner", clientTransactionId: "tx-1" }))
     expect(tx.collectionAttempt.create).not.toHaveBeenCalled()
   })
 
@@ -166,11 +191,37 @@ describe("POST /api/field/collect", () => {
     tx.collectionAttempt.create.mockRejectedValue(Object.assign(new Error("Unique constraint"), { code: "P2002" }))
     loanRepayment.findUnique
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: "repay-winner", clientTransactionId: "tx-1" })
+      .mockResolvedValueOnce({ id: "repay-winner", clientTransactionId: "tx-1", idempotencyFingerprint: validFingerprint })
 
     const response = await collect(valid)
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual(expect.objectContaining({ id: "repay-winner" }))
     expect(tx.collectionAttempt.create).toHaveBeenCalledTimes(1)
+  })
+
+  it("permits two distinct partial payments against the same loan/schedule with distinct keys", async () => {
+    record
+      .mockResolvedValueOnce({ id: "repay-p1", clientTransactionId: "tx-part-1" })
+      .mockResolvedValueOnce({ id: "repay-p2", clientTransactionId: "tx-part-2" })
+
+    const first = await collect({ ...valid, amount: 40, clientTransactionId: "tx-part-1" })
+    const second = await collect({ ...valid, amount: 60, clientTransactionId: "tx-part-2" })
+
+    expect(first.status).toBe(201)
+    expect(second.status).toBe(201)
+    expect(record).toHaveBeenCalledTimes(2)
+    expect(tx.collectionAttempt.create).toHaveBeenCalledTimes(2)
+  })
+
+  it("enforces tenant isolation on idempotency key lookups", async () => {
+    await collect(valid)
+    expect(loanRepayment.findUnique).toHaveBeenCalledWith({
+      where: {
+        organizationId_clientTransactionId: {
+          organizationId: "org-1",
+          clientTransactionId: "tx-1",
+        },
+      },
+    })
   })
 })
