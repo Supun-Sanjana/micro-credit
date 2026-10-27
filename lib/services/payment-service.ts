@@ -1,5 +1,5 @@
 import { Prisma, RepaymentMethod, ScheduleStatus } from "@prisma/client"
-import { allocatePayment, balancesFromLoan } from "@/lib/payment-allocation"
+import { allocatePayment, balancesFromLoan, distributeAllocationsToSchedules, SchedulePortion } from "@/lib/payment-allocation"
 import { assertScheduleOwnership } from "@/lib/field-collection"
 import { postJournalEntry, getAccountByCode } from "@/lib/accounting"
 import { assertMatchingPaymentFingerprint } from "@/lib/payment-idempotency"
@@ -62,21 +62,97 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
   // 4. Allocate payment
   const allocations = allocatePayment(params.amount, balancesFromLoan(loan))
 
-  // 5. Create Repayment & Allocations
+  // 5. Fetch schedules and calculate schedule portions
+  const activeSchedules = await tx.repaymentSchedule.findMany({
+    where: {
+      loanId: params.loanId,
+      supersededAt: null,
+    },
+    orderBy: [
+      { scheduledDate: "asc" },
+      { instalmentNumber: "asc" },
+    ],
+  })
+
   let instalmentNumber: number | null = null
   let scheduledDate: Date | null = null
-  let matchedSchedule: { paidAmount: Prisma.Decimal; scheduledAmount: Prisma.Decimal; status: ScheduleStatus; isPaid: boolean } | null = null
+  const schedulePortions: SchedulePortion[] = []
+  let remainingPayment = new Prisma.Decimal(params.amount)
 
   if (params.scheduleId) {
-    const schedule = await tx.repaymentSchedule.findUnique({
-      where: { id: params.scheduleId },
-      include: { loan: { include: { member: true } } }
-    })
-    assertScheduleOwnership(schedule, params.loanId, params.organizationId)
-    instalmentNumber = schedule.instalmentNumber
-    scheduledDate = schedule.scheduledDate
-    matchedSchedule = schedule
+    const matchedSchedule = activeSchedules.find((s: any) => s.id === params.scheduleId)
+    if (!matchedSchedule) {
+      const scheduleCheck = await tx.repaymentSchedule.findUnique({
+        where: { id: params.scheduleId },
+        include: { loan: { include: { member: true } } },
+      })
+      assertScheduleOwnership(scheduleCheck, params.loanId, params.organizationId)
+      if (scheduleCheck.supersededAt !== null) {
+        throw new Error("Cannot allocate payment to a superseded schedule")
+      }
+    } else {
+      instalmentNumber = matchedSchedule.instalmentNumber
+      scheduledDate = matchedSchedule.scheduledDate
+
+      const schedRemaining = Prisma.Decimal.max(
+        0,
+        matchedSchedule.scheduledAmount.minus(matchedSchedule.paidAmount)
+      )
+
+      const allocToMatched = Prisma.Decimal.min(remainingPayment, schedRemaining)
+      if (allocToMatched.gt(0)) {
+        schedulePortions.push({
+          scheduleId: matchedSchedule.id,
+          amount: allocToMatched,
+        })
+        remainingPayment = remainingPayment.minus(allocToMatched)
+      }
+    }
   }
+
+  // Cascade any remaining payment to unpaid active schedules
+  if (remainingPayment.gt(0)) {
+    for (const schedule of activeSchedules) {
+      if (remainingPayment.lte(0)) break
+      if (params.scheduleId && schedule.id === params.scheduleId) continue
+
+      const schedRemaining = Prisma.Decimal.max(
+        0,
+        schedule.scheduledAmount.minus(schedule.paidAmount)
+      )
+      if (schedRemaining.gt(0)) {
+        const allocAmount = Prisma.Decimal.min(remainingPayment, schedRemaining)
+        schedulePortions.push({
+          scheduleId: schedule.id,
+          amount: allocAmount,
+        })
+        remainingPayment = remainingPayment.minus(allocAmount)
+
+        if (instalmentNumber === null) {
+          instalmentNumber = schedule.instalmentNumber
+          scheduledDate = schedule.scheduledDate
+        }
+      }
+    }
+  }
+
+  // Handle remaining payment if schedules are already satisfied or none exist
+  if (remainingPayment.gt(0)) {
+    if (params.scheduleId) {
+      const existing = schedulePortions.find((p) => p.scheduleId === params.scheduleId)
+      if (existing) {
+        existing.amount = existing.amount.add(remainingPayment)
+      } else {
+        schedulePortions.push({ scheduleId: params.scheduleId, amount: remainingPayment })
+      }
+    } else if (schedulePortions.length > 0) {
+      schedulePortions[schedulePortions.length - 1].amount = schedulePortions[schedulePortions.length - 1].amount.add(remainingPayment)
+    } else {
+      schedulePortions.push({ scheduleId: null, amount: remainingPayment })
+    }
+  }
+
+  const scheduleAllocations = distributeAllocationsToSchedules(allocations, schedulePortions)
 
   const repayment = await tx.loanRepayment.create({
     data: {
@@ -92,8 +168,14 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
       clientTransactionId: params.clientTransactionId,
       idempotencyFingerprint: params.idempotencyFingerprint,
       allocationMethod: "DEFAULT_WATERFALL",
-      allocations: { create: allocations }
-    }
+      allocations: {
+        create: scheduleAllocations.map((a) => ({
+          component: a.component,
+          amount: a.amount,
+          scheduleId: a.scheduleId,
+        })),
+      },
+    },
   })
 
   // 6. Update loan balances
@@ -107,30 +189,37 @@ export async function recordPayment(tx: Prisma.TransactionClient, params: Paymen
     data: {
       totalPaid: newTotalPaid,
       outstanding: newOutstanding,
-      status: newStatus
-    }
+      status: newStatus,
+    },
   })
 
-  // 7. Update RepaymentSchedule
-  if (params.scheduleId && matchedSchedule) {
-    const newPaidAmount = matchedSchedule.paidAmount.add(params.amount)
-    let status = matchedSchedule.status
-    let isPaid = matchedSchedule.isPaid
+  // 7. Update affected RepaymentSchedules
+  for (const portion of schedulePortions) {
+    if (!portion.scheduleId) continue
+    const targetSchedule = activeSchedules.find((s: any) => s.id === portion.scheduleId) ??
+      (await tx.repaymentSchedule.findUnique({ where: { id: portion.scheduleId } }))
 
-    if (newPaidAmount.gte(matchedSchedule.scheduledAmount)) {
+    if (!targetSchedule) continue
+
+    const newPaidAmount = targetSchedule.paidAmount.add(portion.amount)
+    let status: ScheduleStatus = "PENDING"
+    let isPaid = false
+
+    if (newPaidAmount.gte(targetSchedule.scheduledAmount)) {
       status = "PAID"
       isPaid = true
     } else if (newPaidAmount.gt(0)) {
       status = "PARTIALLY_PAID"
+      isPaid = false
     }
 
     await tx.repaymentSchedule.update({
-      where: { id: params.scheduleId },
+      where: { id: portion.scheduleId },
       data: {
         paidAmount: newPaidAmount,
         status,
-        isPaid
-      }
+        isPaid,
+      },
     })
   }
 

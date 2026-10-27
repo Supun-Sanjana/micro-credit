@@ -270,14 +270,17 @@ model LoanRepayment {
 }
 
 model PaymentAllocation {
-  id        String                     @id @default(cuid())
-  paymentId String
-  component PaymentAllocationComponent
-  amount    Decimal                    @db.Decimal(12, 2)
-  createdAt DateTime                   @default(now())
-  payment   LoanRepayment              @relation(fields: [paymentId], references: [id])
+  id         String                     @id @default(cuid())
+  paymentId  String
+  scheduleId String?
+  component  PaymentAllocationComponent
+  amount     Decimal                    @db.Decimal(12, 2)
+  createdAt  DateTime                   @default(now())
+  payment    LoanRepayment              @relation(fields: [paymentId], references: [id])
+  schedule   RepaymentSchedule?         @relation(fields: [scheduleId], references: [id])
 
   @@index([paymentId])
+  @@index([scheduleId])
 }
 
 model PaymentReversal {
@@ -331,6 +334,7 @@ model RepaymentSchedule {
   collectionAttempts CollectionAttempt[]
   loan               Loan                 @relation(fields: [loanId], references: [id])
   scheduleVersion    LoanScheduleVersion? @relation(fields: [scheduleVersionId], references: [id])
+  allocations        PaymentAllocation[]
 
   @@index([loanId])
   @@index([scheduledDate])

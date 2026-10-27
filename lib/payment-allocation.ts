@@ -31,3 +31,72 @@ export function balancesFromLoan(loan: { loanAmount: Prisma.Decimal; totalReceiv
     PRINCIPAL: Prisma.Decimal.max(loan.loanAmount.minus(paidPrincipal), 0),
   } satisfies Record<PaymentAllocationComponent, Prisma.Decimal>
 }
+
+export type SchedulePortion = {
+  scheduleId: string | null
+  amount: Prisma.Decimal
+}
+
+export type ScheduleAllocation = {
+  component: PaymentAllocationComponent
+  amount: Prisma.Decimal
+  scheduleId: string | null
+}
+
+/**
+ * Distributes component allocations (interest, principal, fee, penalty) across
+ * the affected schedules. Preserves total component allocations and per-schedule
+ * totals while ensuring all allocated amounts are non-negative.
+ */
+export function distributeAllocationsToSchedules(
+  allocations: Allocation[],
+  schedulePortions: SchedulePortion[]
+): ScheduleAllocation[] {
+  if (schedulePortions.length === 0) {
+    return allocations.map((a) => ({
+      component: a.component,
+      amount: a.amount,
+      scheduleId: null,
+    }))
+  }
+
+  const remainingComponents = allocations.map((a) => ({
+    component: a.component,
+    remaining: new Prisma.Decimal(a.amount),
+  }))
+
+  const result: ScheduleAllocation[] = []
+
+  for (const portion of schedulePortions) {
+    let portionRemaining = new Prisma.Decimal(portion.amount)
+
+    for (const comp of remainingComponents) {
+      if (portionRemaining.lte(0)) break
+      if (comp.remaining.lte(0)) continue
+
+      const allocAmount = Prisma.Decimal.min(portionRemaining, comp.remaining)
+      if (allocAmount.gt(0)) {
+        result.push({
+          component: comp.component,
+          amount: allocAmount,
+          scheduleId: portion.scheduleId,
+        })
+        portionRemaining = portionRemaining.minus(allocAmount)
+        comp.remaining = comp.remaining.minus(allocAmount)
+      }
+    }
+  }
+
+  for (const comp of remainingComponents) {
+    if (comp.remaining.gt(0)) {
+      result.push({
+        component: comp.component,
+        amount: comp.remaining,
+        scheduleId: null,
+      })
+    }
+  }
+
+  return result
+}
+

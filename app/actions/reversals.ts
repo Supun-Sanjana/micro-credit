@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@prisma/client";
+import { Prisma, ScheduleStatus } from "@prisma/client";
 import { logAudit } from "@/lib/audit";
 import { checkSuspiciousActivity } from "@/lib/intelligence/anomaly-detector";
 import { ensureActiveSubscription } from "@/lib/subscription";
@@ -50,6 +50,9 @@ export async function approveReversal(reversalId: string) {
     let loanIdForAlert: string | undefined;
 
     await prisma.$transaction(async (tx) => {
+      // Row lock on PaymentReversal
+      await tx.$executeRaw`SELECT id FROM "PaymentReversal" WHERE id = ${reversalId} FOR UPDATE`;
+
       const reversal = await tx.paymentReversal.findUnique({
         where: { id: reversalId, organizationId },
       });
@@ -67,8 +70,19 @@ export async function approveReversal(reversalId: string) {
         include: { allocations: true },
       });
 
-      if (!originalRepayment) {
+      if (!originalRepayment || originalRepayment.organizationId !== organizationId) {
         throw new Error("Original repayment not found");
+      }
+
+      if (originalRepayment.transactionType !== "PAYMENT") {
+        throw new Error("Cannot reverse a reversal transaction");
+      }
+
+      const existingReversal = await tx.loanRepayment.findUnique({
+        where: { reversalOfId: originalRepayment.id },
+      });
+      if (existingReversal) {
+        throw new Error("Repayment has already been reversed");
       }
       
       loanIdForAlert = originalRepayment.loanId;
@@ -101,6 +115,7 @@ export async function approveReversal(reversalId: string) {
           allocationMethod: "REVERSAL",
           allocations: {
             create: originalRepayment.allocations.map((alloc) => ({
+              scheduleId: alloc.scheduleId,
               component: alloc.component,
               amount: new Prisma.Decimal(alloc.amount).mul(-1),
             })),
@@ -109,11 +124,11 @@ export async function approveReversal(reversalId: string) {
       });
 
       // Update Loan
-      const newOutstanding = new Prisma.Decimal(loan.outstanding).add(originalRepayment.amount);
       const newTotalPaid = new Prisma.Decimal(loan.totalPaid).sub(originalRepayment.amount);
+      const newOutstanding = new Prisma.Decimal(loan.totalReceivable).minus(newTotalPaid);
       let newStatus = loan.status;
 
-      if (loan.status === "SETTLED") {
+      if (loan.status === "SETTLED" && newOutstanding.gt(0)) {
         newStatus = "ACTIVE";
       }
 
@@ -126,24 +141,80 @@ export async function approveReversal(reversalId: string) {
         },
       });
 
-      // Re-open affected RepaymentSchedule entries
-      if (originalRepayment.instalmentNumber !== null) {
+      // Reverse exact recorded schedule allocations
+      const scheduleAllocationsMap = new Map<string, Prisma.Decimal>();
+      for (const alloc of originalRepayment.allocations) {
+        if (alloc.scheduleId) {
+          const cur = scheduleAllocationsMap.get(alloc.scheduleId) ?? new Prisma.Decimal(0);
+          scheduleAllocationsMap.set(alloc.scheduleId, cur.add(alloc.amount));
+        }
+      }
+
+      if (scheduleAllocationsMap.size > 0) {
+        for (const [scheduleId, allocatedAmount] of scheduleAllocationsMap.entries()) {
+          const schedule = await tx.repaymentSchedule.findUnique({
+            where: { id: scheduleId },
+          });
+
+          if (!schedule || schedule.loanId !== loan.id) continue;
+
+          const newPaidAmount = Prisma.Decimal.max(0, new Prisma.Decimal(schedule.paidAmount).sub(allocatedAmount));
+          let status: ScheduleStatus = "PENDING";
+          let isPaid = false;
+
+          if (newPaidAmount.gte(schedule.scheduledAmount)) {
+            status = "PAID";
+            isPaid = true;
+          } else if (newPaidAmount.gt(0)) {
+            status = "PARTIALLY_PAID";
+            isPaid = false;
+          } else {
+            status = "PENDING";
+            isPaid = false;
+          }
+
+          await tx.repaymentSchedule.update({
+            where: { id: schedule.id },
+            data: {
+              paidAmount: newPaidAmount,
+              status,
+              isPaid,
+            },
+          });
+        }
+      } else if (originalRepayment.instalmentNumber !== null) {
+        // Legacy fallback for historical payments without scheduleId:
+        // Must NEVER touch superseded schedules!
         const schedules = await tx.repaymentSchedule.findMany({
           where: {
             loanId: loan.id,
             instalmentNumber: originalRepayment.instalmentNumber,
+            supersededAt: null,
           },
         });
 
         for (const schedule of schedules) {
-          const newPaidAmount = new Prisma.Decimal(schedule.paidAmount).sub(originalRepayment.amount);
-          
+          const newPaidAmount = Prisma.Decimal.max(0, new Prisma.Decimal(schedule.paidAmount).sub(originalRepayment.amount));
+          let status: ScheduleStatus = "PENDING";
+          let isPaid = false;
+
+          if (newPaidAmount.gte(schedule.scheduledAmount)) {
+            status = "PAID";
+            isPaid = true;
+          } else if (newPaidAmount.gt(0)) {
+            status = "PARTIALLY_PAID";
+            isPaid = false;
+          } else {
+            status = "PENDING";
+            isPaid = false;
+          }
+
           await tx.repaymentSchedule.update({
             where: { id: schedule.id },
             data: {
-              paidAmount: newPaidAmount.isNegative() ? new Prisma.Decimal(0) : newPaidAmount,
-              status: "PENDING", // Simplistic fallback
-              isPaid: false,
+              paidAmount: newPaidAmount,
+              status,
+              isPaid,
             },
           });
         }
